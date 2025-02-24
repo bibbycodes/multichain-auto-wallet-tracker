@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Token {
+  id             Int      @id @default(autoincrement())
+  address        String
+  chainType      String
+  name           String
+  symbol         String
+  createdAt      DateTime?
+
+  // Composite unique constraint for address + chainType
+  @@unique([address, chainType])
+
+  // Relationship
+  trendingTokens TrendingToken[]
+}
+
+model TrendingToken {
+  id          Int      @id @default(autoincrement()) // Primary key with autoincrement
+  tokenId     Int
+  trendingAt  DateTime @default(now())               // Timestamp for when the token was trending
+
+  // Foreign Key to Token table
+  token       Token    @relation(fields: [tokenId], references: [id])
+
+  @@index([tokenId])
+}

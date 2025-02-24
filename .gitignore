@@ -1,0 +1,58 @@
+# Keep environment variables out of version control
+.env
+
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Prisma
+/prisma/.env
+prisma/dev.db
+prisma/dev.db-journal
+prisma/migrations/
+
+# Jest
+coverage/
+jest-cache/
+jest.config.js
+
+# Logs
+logs
+*.log
+*.log.*
+
+# OS/IDE related
+.DS_Store
+.vscode/
+.idea
+
+# Docker
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Optional: Ignore the Prisma Client (optional if you generate it on deployment)
+# Comment this line if you want to commit your generated Prisma Client.
+node_modules/.prisma/
+
+# TypeChain (if you use it for smart contract types)
+typechain/
+
+# Build Output
+dist/
+out/
+build/
+
+# Debugging
+*.swp
