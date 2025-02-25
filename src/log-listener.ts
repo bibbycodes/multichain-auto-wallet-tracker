@@ -19,6 +19,7 @@ class LogListener {
       toBlock: 'latest',
       topics: this.topics
     };
+    
 
     const exchangeFactory = new ExchangeFactory();
 
