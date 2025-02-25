@@ -7,35 +7,25 @@ export const ChainToId = {
   polygon: 137,
   base: 8453,
   zksync: 324,
-  // solana: null,
-  // sui: null,
+  solana: 'solana',
 } as const
 
 export type Chain = keyof typeof ChainToId
 export type ChainId = typeof ChainToId[Chain]
 
-export function getChainId(chain: Chain): number | null {
+export function getChainId(chain: Chain): number | string {
   return ChainToId[chain]
 }
 
 export function getActiveEVMChains(): Chain[] {
   const chains = Object.keys(ChainToId) as Chain[]
-  return chains.filter((chain) => ChainToId[chain] !== null)
+  return chains.filter((chain) => ChainToId[chain] !== null && typeof ChainToId[chain] === 'number')
 }
 
 export const getAllChainIds = (): ChainId[] => {
   return Object.values(ChainToId).filter((id) => id !== null) as ChainId[]
 }
 
-export enum ChainNames {
-  ethereum = 'Ethereum',
-  arbitrum = 'Arbitrum',
-  avalanche = 'Avalanche',
-  bsc = 'Binance Smart Chain',
-  optimism = 'Optimism',
-  polygon = 'Polygon',
-  base = 'Base',
-  zksync = 'ZkSync',
-  solana = 'Solana',
-  sui = 'Sui',
+export const isEvmChain = (chain: Chain): boolean => {
+  return getActiveEVMChains().includes(chain)
 }

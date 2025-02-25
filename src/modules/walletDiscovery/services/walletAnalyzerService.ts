@@ -1,19 +1,36 @@
 import {BirdEyeService, MultiChainPortfolioResponse} from '@shared/services/birdEyeService'
 import { getActiveEVMChains } from '@shared/chains'
+import {MoralisService} from "@shared/services/moralis/moralis-service";
 
-export class WhaleAnalyzerService {
+export class WalletAnalyzerService {
   private birdEyeService: BirdEyeService
-
+  private moralisService: MoralisService
   constructor() {
     this.birdEyeService = new BirdEyeService()
+    this.moralisService = new MoralisService()
   }
   
-  // async getBirdeyeMultichainPortfolioValueUsd(address: string): Promise<MultiChainPortfolioResponse> {
-  //   return this.birdEyeService.getMultiChainPortfolioValueUsd(
-  //     address,
-  //     getActiveEVMChains()
-  //   )
-  // }
+  async getWalletPortfolioValue(address: string): Promise<number | null> {
+    try {
+      const walletValue =
+        await this.birdEyeService.getMultiChainPortfolioValueUsd(
+          address,
+          getActiveEVMChains()
+        )
+      if (walletValue == null) {
+        console.warn('Could not fetch wallet value')
+        return null
+      }
+      return walletValue
+    } catch (error) {
+      console.error('Error fetching wallet value:', error)
+      return null
+    }
+  }
+  
+  
+  
+  
 
   async isWhale(address: string): Promise<boolean> {
     try {

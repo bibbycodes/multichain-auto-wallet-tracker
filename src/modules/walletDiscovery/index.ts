@@ -3,20 +3,20 @@ import { WalletDiscoveryConfig } from '@shared/types'
 import { EventEmitter } from 'events'
 import { TokenService } from '../../shared/services/tokenService'
 import { TrendingTokenRepository } from '@shared/repositories/trendingTokenRepository'
-import { WhaleAnalyzerService } from './services/whaleAnalyzerService'
+import { WalletAnalyzerService } from './services/walletAnalyzerService'
 
 export class WalletDiscovery {
   private eventEmitter = new EventEmitter()
   private config: WalletDiscoveryConfig
   private trendingTokenRepository: TrendingTokenRepository
   private trendingTokenService: TokenService
-  private whaleAnalyzerService: WhaleAnalyzerService
+  private whaleAnalyzerService: WalletAnalyzerService
 
   constructor(config: WalletDiscoveryConfig) {
     this.config = config
     this.trendingTokenService = new TokenService()
     this.trendingTokenRepository = new TrendingTokenRepository()
-    this.whaleAnalyzerService = new WhaleAnalyzerService()
+    this.whaleAnalyzerService = new WalletAnalyzerService()
   }
 
   async fetchAndSaveTrendingCryptos(): Promise<void> {

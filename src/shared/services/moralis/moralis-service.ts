@@ -1,10 +1,9 @@
-import {BaseSingleton} from "../../util/base-singleton";
+import {Singleton} from "../../util/singleton";
 import {MoralisClient} from "./moralis-client";
-import {uniV2Pair} from "../../../lib/exchanges/uni-like-v2/abi/uni-v2-pair";
-import {deriveTopic} from "./moralis-utils";
 import {ChainToId} from "../../chains";
+import {GetWalletNetWorthOperationResponseJSON} from "@moralisweb3/common-evm-utils";
 
-export class MoralisService extends BaseSingleton {
+export class MoralisService extends Singleton {
   constructor(private client = new MoralisClient()) {
     super();
   }
@@ -49,16 +48,8 @@ export class MoralisService extends BaseSingleton {
     
     return jsonStream
   }
+  
+  async getWalletPortfolioDetails(address: string): Promise<GetWalletNetWorthOperationResponseJSON> {
+    return (await this.client.getWalletNetWorth({address})).toJSON()
+  }
 }
-
-const mrls = MoralisService.getInstance()
-const topics = [deriveTopic(uniV2Pair, "Swap")]
-
-mrls.createStream({
-  addresses: ["0x8622Da2cd359D9c6B9855aaF7C28606E87C75915"],
-  webhookUrl: "https://degengalore.a.pinggy.link/webhooks/moralis",
-  topics,
-  abi: uniV2Pair
-})
-  .then(console.log)
-  .catch(console.log)

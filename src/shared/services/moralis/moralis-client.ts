@@ -12,8 +12,12 @@ export class MoralisClient {
   constructor(private apiKey: string = env.moralis.apikey) {
   }
 
+  isStarted() {
+    return this.isInitialized
+  }
+  
   async init() {
-    if (this.isInitialized) {
+    if (this.isStarted()) {
       return;
     }
 
@@ -34,11 +38,7 @@ export class MoralisClient {
       throw err;
     }
   }
-
-  isStarted() {
-    return this.isInitialized
-  }
-
+  
   async createStream({
                        webhookUrl,
                        description,

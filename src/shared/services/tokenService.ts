@@ -1,8 +1,8 @@
 import { BirdEyeService } from './birdEyeService'
 import { TrendingToken } from '../types'
-import { Chain, ChainToId } from '@shared/chains'
-import { ChainBaseService } from '@shared/services/chainBaseService'
-import { CoingeckoService } from '@shared/services/coingeckoService'
+import { Chain, ChainToId } from '../chains'
+import { ChainBaseService } from './chainBaseService'
+import { CoingeckoService } from './coingeckoService'
 
 const supportedChains: Chain[] = Object.keys(ChainToId) as Chain[]
 

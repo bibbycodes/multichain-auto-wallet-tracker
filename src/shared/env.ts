@@ -1,5 +1,5 @@
 import {ChainId, ChainToId} from "../shared/chains";
-import {ProviderConfig} from "@shared/types";
+import {ProviderConfig} from "../shared/types";
 
 require('dotenv').config();
 
@@ -16,6 +16,10 @@ export const env: any = {
     apikey: getOrThrowEnvVar('MORALIS_API_KEY'),
     streamsSecret: getOrThrowEnvVar('MORALIS_STREAMS_SECRET'),
   },
+  geonode: {
+    username: getOrThrowEnvVar('GEO_NODE_API_USERNAME'),
+    password: getOrThrowEnvVar('GEO_NODE_API_PASSWORD'),
+  },
   quicknode: {
     [ChainToId.bsc]: [{
       https: getOrThrowEnvVar('QUICKNODE_BSC_ENDPOINT_HTTPS_1'),
@@ -29,6 +33,11 @@ export const env: any = {
       https: getOrThrowEnvVar('QUICKNODE_ETH_ENDPOINT_HTTPS_1'),
       wss: getOrThrowEnvVar('QUICKNODE_ETH_ENDPOINT_WSS_1')
     }],
+  },
+  redis: {
+    host: getOrThrowEnvVar('REDIS_HOST'),
+    port: parseInt(getOrThrowEnvVar('REDIS_PORT')),
+    db: parseInt(getOrThrowEnvVar('REDIS_DB')),
   }
 };
 
