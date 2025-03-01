@@ -1,4 +1,4 @@
-export interface PancakeSwapEvent {
+export interface Univ2LikeSwapEvent {
   sender: string;
   amount0In: bigint;
   amount1In: bigint;

@@ -17,7 +17,7 @@ export class ExchangeFactory {
     }, {} as { [key: number]: Record<Exchanges, Exchange> });
   }
   
-  getExchangeMap(): { [key: number]: Record<Exchanges, Exchange> } {
+  getExchangeMap(): { [key: string]: Record<Exchanges, Exchange> } {
     const uniV2AcrossAllChains = this.getUniv2LikeAcrossAllChains();
     return {
       ...uniV2AcrossAllChains,
@@ -42,7 +42,7 @@ export class ExchangeFactory {
     }
     
     for (const exchange of Object.values(exchangesForChain)) {
-      if (exchange.isLogForExchange(log, chainId)) {
+      if (exchange.matchesTopic(log, chainId)) {
         return exchange;
       }
     }

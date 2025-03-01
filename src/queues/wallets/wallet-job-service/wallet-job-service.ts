@@ -1,11 +1,12 @@
-import {Singleton} from "../../../shared/util/singleton";
+import {Singleton} from "../../../lib/services/util/singleton";
+import {EvaluateWalletJobData} from "./types";
 
 export class WalletJobService extends Singleton {
   constructor() {
     super()
   }
   
-  evaluateWallet(data: any) {
+  evaluateWallet(data: EvaluateWalletJobData) {
     return true
   }
 }

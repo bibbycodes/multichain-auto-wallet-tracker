@@ -1,4 +1,4 @@
-import { Chain } from '@shared/chains'
+import {Chain} from "./chains";
 
 export type WalletDiscoveryConfig = {
   interval: number // Interval in milliseconds for the cron job or periodic task

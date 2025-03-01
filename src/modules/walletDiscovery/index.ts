@@ -1,22 +1,27 @@
 import cron from 'node-cron'
-import { WalletDiscoveryConfig } from '@shared/types'
 import { EventEmitter } from 'events'
-import { TokenService } from '../../shared/services/tokenService'
-import { TrendingTokenRepository } from '@shared/repositories/trendingTokenRepository'
-import { WalletAnalyzerService } from './services/walletAnalyzerService'
+import { TokenService } from '../../lib/services/tokens/token-service'
+import { WalletAnalyzerService } from '../../lib/services/wallets/walletAnalyzerService'
+import {WalletDiscoveryConfig} from "../../shared/types";
+import {TrendingTokenRepository} from "../../lib/db/repositories/trendingTokenRepository";
+import {WalletsQueue} from "../../queues/wallets/wallets-queue";
+import {WalletJobs} from "../../queues/wallets/types";
+import {EvaluateWalletJobData} from "../../queues/wallets/wallet-job-service/types";
 
-export class WalletDiscovery {
+export class WalletDiscoveryService {
   private eventEmitter = new EventEmitter()
   private config: WalletDiscoveryConfig
   private trendingTokenRepository: TrendingTokenRepository
   private trendingTokenService: TokenService
   private whaleAnalyzerService: WalletAnalyzerService
+  private walletsQueue: WalletsQueue 
 
   constructor(config: WalletDiscoveryConfig) {
     this.config = config
     this.trendingTokenService = new TokenService()
     this.trendingTokenRepository = new TrendingTokenRepository()
     this.whaleAnalyzerService = new WalletAnalyzerService()
+    this.walletsQueue = WalletsQueue.getInstance()
   }
 
   async fetchAndSaveTrendingCryptos(): Promise<void> {
@@ -64,8 +69,10 @@ export class WalletDiscovery {
       ])
 
       for (let address of allAddresses) {
-        const isWhale = await this.whaleAnalyzerService.isWhale(address)
-        console.log(`Address ${address} is whale: ${isWhale}`)
+        await this.walletsQueue.addJob<EvaluateWalletJobData>({
+          name: WalletJobs.EVALUATE,
+          data: { address },
+        })
       }
 
       console.log('Successfully fetched and saved trending tokens.')

@@ -1,6 +1,6 @@
 import Web3 from "web3";
 import {Log} from "ethers/lib.esm";
-import {PancakeSwapEvent} from "./types";
+import {Univ2LikeSwapEvent} from "./types";
 import {swapEventAbi} from "../abi/swap-event-abi";
 import {pancakeSwapSha3Topics} from "../constants";
 
@@ -11,7 +11,7 @@ export class UniLikeSwapLogDecoder {
     this.web3 = new Web3(web3Provider);
   }
 
-  public decodeSwapEvent(log: Log): PancakeSwapEvent {
+  public decodeSwapEvent(log: Log): Univ2LikeSwapEvent {
     const decoded = this.web3.eth.abi.decodeLog(
       swapEventAbi.inputs,
       log.data,

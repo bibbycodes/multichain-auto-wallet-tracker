@@ -1,7 +1,7 @@
 import {Redis} from 'ioredis';
 import {JobsOptions, Queue, QueueEvents, QueueOptions} from 'bullmq';
 import {RedisClient} from "../cache/redis-client";
-import {Singleton} from "../shared/util/singleton";
+import {Singleton} from "../lib/services/util/singleton";
 import {Queues} from "./types";
 
 export abstract class BaseQueue extends Singleton {
@@ -20,14 +20,14 @@ export abstract class BaseQueue extends Singleton {
     });
   }
 
-  public async addJob<T>({jobName, jobData, options}: {
-    jobName: string,
-    jobData: T,
+  public async addJob<T>({name, data, options}: {
+    name: string,
+    data: T,
     options?: JobsOptions
   }): Promise<string | undefined> {
-    console.info(`Adding Job: ${jobName}`)
+    console.info(`Adding Job: ${name}`)
     try {
-      const job = await this.queue.add(jobName, jobData, options);
+      const job = await this.queue.add(name, data, options);
       return job.id;
     } catch (error: any) {
       console.error(`Error adding job to queue: ${error.message}`);

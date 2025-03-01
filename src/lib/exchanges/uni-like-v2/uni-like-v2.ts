@@ -3,12 +3,12 @@ import {ChainId} from "../../../shared/chains";
 import {ethers} from "ethers"; // Import ethers.js
 import {uniV2Pair} from "./abi/uni-v2-pair";
 import {erc20} from "../../../evm/abis/erc20";
-import {PancakeSwapEvent} from "./swap-event-decoder/types";
+import {Univ2LikeSwapEvent} from "./swap-event-decoder/types";
 import {Swap} from "../../swap";
 import {BigMath} from "../../../utils/math";
 import {Log} from "ethers/lib.esm";
 import {UniLikeSwapLogDecoder} from "./swap-event-decoder/uni-like-swap-log-decoder";
-import {getRandomQuicknodeEndpoint} from "../../../shared/env";
+import {getRandomQuicknodeEndpoint} from "../../services/util/env/env";
 
 export class UniLikeV2 implements Exchange {
   private provider: ethers.Provider;
@@ -64,7 +64,7 @@ export class UniLikeV2 implements Exchange {
     throw new Error("Method not implemented.");
   }
 
-  async getSwap(rawSwap: PancakeSwapEvent): Promise<Swap> {
+  async getSwap(rawSwap: Univ2LikeSwapEvent): Promise<Swap> {
     console.log({rawSwap})
     const token0Delta = rawSwap.amount0In - rawSwap.amount0Out;
     const token1Delta = rawSwap.amount1In - rawSwap.amount1Out;
@@ -88,12 +88,16 @@ export class UniLikeV2 implements Exchange {
     };
   }
   
-  async getSwapFromLog(log: Log): Promise<Swap> {
-    const decoded = this.decoder.decodeSwapEvent(log);
+  async getSwapFromLog(log: Log): Promise<any> {
+    const decoded =  this.decodeLog(log)
     return this.getSwap(decoded);
   }
   
-  isLogForExchange(log: Log): boolean {
+  decodeLog(log: Log): Univ2LikeSwapEvent {
+    return this.decoder.decodeSwapEvent(log);
+  }
+  
+  matchesTopic(log: Log): boolean {
     return this.decoder.isLogForExchange(log);
   }
 

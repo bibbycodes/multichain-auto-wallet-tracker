@@ -1,12 +1,12 @@
 export const ChainToId = {
-  ethereum: 1,
-  arbitrum: 42161,
-  avalanche: 43114,
-  bsc: 56,
-  optimism: 10,
-  polygon: 137,
-  base: 8453,
-  zksync: 324,
+  ethereum: '1',
+  arbitrum: '42161',
+  avalanche: '43114',
+  bsc: '56',
+  optimism: '10',
+  polygon: '137',
+  base: '8453',
+  zksync: '324',
   solana: 'solana',
 } as const
 

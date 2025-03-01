@@ -1,6 +1,6 @@
 import IORedis from 'ioredis';
-import {env} from "../shared/env";
-import {Singleton} from "../shared/util/singleton";
+import {env} from "../lib/services/util/env/env";
+import {Singleton} from "../lib/services/util/singleton";
 
 interface RedisConfig {
   host: string;

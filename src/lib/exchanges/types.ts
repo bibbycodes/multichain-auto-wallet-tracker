@@ -1,6 +1,7 @@
 import {Swap} from "../swap";
 import {Log} from "ethers/lib.esm";
 import {ChainId} from "../../shared/chains";
+import {Univ2LikeSwapEvent} from "./uni-like-v2/swap-event-decoder/types";
 
 export interface Exchange {
   getLiquidity(pairAddress: string): Promise<bigint>;
@@ -15,14 +16,15 @@ export interface Exchange {
   getMarketCap(tokenAddress: string): Promise<number>;
   getPrice(tokenAddress: string): Promise<number>;
   getSwapFromLog(log: Log): Promise<Swap>;
-  isLogForExchange(log: Log, chainId: ChainId): boolean;
+  decodeLog(log: Log): Univ2LikeSwapEvent;
+  matchesTopic(log: Log, chainId: ChainId): boolean;
 }
 
 export interface ExchangeToken {
   symbol: string;
   decimals: number;
   address: string;
-  chainId: number
+  chainId: string
 }
 
 export interface LiquidityPool {

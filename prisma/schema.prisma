@@ -13,28 +13,127 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Chain {
+  id                    String    @id @unique @default(uuid())
+  name                  String
+  chain_type            String
+  created_at            DateTime
+  updated_at            DateTime
+  chain_id              String
+  native_token_address  String
+  wrapped_token_address String?
+  Token                 Token[]
+  Wallets               Wallets[]
+}
+
 model Token {
-  id             Int      @id @default(autoincrement())
+  id         String    @id @unique @default(uuid())
+  address    String
+  chain_id   String
+  name       String
+  symbol     String
+  created_at DateTime?
+  decimals   Int
+
+  chain Chain @relation(fields: [chain_id], references: [id])
+
+  @@unique([address, chain_id])
+  @@index(address)
+}
+
+model Wallets {
+  id             String           @id @default(uuid())
   address        String
-  chainType      String
-  name           String
-  symbol         String
-  createdAt      DateTime?
+  chain_id       String
+  chain          Chain            @relation(fields: [chain_id], references: [id])
+  created_at     DateTime
+  updated_at     DateTime
+  TrackedWallets TrackedWallets[]
 
-  // Composite unique constraint for address + chainType
-  @@unique([address, chainType])
-
-  // Relationship
-  trendingTokens TrendingToken[]
+  @@unique([address, chain_id])
+  @@index([address])
+  @@index([address, chain_id])
 }
 
-model TrendingToken {
-  id          Int      @id @default(autoincrement()) // Primary key with autoincrement
-  tokenId     Int
-  trendingAt  DateTime @default(now())               // Timestamp for when the token was trending
+model TrackedWallets {
+  id         String   @id @default(uuid())
+  wallet_id  String
+  address    String
+  chain_id   String
+  created_at DateTime
+  updated_at DateTime
 
-  // Foreign Key to Token table
-  token       Token    @relation(fields: [tokenId], references: [id])
+  wallet Wallets @relation(fields: [wallet_id], references: [id])
 
-  @@index([tokenId])
+  @@unique([wallet_id, address, chain_id])
+  @@index([wallet_id])
 }
+
+// model TrendingToken {
+//   id         Int      @id @default(autoincrement()) // Primary key with autoincrement
+//   tokenId    Int
+//   trendingAt DateTime @default(now()) // Timestamp for when the token was trending
+//
+//   // Foreign Key to Token table
+//   token Token @relation(fields: [tokenId], references: [id])
+//
+//   @@index([tokenId])
+// }
+
+// Wallet Discovery
+// Wallet Assessment
+// Token Assessment
+// Parsing Trades
+// Parsing Transactions
+// Analyse Trades
+
+// Look for top holders 
+// => Get Wallet Addresses 
+// => Check the balance in the wallet 
+// => Categorise the wallet
+// - bot, whale, vault, is this associated with scames, analyse trading history
+// arkham => Blockchain Data Platfomr => https://intel.arkm.com/dashboards/explore
+
+// Token Assessment
+// A trade, Telegram metion, Twitter mention
+
+// What is the market cap
+// How much liquidity is there
+// How much volume is there
+// How many holders
+// How many of our tracked wallets have been buying the token
+
+// Token Distrubtion
+// How much the creator owns
+// How much do the top 10 holders
+// Are there locked
+// Are there any bundles
+// sol 0.1, 4000 token
+// Do multiple wallets own the same amount of token
+
+// General Token Safety
+// Is the LP Liquidity Locked
+// Is the token mintable
+
+// Telegram or twitter
+// - How many mentions
+// - How many users
+// Who mentioned it
+// What is the historical potential from tracking this social media user
+
+// Assessing a token via trade
+// - How much was traded
+// Is it a buy a sell
+// Who is trading
+
+// https://gmgn.ai/sol/address/HyLxrdfu8iHSPSzbzw6zicDVWfG1wPfrFmoj6P3coHmb
+
+// Payment Subscription Gateway
+// - Stripe Payment, Evm payment and solana payment
+// Offer different tiers, free, basic, premium
+// Product Level, Tier Level
+// Ethereum Instutional Tracker, Tier A, B
+// Solana Wallet Tracker, Tier A, B
+// (Solana + Ethereum + Binance Smart Chain) Product ID 1234 => Channel A, B, C
+// USDC, ETH, SOL (What is the native currency for a given blockchian) CARD PAYMENT
+// Coupons

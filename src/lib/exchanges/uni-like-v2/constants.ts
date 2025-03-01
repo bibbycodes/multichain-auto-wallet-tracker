@@ -1,4 +1,4 @@
-import {deriveTopic, deriveTopicSha3} from "../../../shared/services/moralis/moralis-utils";
+import {deriveTopic, deriveTopicSha3} from "../../services/apis/moralis/moralis-utils";
 import {uniV2Pair} from "./abi/uni-v2-pair";
 import {ChainId, ChainToId} from "../../../shared/chains";
 
