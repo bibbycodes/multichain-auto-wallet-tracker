@@ -45,7 +45,7 @@ export class GeonodeFetcher extends Singleton {
         ipSourceType = ProxySourceType.RESIDENTIAL,
         lifetime = 3,
     }: ProxyUrlOptions = {}): string {
-        return `${this.username}-${this.getIpSourceType(ipSourceType)}-${this.getCountry(country)}-${this.getLifetime(lifetime)}`;
+        return `${this.username}-${this.getIpSourceType(ipSourceType)}-${this.getCountry(country as CountryCode)}-${this.getLifetime(lifetime)}`;
     }
 
     async fetch(url: string, options: any = {}): Promise<any> {

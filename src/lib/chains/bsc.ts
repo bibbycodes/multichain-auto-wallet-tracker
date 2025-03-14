@@ -1,7 +1,7 @@
-import {ChainToId} from "../../shared/chains";
+import {ChainsMap} from "../../shared/chains";
 
 export class BscChain {
-  public chainId = ChainToId.bsc;
+  public chainId = ChainsMap.bsc;
   public name = 'Binance Smart Chain';
   public nativeToken = 'BNB';
   public wrappedNativeTokenAddress = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';

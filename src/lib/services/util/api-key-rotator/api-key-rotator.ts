@@ -2,7 +2,7 @@ import {ApiService} from "./types";
 import {Singleton} from "../singleton";
 import {env} from "../env/env";
 import {ChainBaseConfig} from "../env/types";
-import {ChainToId} from "../../../../shared/chains";
+import {ChainsMap} from "../../../../shared/chains";
 
 export class ApiKeyRotator extends Singleton {
   private apiKeysMap: Map<ApiService, string[]> = new Map();
@@ -73,8 +73,8 @@ export class ApiKeyRotator extends Singleton {
 
   populate(): void {
     this.addService(ApiService.ChainBase, env.chainBase.map((config: ChainBaseConfig) => config.apiKey))
-    this.addService(ApiService.QuicknodeBscHttps, env.quicknode[ChainToId.bsc].map(config => config.https))
-    this.addService(ApiService.QuicknodeBaseHttps, env.quicknode[ChainToId.base].map(config => config.https))
-    this.addService(ApiService.QuicknodeEthHttps, env.quicknode[ChainToId.ethereum].map(config => config.https))
+    this.addService(ApiService.QuicknodeBscHttps, env.quicknode[ChainsMap.bsc].map(config => config.https))
+    this.addService(ApiService.QuicknodeBaseHttps, env.quicknode[ChainsMap.base].map(config => config.https))
+    this.addService(ApiService.QuicknodeEthHttps, env.quicknode[ChainsMap.ethereum].map(config => config.https))
   }
 }

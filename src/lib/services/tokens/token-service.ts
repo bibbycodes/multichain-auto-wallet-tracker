@@ -1,10 +1,10 @@
 import { BirdEyeService } from '../apis/birdeye/birdeye-service'
 import { TrendingToken } from '../../../shared/types'
-import { Chain, ChainToId } from '../../../shared/chains'
+import { Chain, ChainsMap } from '../../../shared/chains'
 import { ChainBaseService } from '../apis/chain-base/chain-base-service'
 import { CoingeckoService } from '../apis/coin-gecko/coin-gecko-service'
 
-const supportedChains: Chain[] = Object.keys(ChainToId) as Chain[]
+const supportedChains: Chain[] = Object.keys(ChainsMap) as Chain[]
 
 export class TokenService {
   private birdEyeService: BirdEyeService

@@ -1,6 +1,6 @@
 import {Singleton} from "../../util/singleton";
 import {MoralisClient} from "./moralis-client";
-import {ChainToId} from "../../../../shared/chains";
+import {ChainsMap} from "../../../../shared/chains";
 import {GetWalletNetWorthOperationResponseJSON} from "@moralisweb3/common-evm-utils";
 
 export class MoralisService extends Singleton {
@@ -24,7 +24,7 @@ export class MoralisService extends Singleton {
       webhookUrl,
       description: "Monitor Addresses Swaps and Transfers",
       tag: "addresses",
-      chains: [ChainToId.bsc.toString()],
+      chains: [ChainsMap.bsc.toString()],
       includeNativeTxs: true,
     })
 

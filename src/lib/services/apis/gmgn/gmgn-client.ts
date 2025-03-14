@@ -1,17 +1,33 @@
-import { SessionType, GatewayCountry, ProxySourceType, BrowserType } from '../../proxy-fetcher/geonode/types';
-import { GeonodeServerClient } from '../../proxy-fetcher/geonode/geonode-server-client';
-import { sleep } from '../../../../utils/async';
-import { GmgnResponse, SmartMoneyWalletData, TopTrader } from './types';
-import { ChainId } from 'shared/chains';
+import { ChainId } from '../../../../shared/chains';
+import { GeonodeServerClient, } from '../../proxy-fetcher/geonode/geonode-server-client';
+import { getRandomProxyOptions } from '../../proxy-fetcher/geonode/utils';
+import { GmgnResponse, SmartMoneyWalletData, SolanaTrendingToken, TokenSecurityAndLaunchpad, TopBuyersResponse, TopHolder, TopTrader, TrendingToken, TrendingTokensResponse, WalletHoldings } from './types';
 import { chainIdToChain } from './utils';
-
 
 export class GmgnClient {
     private readonly geonodeClient: GeonodeServerClient;
-    private readonly baseUrl = 'https://gmgn.ai/defi';
+    private readonly baseUrl = 'https://gmgn.ai';
 
     constructor() {
         this.geonodeClient = new GeonodeServerClient();
+    }
+
+    private async makeRequest<T>(url: string, referer: string): Promise<T> {
+        const response = await this.geonodeClient.get(url, {
+            headers: { ...this.getHeaders(), 'referer': referer },
+            proxy_options: getRandomProxyOptions()
+        });
+
+        if (!response.content) {
+            throw new Error('No content in response');
+        }
+
+        const gmgnResponse = response.content as GmgnResponse<T>;
+        if (gmgnResponse.code !== 0 || !gmgnResponse.data) {
+            throw new Error(gmgnResponse.msg || 'Invalid response from GMGN');
+        }
+
+        return gmgnResponse.data;
     }
 
     getHeaders(): Record<string, string> {
@@ -37,83 +53,73 @@ export class GmgnClient {
     }
 
     async getSmartMoneyWalletData(walletAddress: string, chainId: ChainId): Promise<SmartMoneyWalletData> {
-        const chain = chainIdToChain(chainId);
-        const url = `${this.baseUrl}/quotation/v1/smartmoney/${chain}/walletNew/${walletAddress}?period=7d`;
-        const referer = `${this.baseUrl}/${chain}/address/${walletAddress}`;
-        const response = await this.geonodeClient.get(url, {
-            headers: { ...this.getHeaders(), 'referer': referer },
-            proxy_options: {
-                country: "US",
-                ip_source_type: ProxySourceType.RESIDENTIAL,
-                session_type: SessionType.ROTATING,
-                lifetime: 5,
-                gateway: GatewayCountry.UNITED_STATES
-            }
-        });
-
-        if (!response.content) {
-            throw new Error('No content in response');
-        }
-
-        const gmgnResponse = response.content as GmgnResponse<SmartMoneyWalletData>;
-        if (gmgnResponse.code !== 0 || !gmgnResponse.data) {
-            throw new Error(gmgnResponse.msg || 'Invalid response from GMGN');
-        }
-
-        return gmgnResponse.data;
+        const chainName = chainIdToChain(chainId);
+        const url = `${this.baseUrl}/defi/quotation/v1/smartmoney/${chainName}/walletNew/${walletAddress}?period=7d`;
+        const referer = `${this.baseUrl}/${chainName}/address/${walletAddress}`;
+        return this.makeRequest<SmartMoneyWalletData>(url, referer);
     }
 
     async getTopTraders(tokenAddress: string, chainId: ChainId): Promise<TopTrader[]> {
         const chain = chainIdToChain(chainId);
-        const url = `${this.baseUrl}/quotation/v1/tokens/top_traders/${chain}/${tokenAddress}`;
+        const url = `${this.baseUrl}/defi/quotation/v1/tokens/top_traders/${chain}/${tokenAddress}`;
         const referer = `https://gmgn.ai/${chain}/token/${tokenAddress}`;
+        return this.makeRequest<TopTrader[]>(url, referer);
+    }
 
-        const response = await this.geonodeClient.get(url, {
-            headers: { ...this.getHeaders(), 'referer': referer },
-            proxy_options: {
-                country: "US",
-                ip_source_type: ProxySourceType.RESIDENTIAL,
-                session_type: SessionType.ROTATING,
-                lifetime: 5,
-                gateway: GatewayCountry.UNITED_STATES
+    async getTokenSecurityAndLaunchpad(tokenAddress: string, chainId: ChainId): Promise<TokenSecurityAndLaunchpad> {
+        const chainName = chainIdToChain(chainId);
+        const url = `${this.baseUrl}/api/v1/mutil_window_token_security_launchpad/${chainName}/${tokenAddress}`;
+        const referer = `https://gmgn.ai/${chainName}/token/${tokenAddress}`;
+        return this.makeRequest<TokenSecurityAndLaunchpad>(url, referer);
+    }
+
+    async getWalletHoldings(walletAddress: string, chainId: ChainId): Promise<WalletHoldings> {
+        const chainName = chainIdToChain(chainId);
+        const url = `${this.baseUrl}/api/v1/wallet_holdings/${chainName}/${walletAddress}`;
+        const referer = `https://gmgn.ai/${chainName}/address/${walletAddress}`;
+        return this.makeRequest<WalletHoldings>(url, referer);
+    }
+
+    isSolanaTrendingToken(token: TrendingToken | SolanaTrendingToken): token is SolanaTrendingToken {
+        return token.chain === 'sol' && 'renounced_mint' in token;
+    }
+
+    async getTrendingTokens(chainId: ChainId, timeframe: '1h' | '24h' = '1h'): Promise<TrendingTokensResponse> {
+        const chainName = chainIdToChain(chainId);
+        const url = `${this.baseUrl}/defi/quotation/v1/rank/${chainName}/swaps/${timeframe}`;
+        const referer = `https://gmgn.ai/${chainName}/trending`;
+
+        const data = await this.makeRequest<TrendingTokensResponse>(url, referer);
+
+        // Validate and transform the response based on chain type
+        data.rank = data.rank.map(token => {
+            if (this.isSolanaTrendingToken(token)) {
+                // Ensure numeric fields are properly typed for Solana tokens
+                return {
+                    ...token,
+                    price: Number(token.price),
+                    market_cap: Number(token.market_cap),
+                    total_supply: Number(token.total_supply),
+                    top_10_holder_rate: Number(token.top_10_holder_rate),
+                } as SolanaTrendingToken;
             }
+            return token as TrendingToken;
         });
 
-        if (!response.content) {
-            throw new Error('No content in response');
-        }
-
-        const gmgnResponse = response.content as GmgnResponse<TopTrader[]>;
-        if (gmgnResponse.code !== 0 || !gmgnResponse.data) {
-            throw new Error(gmgnResponse.msg || 'Invalid response from GMGN');
-        }
-
-        return gmgnResponse.data;
-    }
-}
-
-// Test the client
-if (require.main === module) {
-    const testTokens = [
-        'J2JtfsdDaQWbkJdSwF83J66XBds5SRoP1RkYxwmgpump',
-    ];
-
-    const client = new GmgnClient();
-
-    // Process tokens sequentially with delay
-    async function processTokens() {
-        for (const token of testTokens) {
-            console.log(`\nFetching top traders for token: ${token}`);
-            try {
-                const traders = await client.getTopTraders(token, 'solana');
-                console.log('Top traders:', JSON.stringify(traders, null, 2));
-            } catch (error: any) {
-                console.error('Error:', error.message);
-            }
-            // Wait 1 second before next request
-            await sleep(1000);
-        }
+        return data;
     }
 
-    processTokens().catch(console.error);
+    async getTopBuyers(tokenAddress: string, chainId: ChainId): Promise<TopBuyersResponse> {
+        const chainName = chainIdToChain(chainId);
+        const url = `${this.baseUrl}/defi/quotation/v1/tokens/top_buyers/${chainName}/${tokenAddress}`;
+        const referer = `${this.baseUrl}/${chainName}/token/${tokenAddress}`;
+        return this.makeRequest<TopBuyersResponse>(url, referer);
+    }
+
+    async getTopHolders(tokenAddress: string, chainId: ChainId): Promise<TopHolder[]> {
+        const chainName = chainIdToChain(chainId);
+        const url = `${this.baseUrl}/defi/quotation/v1/tokens/top_holders/${chainName}/${tokenAddress}`;
+        const referer = `${this.baseUrl}/${chainName}/token/${tokenAddress}`;
+        return this.makeRequest<TopHolder[]>(url, referer);
+    }
 }

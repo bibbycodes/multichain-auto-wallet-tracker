@@ -1,7 +1,7 @@
 import Moralis from "moralis";
 import {env} from "../../util/env/env";
 import {CreateStreamParams} from "./types";
-import {ChainId, ChainToId} from "../../../../shared/chains";
+import {ChainId, ChainsMap} from "../../../../shared/chains";
 import {toHex} from "./moralis-utils";
 import axios, {AxiosResponse} from "axios";
 
@@ -196,4 +196,4 @@ export class MoralisClient {
 }
 
 const moralis = new MoralisClient();
-moralis.getTopHoldersForToken({address: '0x98d0baa52b2D063E780DE12F615f963Fe8537553', chainId: ChainToId.base}).then((r) => console.log(JSON.stringify(r))).catch(console.error);
+moralis.getTopHoldersForToken({address: '0x98d0baa52b2D063E780DE12F615f963Fe8537553', chainId: ChainsMap.base}).then((r) => console.log(JSON.stringify(r))).catch(console.error);

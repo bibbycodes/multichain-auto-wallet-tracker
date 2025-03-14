@@ -2,7 +2,7 @@ import {Exchanges} from "../exchanges";
 import {Exchange} from "../types";
 import {UniLikeV2} from "../uni-like-v2/uni-like-v2";
 import {Log} from "ethers/lib.esm";
-import {ChainId, ChainToId, getActiveEVMChains} from "../../../shared/chains";
+import {ChainId, ChainsMap, getActiveEVMChains} from "../../../shared/chains";
 
 export class ExchangeFactory {
   constructor() {
@@ -11,7 +11,7 @@ export class ExchangeFactory {
   getUniv2LikeAcrossAllChains():  { [key: number]: Record<Exchanges, Exchange> } {
     const allChains = getActiveEVMChains();
     return allChains.reduce((acc: any, chain) => {
-      const chainId = ChainToId[chain];
+      const chainId = ChainsMap[chain];
       acc[chainId] = {[Exchanges.UniV2Like]: new UniLikeV2(chainId)};
       return acc
     }, {} as { [key: number]: Record<Exchanges, Exchange> });
@@ -21,14 +21,14 @@ export class ExchangeFactory {
     const uniV2AcrossAllChains = this.getUniv2LikeAcrossAllChains();
     return {
       ...uniV2AcrossAllChains,
-      [ChainToId.bsc]: {
-        [Exchanges.UniV2Like]: new UniLikeV2(ChainToId.bsc)
+      [ChainsMap.bsc]: {
+        [Exchanges.UniV2Like]: new UniLikeV2(ChainsMap.bsc)
       },
-      [ChainToId.base]: {
-        [Exchanges.UniV2Like]: new UniLikeV2(ChainToId.base)
+      [ChainsMap.base]: {
+        [Exchanges.UniV2Like]: new UniLikeV2(ChainsMap.base)
       },
-      [ChainToId.ethereum]: {
-        [Exchanges.UniV2Like]: new UniLikeV2(ChainToId.ethereum)
+      [ChainsMap.ethereum]: {
+        [Exchanges.UniV2Like]: new UniLikeV2(ChainsMap.ethereum)
       },
     }
   }

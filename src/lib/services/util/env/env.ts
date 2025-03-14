@@ -1,4 +1,4 @@
-import {ChainId, ChainToId} from "../../../../shared/chains";
+import {ChainId, ChainsMap} from "../../../../shared/chains";
 import {ProviderConfig} from "../../../../shared/types";
 import {EnvConfig} from "./types";
 require('dotenv').config();
@@ -47,15 +47,15 @@ export const env: EnvConfig = {
     {apiKey: getOrThrowEnvVar('CHAIN_BASE_API_KEY_16'), email: 'p.ladar@icloud.com', project: 'track8'},
   ],
   quicknode: {
-    [ChainToId.bsc]: [{
+    [ChainsMap.bsc]: [{
       https: getOrThrowEnvVar('QUICKNODE_BSC_ENDPOINT_HTTPS_1'),
       wss: getOrThrowEnvVar('QUICKNODE_BSC_ENDPOINT_WSS_1'),
     }],
-    [ChainToId.base]: [{
+    [ChainsMap.base]: [{
       https: getOrThrowEnvVar('QUICKNODE_BASE_ENDPOINT_HTTPS_1'),
       wss: getOrThrowEnvVar('QUICKNODE_BASE_ENDPOINT_WSS_1')
     }],
-    [ChainToId.ethereum]: [{
+    [ChainsMap.ethereum]: [{
       https: getOrThrowEnvVar('QUICKNODE_ETH_ENDPOINT_HTTPS_1'),
       wss: getOrThrowEnvVar('QUICKNODE_ETH_ENDPOINT_WSS_1')
     }],

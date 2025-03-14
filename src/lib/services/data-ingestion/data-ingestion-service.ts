@@ -1,6 +1,6 @@
 import {Singleton} from "../util/singleton";
 import {LogListener} from "../../data-sources/evm-log-listener/log-listener";
-import {ChainToId} from "../../../shared/chains";
+import {ChainsMap} from "../../../shared/chains";
 
 export class DataIngestionService extends Singleton {
   constructor() {
@@ -9,9 +9,9 @@ export class DataIngestionService extends Singleton {
   
   async listenToEvmLogs() {
     // Instantiate and start listening for logs
-    const ethListener = new LogListener(ChainToId.ethereum);
-    const bscListener = new LogListener(ChainToId.bsc);
-    const baseListener = new LogListener(ChainToId.base);
+    const ethListener = new LogListener(ChainsMap.ethereum);
+    const bscListener = new LogListener(ChainsMap.bsc);
+    const baseListener = new LogListener(ChainsMap.base);
     ethListener.start();
     bscListener.start();
     baseListener.start();

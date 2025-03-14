@@ -1,4 +1,4 @@
-export const ChainToId = {
+export const ChainsMap = {
   ethereum: '1',
   arbitrum: '42161',
   avalanche: '43114',
@@ -10,20 +10,20 @@ export const ChainToId = {
   solana: 'solana',
 } as const
 
-export type Chain = keyof typeof ChainToId
-export type ChainId = typeof ChainToId[Chain]
+export type Chain = keyof typeof ChainsMap
+export type ChainId = typeof ChainsMap[Chain]
 
 export function getChainId(chain: Chain): number | string {
-  return ChainToId[chain]
+  return ChainsMap[chain]
 }
 
 export function getActiveEVMChains(): Chain[] {
-  const chains = Object.keys(ChainToId) as Chain[]
-  return chains.filter((chain) => ChainToId[chain] !== null && typeof ChainToId[chain] === 'number')
+  const chains = Object.keys(ChainsMap) as Chain[]
+  return chains.filter((chain) => ChainsMap[chain] !== null && typeof ChainsMap[chain] === 'number')
 }
 
 export const getAllChainIds = (): ChainId[] => {
-  return Object.values(ChainToId).filter((id) => id !== null) as ChainId[]
+  return Object.values(ChainsMap).filter((id) => id !== null) as ChainId[]
 }
 
 export const isEvmChain = (chain: Chain): boolean => {
