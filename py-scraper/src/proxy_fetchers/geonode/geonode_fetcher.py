@@ -9,7 +9,6 @@ import traceback
 from dotenv import load_dotenv
 from fake_useragent import UserAgent
 
-# Load environment variables from .env file
 load_dotenv()
 
 # Configure logging
