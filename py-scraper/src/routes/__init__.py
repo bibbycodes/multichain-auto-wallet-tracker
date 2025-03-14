@@ -5,6 +5,6 @@ Contains FastAPI route modules for different endpoints.
 """
 
 from .proxy import router as proxy_router
-from .twitter import router as twitter_router
+from .gmgn_router import router as gmgn_router
 
-__all__ = ['proxy_router', 'twitter_router'] 
+__all__ = ['proxy_router', 'gmgn_router'] 

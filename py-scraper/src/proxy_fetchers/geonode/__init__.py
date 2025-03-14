@@ -5,17 +5,19 @@ Provides functionality for fetching and managing proxy connections from Geonode.
 """
 
 from .geonode_fetcher import (
-    GeonodeFetcher,
+    GeonodeFetcher as GeonodeClient,
     ProxyUrlOptions,
     SessionType,
     ProxySourceType,
     GatewayCountry
 )
+from .utils import get_random_proxy_options
 
 __all__ = [
-    'GeonodeFetcher',
+    'GeonodeClient',
     'ProxyUrlOptions',
     'SessionType',
     'ProxySourceType',
-    'GatewayCountry'
+    'GatewayCountry',
+    'get_random_proxy_options'
 ] 

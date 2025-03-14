@@ -1,5 +1,5 @@
 from tweety import Twitter
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 import os
 from dotenv import load_dotenv
 import json
@@ -12,49 +12,72 @@ from ..utils.serializers import serialize_datetime, get_all_attributes
 load_dotenv()
 
 class TwitterScraper:
-    def __init__(self, session_name: str = "twitter_scraper"):
+    def __init__(self, session_name: str = "twitter_scraper", auth_token: Optional[str] = None, cookies: Optional[Union[str, Dict[str, str]]] = None):
         """
         Initialize TwitterScraper
         
         Args:
             session_name (str): Name for the Twitter session. Defaults to "twitter_scraper"
+            auth_token (Optional[str]): Twitter auth token for authentication
+            cookies (Optional[Union[str, Dict[str, str]]]): Twitter cookies as string or dictionary
         """
         # Create sessions directory if it doesn't exist
         self.sessions_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data", "sessions")
         os.makedirs(self.sessions_dir, exist_ok=True)
         
         # Set up session path and name
-        self.session_name = session_name
-        self.session_path = os.path.join(self.sessions_dir, session_name)
+        self.session_name = str(session_name)
+        self.session_path = os.path.join(self.sessions_dir, self.session_name)
         
         # Try to initialize with existing session first
         try:
             # Initialize Twitter client
-            self.app = Twitter(session_name)
+            self.app = Twitter(self.session_name)
             
-            # Test if session is valid by attempting to get home timeline
+            if auth_token:
+                print("Attempting to authenticate using auth token...")
+                self.app.load_auth_token(auth_token)
+            elif cookies:
+                print("Attempting to authenticate using cookies...")
+                self.app.load_cookies(cookies)
+            else:
+                # Try to connect with existing session
+                print("Attempting to connect with existing session...")
+                self.app.connect()
+            
+            # Validate session
+            if not isinstance(self.app.session, dict):
+                raise ValueError(f"Invalid session type: {type(self.app.session)}")
+            
+            # Test connection by fetching home timeline
             self.app.get_home_timeline(1)
-            print("Successfully loaded existing session")
-        except Exception as e:
-            print(f"Could not use existing session: {str(e)}")
-            print("Creating new session...")
+            print("Successfully authenticated with Twitter")
             
-            # Clean up any existing invalid session
+        except Exception as e:
+            print(f"Authentication failed: {str(e)}")
+            print("Full error details:")
+            traceback.print_exc()
+            
+            # Clean up invalid session
             if os.path.exists(self.session_path):
                 try:
                     shutil.rmtree(self.session_path)
                     print(f"Cleaned up invalid session at {self.session_path}")
-                except Exception as e:
-                    print(f"Warning: Could not clean up session: {e}")
+                except Exception as cleanup_error:
+                    print(f"Warning: Could not clean up session: {cleanup_error}")
             
-            # Create new session and login
-            try:
-                self.app = Twitter(session_name)
-                self._login()
-            except Exception as e:
-                print(f"Failed to create new session: {str(e)}")
-                raise
-    
+            # If no auth methods provided, try username/password
+            if not auth_token and not cookies:
+                print("No auth token or cookies provided, attempting username/password login...")
+                try:
+                    self.app = Twitter(self.session_name)
+                    self._login()
+                except Exception as login_error:
+                    print(f"Username/password login failed: {str(login_error)}")
+                    raise
+            else:
+                raise RuntimeError("Authentication failed and no fallback credentials available")
+
     def _login(self):
         """Login to Twitter using credentials from environment variables"""
         username = os.getenv("TWITTER_USERNAME")
@@ -65,25 +88,32 @@ class TwitterScraper:
         
         try:
             print(f"Attempting to login with username: {username}")
+            
             # Try to get the current session state before login
             try:
                 current_session = self.app.session
                 print(f"Current session state: {type(current_session)}")
                 if isinstance(current_session, dict):
                     print("Session keys:", list(current_session.keys()))
+                else:
+                    print(f"Warning: Session is not a dictionary: {type(current_session)}")
             except Exception as e:
                 print(f"Could not inspect session: {e}")
 
-            self.app.sign_in(username, password)
+            # Login with username and password
+            self.app.start(str(username), str(password))
             
-            # Try to get the session state after login
+            # Validate the new session
             try:
                 new_session = self.app.session
                 print(f"New session state: {type(new_session)}")
                 if isinstance(new_session, dict):
                     print("New session keys:", list(new_session.keys()))
+                else:
+                    raise ValueError(f"Invalid session type after login: {type(new_session)}")
             except Exception as e:
                 print(f"Could not inspect new session: {e}")
+                raise
                 
             print("Successfully logged in to Twitter")
         except Exception as e:

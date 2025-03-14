@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 from curl_cffi import requests as curl_requests
 from enum import Enum
 import os
@@ -12,7 +12,7 @@ from fake_useragent import UserAgent
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SessionType(Enum):
@@ -161,8 +161,16 @@ class GeonodeFetcher:
         try:
             logger.debug(f"Making {method} request to {url}")
             
+            # Handle proxy options
+            proxy_options = kwargs.pop('proxy_options', None)
+            if proxy_options:
+                # Update proxy URL with new options
+                proxy_url = self.get_proxy_url(ProxyUrlOptions(**proxy_options))
+            else:
+                # Use default proxy URL
+                proxy_url = self.get_proxy_url()
+            
             # Set up proxy
-            proxy_url = self.get_proxy_url()
             self.session.proxies = {
                 "http": proxy_url,
                 "https": proxy_url
