@@ -71,4 +71,4 @@ async def get_top_holders(chain: str, token_address: str):
     try:
         return gmgn_client.get_top_holders(token_address, chain)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
