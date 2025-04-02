@@ -25,8 +25,7 @@ export class LogListener {
       toBlock: 'latest',
       topics: this.topics
     };
-
-
+    
     const exchangeFactory = new ExchangeFactory();
 
     // Subscribe to logs with the specified filter

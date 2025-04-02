@@ -1,5 +1,5 @@
 export class Singleton {
-  private static instances: WeakMap<Function, Singleton> = new WeakMap();
+  public static instances: WeakMap<Function, Singleton> = new WeakMap();
 
   // Private constructor ensures this class cannot be instantiated directly
   protected constructor() {}

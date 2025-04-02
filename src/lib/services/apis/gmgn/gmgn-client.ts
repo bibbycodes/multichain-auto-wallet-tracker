@@ -2,7 +2,7 @@ import { ChainId } from '../../../../shared/chains';
 import { GeonodeServerClient, } from '../../proxy-fetcher/geonode/geonode-server-client';
 import { getRandomProxyOptions } from '../../proxy-fetcher/geonode/utils';
 import { GmgnResponse, SmartMoneyWalletData, SolanaTrendingToken, TokenSecurityAndLaunchpad, TopBuyersResponse, TopHolder, TopTrader, TrendingToken, TrendingTokensResponse, WalletHoldings } from './types';
-import { chainIdToChain } from './utils';
+import { chainIdToGmGnChain } from './utils';
 
 export class GmgnClient {
     private readonly geonodeClient: GeonodeServerClient;
@@ -53,28 +53,28 @@ export class GmgnClient {
     }
 
     async getSmartMoneyWalletData(walletAddress: string, chainId: ChainId): Promise<SmartMoneyWalletData> {
-        const chainName = chainIdToChain(chainId);
+        const chainName = chainIdToGmGnChain(chainId);
         const url = `${this.baseUrl}/defi/quotation/v1/smartmoney/${chainName}/walletNew/${walletAddress}?period=7d`;
         const referer = `${this.baseUrl}/${chainName}/address/${walletAddress}`;
         return this.makeRequest<SmartMoneyWalletData>(url, referer);
     }
 
     async getTopTraders(tokenAddress: string, chainId: ChainId): Promise<TopTrader[]> {
-        const chain = chainIdToChain(chainId);
+        const chain = chainIdToGmGnChain(chainId);
         const url = `${this.baseUrl}/defi/quotation/v1/tokens/top_traders/${chain}/${tokenAddress}`;
         const referer = `https://gmgn.ai/${chain}/token/${tokenAddress}`;
         return this.makeRequest<TopTrader[]>(url, referer);
     }
 
     async getTokenSecurityAndLaunchpad(tokenAddress: string, chainId: ChainId): Promise<TokenSecurityAndLaunchpad> {
-        const chainName = chainIdToChain(chainId);
+        const chainName = chainIdToGmGnChain(chainId);
         const url = `${this.baseUrl}/api/v1/mutil_window_token_security_launchpad/${chainName}/${tokenAddress}`;
         const referer = `https://gmgn.ai/${chainName}/token/${tokenAddress}`;
         return this.makeRequest<TokenSecurityAndLaunchpad>(url, referer);
     }
 
     async getWalletHoldings(walletAddress: string, chainId: ChainId): Promise<WalletHoldings> {
-        const chainName = chainIdToChain(chainId);
+        const chainName = chainIdToGmGnChain(chainId);
         const url = `${this.baseUrl}/api/v1/wallet_holdings/${chainName}/${walletAddress}`;
         const referer = `https://gmgn.ai/${chainName}/address/${walletAddress}`;
         return this.makeRequest<WalletHoldings>(url, referer);
@@ -85,7 +85,7 @@ export class GmgnClient {
     }
 
     async getTrendingTokens(chainId: ChainId, timeframe: '1h' | '24h' = '1h'): Promise<TrendingTokensResponse> {
-        const chainName = chainIdToChain(chainId);
+        const chainName = chainIdToGmGnChain(chainId);
         const url = `${this.baseUrl}/defi/quotation/v1/rank/${chainName}/swaps/${timeframe}`;
         const referer = `https://gmgn.ai/${chainName}/trending`;
 
@@ -110,14 +110,14 @@ export class GmgnClient {
     }
 
     async getTopBuyers(tokenAddress: string, chainId: ChainId): Promise<TopBuyersResponse> {
-        const chainName = chainIdToChain(chainId);
+        const chainName = chainIdToGmGnChain(chainId);
         const url = `${this.baseUrl}/defi/quotation/v1/tokens/top_buyers/${chainName}/${tokenAddress}`;
         const referer = `${this.baseUrl}/${chainName}/token/${tokenAddress}`;
         return this.makeRequest<TopBuyersResponse>(url, referer);
     }
 
     async getTopHolders(tokenAddress: string, chainId: ChainId): Promise<TopHolder[]> {
-        const chainName = chainIdToChain(chainId);
+        const chainName = chainIdToGmGnChain(chainId);
         const url = `${this.baseUrl}/defi/quotation/v1/tokens/top_holders/${chainName}/${tokenAddress}`;
         const referer = `${this.baseUrl}/${chainName}/token/${tokenAddress}`;
         return this.makeRequest<TopHolder[]>(url, referer);

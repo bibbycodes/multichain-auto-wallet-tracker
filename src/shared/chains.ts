@@ -13,13 +13,17 @@ export const ChainsMap = {
 export type Chain = keyof typeof ChainsMap
 export type ChainId = typeof ChainsMap[Chain]
 
-export function getChainId(chain: Chain): number | string {
+export function getChainId(chain: Chain): ChainId {
   return ChainsMap[chain]
 }
 
 export function getActiveEVMChains(): Chain[] {
   const chains = Object.keys(ChainsMap) as Chain[]
-  return chains.filter((chain) => ChainsMap[chain] !== null && typeof ChainsMap[chain] === 'number')
+  return chains.filter((chain) => ChainsMap[chain] !== null && ChainsMap[chain] !== 'solana')
+}
+
+export function getActiveEVMChainIds(): ChainId[] {
+  return getActiveEVMChains().map((chain) => getChainId(chain))
 }
 
 export const getAllChainIds = (): ChainId[] => {
@@ -28,4 +32,12 @@ export const getAllChainIds = (): ChainId[] => {
 
 export const isEvmChain = (chain: Chain): boolean => {
   return getActiveEVMChains().includes(chain)
+}
+
+export const isEvmChainId = (chainId: ChainId): boolean => {
+  return getActiveEVMChainIds().includes(chainId)
+}
+
+export const isSolanaChainId = (chainId: ChainId): boolean => {
+  return chainId === 'solana'
 }

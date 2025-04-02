@@ -5,13 +5,18 @@ export interface EnvConfig {
   birdeye: BirdEyeConfig;
   moralis: MoralisConfig;
   geonode: GeoNodeConfig;
-  telegram: TelegramConfig
+  telegram: TelegramConfig;
+  database: DatabaseConfig;
 }
 
 export interface TelegramConfig {
   sessionString: string
   apiId: number
   apiHash: string
+}
+
+export interface DatabaseConfig {
+  url: string;
 }
 
 export interface ChainBaseConfig {

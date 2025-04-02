@@ -9,6 +9,7 @@ export abstract class BaseWorker {
   protected queueName: string;
   protected lockKey: string;
   protected options: Partial<WorkerOptions>;
+  private process: JobProcessorFunction<any, any>;
 
   protected constructor({
                           queueName,
@@ -24,11 +25,12 @@ export abstract class BaseWorker {
     this.queueName = queueName;
     this.lockKey = lockKey;
     this.options = options;
+    this.process = this.processJob.bind(this);
   }
 
   abstract getJob(job: Job): Function | void;
 
-  private async process(job: Job) {
+  private processJob = async (job: Job) => {
     const {data} = job
     const fn = this.getJob(job)
     if (!fn) {
@@ -77,6 +79,7 @@ export abstract class BaseWorker {
     this.worker.on('failed', (job, err) => {
       if (job) {
         console.error(`Worker ${this.queueName} failed job ${job.id}: ${err.message}`);
+        console.error(err)
       }
     });
 

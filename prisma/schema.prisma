@@ -9,64 +9,322 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Chain {
-  id                    String    @id @unique @default(uuid())
+  id                    String              @id @unique @default(uuid())
   name                  String
-  chain_type            String
+  chain_type            ChainType
   created_at            DateTime
   updated_at            DateTime
-  chain_id              String
+  chain_id              String              @unique
   native_token_address  String
   wrapped_token_address String?
-  Token                 Token[]
-  Wallets               Wallets[]
+  usdt_address          String?
+  usdc_address          String?
+  dai_address           String?
+  tokens                Token[]
+  wallets               Wallet[]
+  liquidity_pools       LiquidityPool[]
+  trending_tokens       TrendingToken[]
+  token_distributions   TokenDistribution[]
+  tracked_wallets       TrackedWallet[]
+  wallet_performances   WalletPerformance[]
+  
+  @@index([chain_id])
 }
 
 model Token {
-  id         String    @id @unique @default(uuid())
-  address    String
-  chain_id   String
-  name       String
-  symbol     String
-  created_at DateTime?
-  decimals   Int
-
-  chain Chain @relation(fields: [chain_id], references: [id])
+  id            String    @id @unique @default(uuid())
+  address       String    @unique
+  chain_id      String
+  name          String
+  symbol        String
+  created_by    String?
+  creation_time DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  decimals      Int
+  logo_url      String?
+  website_url   String?
+  telegram_url  String?
+  twitter_url   String?
+  discord_url   String?
+  reddit_url    String?
+  github_url    String?
+  description   String?
+  total_supply  String
+  pair_address  String
+  chain               Chain                @relation(fields: [chain_id], references: [chain_id])
+  token_relationships TokenRelationship[]
+  token_holdings      TokenHolding[]
+  token_distribution  TokenDistribution[]
+  liquidity_pools     LiquidityPool[]
+  trending_tokens     TrendingToken[]
+  wallet_swaps        WalletSwaps[]
+  wallet_transactions WalletTransactions[]
 
   @@unique([address, chain_id])
-  @@index(address)
 }
 
-model Wallets {
-  id             String           @id @default(uuid())
-  address        String
-  chain_id       String
-  chain          Chain            @relation(fields: [chain_id], references: [id])
-  created_at     DateTime
-  updated_at     DateTime
-  TrackedWallets TrackedWallets[]
+model Wallet {
+  id                  String               @id @default(uuid())
+  address             String
+  chain_id            String
+  chain               Chain                @relation(fields: [chain_id], references: [chain_id])
+  created_at          DateTime
+  updated_at          DateTime
+  tracked_wallets     TrackedWallet[]
+  token_relationships TokenRelationship[]
+  token_holdings      TokenHolding[]
+  wallet_performance  WalletPerformance[]
+  token_distribution  TokenDistribution[]
+  social_channels     SocialChannel[]
+  wallet_swaps        WalletSwaps[]
+  wallet_transactions WalletTransactions[]
+  portfolio_snapshots PortfolioSnapshot[]
 
   @@unique([address, chain_id])
-  @@index([address])
-  @@index([address, chain_id])
 }
 
-model TrackedWallets {
+model WalletSwaps {
+  id                 String   @id @default(uuid())
+  created_at         DateTime
+  updated_at         DateTime
+  token_id           String
+  wallet_id          String
+  wallet_address     String
+  amount_in          Float
+  amount_out         Float
+  amount_usd         Float
+  price              Float
+  market_cap         Float
+  hash               String
+  link               String
+  timestamp          DateTime
+
+  token  Token  @relation(fields: [token_id], references: [id])
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
+}
+
+model WalletTransactions {
+  id         String          @id @default(uuid())
+  created_at DateTime
+  updated_at DateTime
+  wallet_id  String
+  wallet_address String
+  token_id   String
+  hash       String
+  timestamp  DateTime
+  type       TransactionType
+  status     String
+  from       String
+  to         String
+  value      Float
+  value_usd  Float
+  wallet     Wallet          @relation(fields: [wallet_id], references: [id])
+  token      Token           @relation(fields: [token_id], references: [id])
+}
+
+model LiquidityPool {
+  id                  String   @id @default(uuid())
+  address             String
+  chain_id            String
+  chain               Chain    @relation(fields: [chain_id], references: [id])
+  token_address       String
+  base_token_address  String
+  vault_address       String?
+  quote_token_address String
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  token               Token    @relation(fields: [token_address], references: [address])
+}
+
+model TrackedWallet {
   id         String   @id @default(uuid())
   wallet_id  String
   address    String
   chain_id   String
-  created_at DateTime
-  updated_at DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  types       TrackedWalletType[]
 
-  wallet Wallets @relation(fields: [wallet_id], references: [id])
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
+  chain  Chain  @relation(fields: [chain_id], references: [chain_id])
 
-  @@unique([wallet_id, address, chain_id])
+  @@unique([address, chain_id])
   @@index([wallet_id])
+}
+
+model TokenRelationship {
+  id         String                @id @default(uuid())
+  token_id   String 
+  wallet_id  String 
+  type       TokenRelationshipType
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+
+  token  Token  @relation(fields: [token_id], references: [id])
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
+}
+
+model TokenHolding {
+  id             String   @id @default(uuid())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  token_id       String
+  wallet_id      String
+  token_address  String
+  wallet_address String
+  balance        Float
+  usd_value      Float
+  token          Token    @relation(fields: [token_id], references: [id])
+  wallet         Wallet   @relation(fields: [wallet_id], references: [id])
+
+  @@index([token_id])
+  @@index([wallet_id])
+}
+
+model PortfolioSnapshot {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  wallet_id  String
+  wallet_address String
+  usd_value  Float
+  data       Json
+  wallet     Wallet   @relation(fields: [wallet_id], references: [id])
+}
+
+model WalletPerformance {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  wallet_id  String
+  wallet_address String
+  pnl        Float
+  win_rate   Float
+  total_profit Float
+  num_5x_profitable_trades Int
+  num_2x_profitable_trades Int
+  num_1x_profitable_trades Int
+  num_losses Int
+  num_wins Int
+  pnl_1d_percentage Float
+  pnl_7d_percentage Float
+  pnl_30d_percentage Float
+  realized_profit Float
+  unrealized_profit Float
+  chain_id   String
+
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
+  chain  Chain  @relation(fields: [chain_id], references: [chain_id])
+
+  @@index([wallet_id])
+}
+
+model TokenDistribution {
+  id                     String   @id @default(uuid())
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+  token_id               String
+  top_10_holder_rate     Float
+  top_20_holder_rate     Float
+  creator_token_rate     Float
+  creator_wallet_address String
+  bundle_rate            Float
+  wallets                Wallet[]
+  chain_id               String
+  chain                  Chain    @relation(fields: [chain_id], references: [chain_id])
+
+  wallet_to_balance_map Json
+  fresh_wallets         String[]
+  same_balance_wallets  String[]
+  locked_wallets        String[]
+  bundled_wallets       String[]
+  clusters              Json
+
+  token Token @relation(fields: [token_id], references: [id])
+}
+
+model TrendingToken {
+  id         String        @id @default(uuid())
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  token_id   String
+  platform   TokenPlatform
+  chain_id   String
+  market_cap Float
+
+  token Token @relation(fields: [token_id], references: [id])
+  chain Chain @relation(fields: [chain_id], references: [chain_id])
+}
+
+model SocialChannel {
+  id             String         @id @default(uuid())
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  token_id       String
+  id_on_platform String
+  username       String
+  platform       SocialPlatform
+  wallet_id      String?
+  wallet_address String?
+  wallet         Wallet?        @relation(fields: [wallet_id], references: [id])
+}
+
+model Settings {
+  id String @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  version Int
+  data Json
+}
+
+enum SocialPlatform {
+  TELEGRAM
+  TWITTER
+}
+
+enum TokenPlatform {
+  GMGN
+  COIN_GECKO
+  DEX_SCREENER
+  PHOTON
+  AXIOM
+  BIRDEYE
+}
+
+enum TokenRelationshipType {
+  TOP_HOLDER
+  EARLY_BUYER
+}
+
+enum TransactionType {
+  SWAP
+  TRANSFER
+  MINT
+  BURN
+}
+
+enum TrackedWalletType {
+  INSTITUTIONAL
+  KOL
+  SMART_MONEY
+  WHALE
+  SCAMMER
+  BOT
+  DEV
+  INSIDER
+  SNIPER
+  UNKNOWN
+}
+
+enum ChainType {
+  EVM
+  SOLANA
 }
 
 // model TrendingToken {
@@ -80,7 +338,7 @@ model TrackedWallets {
 //   @@index([tokenId])
 // }
 
-// Wallet Discovery
+// Wallet Discoveryclea
 // Wallet Assessment
 // Token Assessment
 // Parsing Trades

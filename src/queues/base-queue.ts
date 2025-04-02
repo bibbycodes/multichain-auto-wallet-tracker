@@ -14,7 +14,6 @@ export abstract class BaseQueue extends Singleton {
     this.connection = RedisClient.getInstance().client();
     this.queue = new Queue(queueName, {connection: this.connection, ...queueOptions});
     this.queueEvents = new QueueEvents(queueName, {connection: this.connection});
-
     this.queueEvents.on('failed', (event) => {
       console.error(`Job failed: ${event.jobId}, failedReason: ${event.failedReason}`);
     });

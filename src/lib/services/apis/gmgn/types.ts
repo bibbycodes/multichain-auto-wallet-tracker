@@ -241,6 +241,10 @@ export interface TokenLockInfo {
     leftLockPercent: number;
 }
 
+export interface TrendingTokenResponse {
+    rank: TrendingToken[];
+}
+
 export interface TrendingToken {
     id: number;
     chain: string;

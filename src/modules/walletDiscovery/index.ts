@@ -1,7 +1,7 @@
 import cron from 'node-cron'
 import { EventEmitter } from 'events'
 import { TokenService } from '../../lib/services/tokens/token-service'
-import { WalletAnalyzerService } from '../../lib/services/wallets/walletAnalyzerService'
+import { WalletAnalyzerService } from '../../lib/services/wallets/wallet-analyzer-service'
 import {WalletDiscoveryConfig} from "../../shared/types";
 import {TrendingTokenRepository} from "../../lib/db/repositories/trendingTokenRepository";
 import {WalletsQueue} from "../../queues/wallets/wallets-queue";

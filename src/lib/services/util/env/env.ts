@@ -46,6 +46,9 @@ export const env: EnvConfig = {
     {apiKey: getOrThrowEnvVar('CHAIN_BASE_API_KEY_15'), email: 'p.ladar@icloud.com', project: 'track7'},
     {apiKey: getOrThrowEnvVar('CHAIN_BASE_API_KEY_16'), email: 'p.ladar@icloud.com', project: 'track8'},
   ],
+  database: {
+    url: getOrThrowEnvVar('DATABASE_URL'),
+  },
   quicknode: {
     [ChainsMap.bsc]: [{
       https: getOrThrowEnvVar('QUICKNODE_BSC_ENDPOINT_HTTPS_1'),
