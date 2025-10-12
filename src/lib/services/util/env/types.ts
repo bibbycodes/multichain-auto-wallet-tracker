@@ -13,6 +13,8 @@ export interface TelegramConfig {
   sessionString: string
   apiId: number
   apiHash: string
+  wbbBscBotToken: string
+  wbbBscChannelId: string
 }
 
 export interface DatabaseConfig {

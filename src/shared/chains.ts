@@ -17,6 +17,12 @@ export function getChainId(chain: Chain): ChainId {
   return ChainsMap[chain]
 }
 
+export function getInternallySupportedChainIds(): ChainId[] {
+  return [
+    ChainsMap.bsc,
+  ]
+}
+
 export function getActiveEVMChains(): Chain[] {
   const chains = Object.keys(ChainsMap) as Chain[]
   return chains.filter((chain) => ChainsMap[chain] !== null && ChainsMap[chain] !== 'solana')

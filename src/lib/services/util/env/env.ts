@@ -26,7 +26,9 @@ export const env: EnvConfig = {
   telegram: {
     sessionString: getOrThrowEnvVar('TELEGRAM_SESSION_STRING'),
     apiId: parseInt(getOrThrowEnvVar('TELEGRAM_API_ID')),
-    apiHash: getOrThrowEnvVar('TELEGRAM_API_HASH')
+    apiHash: getOrThrowEnvVar('TELEGRAM_API_HASH'),
+    wbbBscBotToken: getOrThrowEnvVar('WBB_BSC_TELEGRAM_BOT_TOKEN'),
+    wbbBscChannelId: getOrThrowEnvVar('WBB_BSC_CHANNEL_ID')
   },
   chainBase: [
     {apiKey: getOrThrowEnvVar('CHAIN_BASE_API_KEY_1'), email: 'robertrosijigriffith@gmail.com', project: '1'},

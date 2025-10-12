@@ -1,3 +1,5 @@
+
+
 export interface TokenPriceResponse {
   data: {
     value: number;
@@ -16,6 +18,22 @@ export interface OhlcResponseData {
   items: OhlcvItem[];
 }
 
+export interface TopHolderResponse {
+  data: {
+    items: TopHolder[];
+  };
+  success: boolean;
+}
+
+export interface TopHolder {
+  amount: string;
+  decimals: number;
+  mint: string;
+  owner: string;
+  token_account: string;
+  ui_amount: number;
+}
+
 export interface OhlcvItem {
   o: number;
   h: number;
@@ -28,13 +46,13 @@ export interface OhlcvItem {
 }
 
 export interface CreationData {
-  "txHash": string,
-  "slot": number,
-  "tokenAddress": string,
-  "decimals": number,
-  "owner": string,
-  "blockUnixTime": number,
-  "blockHumanTime": string
+  txHash: string,
+  slot: number,
+  tokenAddress: string,
+  decimals: number,
+  owner: string,
+  blockUnixTime: number,
+  blockHumanTime: string
 }
 
 export interface BirdEyeResponse<T> {
@@ -53,7 +71,7 @@ export interface HistoricalPriceDataData {
 }
 
 export interface HistoricalPriceItem {
-  unixTime: number;
+  timestamp: number;
   value: number;
 }
 
@@ -106,6 +124,8 @@ export interface BirdTokenEyeOverview {
   uniqueWalletHistory1h: number;
   uniqueWallet1hChangePercent: number;
   uniqueWallet2h: number;
+  marketCap: number;
+  fdv: number;
   uniqueWalletHistory2h: number;
   uniqueWallet2hChangePercent: number;
   uniqueWallet4h: number;
@@ -118,10 +138,35 @@ export interface BirdTokenEyeOverview {
   uniqueWalletHistory24h: number;
   uniqueWallet24hChangePercent: number;
   supply: number;
+  totalSuply: number;
   mc: number;
   circulatingSupply: number;
   realMc: number;
   holder: number;
+  trade5m: number;
+  tradeHistory5m: number;
+  trade5mChangePercent: number;
+  sell5m: number;
+  sellHistory5m: number;
+  sell5mChangePercent: number;
+  buy5m: number;
+  buyHistory5m: number;
+  buy5mChangePercent: number;
+  v5m: number;
+  v5mUSD: number;
+  vHistory5m: number;
+  vHistory5mUSD: number;
+  v5mChangePercent: number;
+  vBuy5m: number;
+  vBuy5mUSD: number;
+  vBuyHistory5m: number;
+  vBuyHistory5mUSD: number;
+  vBuy5mChangePercent: number;
+  vSell5m: number;
+  vSell5mUSD: number;
+  vSellHistory5m: number;
+  vSellHistory5mUSD: number;
+  vSell5mChangePercent: number;
   trade30m: number;
   tradeHistory30m: number;
   trade30mChangePercent: number;
@@ -318,4 +363,301 @@ export interface TrendingTokenListItem {
   volume24hUSD: number,
   rank: number,
   price: number
+}
+
+export interface MarketsResponse {
+  success: boolean;
+  data: MarketsData;
+}
+
+export interface MarketsData {
+  items: MarketItem[];
+  total: number;
+}
+
+export interface MarketItem {
+  address: string;
+  base: TokenInfo;
+  createdAt: string;
+  liquidity: number;
+  name: string;
+  price: number;
+  quote: TokenInfo;
+  source: string;
+  volume24h: number;
+  trade24h: number;
+  trade24hChangePercent: number | null;
+  uniqueWallet24h: number;
+  uniqueWallet24hChangePercent: number | null;
+}
+
+export interface TokenInfo {
+  address: string;
+  decimals: number;
+  symbol?: string;
+  icon?: string;
+}
+
+
+export interface TradesResponse {
+  success: boolean;
+  data: { items: Trade[], has_next: boolean };
+}
+
+export interface TradeToken {
+  symbol: string
+  address: string
+  decimals: number
+  price: number
+  amount: string
+  ui_amount: number
+  ui_change_amount: number
+  type_swap: 'from' | 'to'
+  is_scaled_ui_token: boolean
+  multiplier: number | null
+}
+
+export interface Trade {
+  base: TradeToken
+  quote: TradeToken
+  tx_type: string
+  tx_hash: string
+  ins_index: number
+  inner_ins_index: number
+  block_unix_time: number
+  block_number: number
+  volume_usd: number
+  volume: number
+  owner: string
+  signers: string[]
+  source: string
+  interacted_program_id: string
+  pool_id: string
+}
+
+export interface TradesSeekByTimeToken {
+  symbol: string
+  decimals: number
+  address: string
+  amount: string
+  uiAmount: number
+  price: number
+  changeAmount: number
+  uiChangeAmount: number
+  isScaledUiToken: boolean
+  multiplier: number | null
+}
+
+export interface TradesSeekByTimeItem {
+  quote: TradesSeekByTimeToken
+  base: TradesSeekByTimeToken
+  basePrice: number
+  quotePrice: number
+  txHash: string
+  source: string
+  blockUnixTime: number
+  txType: string
+  owner: string
+  side: 'buy' | 'sell'
+  alias: string | null
+  pricePair: number
+  from: TradesSeekByTimeToken
+  to: TradesSeekByTimeToken
+  tokenPrice: number
+  poolId: string
+}
+
+export interface TradesSeekByTimeData {
+  items: TradesSeekByTimeItem[]
+  hasNext: boolean
+}
+
+export interface TradesSeekByTimeResponse {
+  success: boolean
+  data: TradesSeekByTimeData
+}
+
+export interface WalletPnlMeta {
+  address: string
+  currency: string
+  holdingCheck: boolean
+  time: string
+}
+
+export interface WalletPnlCounts {
+  totalBuy: number
+  totalSell: number
+  totalTrade: number
+}
+
+export interface WalletPnlQuantity {
+  totalBoughtAmount: number
+  totalSoldAmount: number
+  holding: number
+}
+
+export interface WalletPnlCashflow {
+  costOfQuantitySold: number
+  totalInvested: number
+  totalSold: number
+  currentValue: number
+}
+
+export interface WalletPnlPnl {
+  realizedProfitUsd: number
+  realizedProfitPercent: number
+  unrealizedUsd: number
+  unrealizedPercent: number
+  totalUsd: number
+  totalPercent: number
+  avgProfitPerTradeUsd: number
+}
+
+export interface WalletPnlPricing {
+  currentPrice: number
+  avgBuyCost: number
+  avgSellCost: number
+}
+
+export interface WalletPnlToken {
+  symbol: string
+  decimals: number
+  counts: WalletPnlCounts
+  quantity: WalletPnlQuantity
+  cashflowUsd: WalletPnlCashflow
+  pnl: WalletPnlPnl
+  pricing: WalletPnlPricing
+}
+
+export interface WalletPnlData {
+  meta: WalletPnlMeta
+  tokens: Record<string, WalletPnlToken>
+}
+
+export interface WalletPnlResponse {
+  success: boolean
+  data: WalletPnlData
+}
+
+// Token Security Types
+export interface LpHolder {
+  address: string
+  tag: string
+  value: number | null
+  is_contract: number
+  balance: string
+  percent: string
+  NFT_list: any | null
+  is_locked: number
+  locked_detail?: Array<{
+    amount: string
+    end_time: string
+    opt_time: string
+  }>
+}
+
+export interface BirdeyeEvmTokenSecurity {
+  antiWhaleModifiable: string
+  buyTax: string
+  canTakeBackOwnership: string
+  cannotBuy: string
+  cannotSellAll: string
+  creatorAddress: string
+  creatorBalance: string
+  creatorPercentage: string
+  externalCall: string
+  hiddenOwner: string
+  holderCount: string
+  honeypotWithSameCreator: string
+  isAntiWhale: string
+  isBlacklisted: string
+  isHoneypot: string
+  isInDex: string
+  isMintable: string
+  isOpenSource: string
+  isProxy: string
+  isWhitelisted: string
+  lpHolderCount: string
+  lpHolders: LpHolder[]
+  lpTotalSupply: string
+  ownerAddress: string
+  ownerBalance: string
+  ownerChangeBalance: string
+  ownerPercentage: string
+  personalSlippageModifiable: string
+  sellTax: string
+  slippageModifiable: string
+  tokenName: string
+  tokenSymbol: string
+  totalSupply: string
+  tradingCooldown: string
+  transferPausable: string
+}
+
+export interface BirdeyeSolanaTokenSecurity {
+  creatorAddress: string
+  creatorOwnerAddress: string | null
+  ownerAddress: string | null
+  ownerOfOwnerAddress: string | null
+  creationTx: string
+  creationTime: number
+  creationSlot: number
+  mintTx: string
+  mintTime: number
+  mintSlot: number
+  creatorBalance: number
+  ownerBalance: number | null
+  ownerPercentage: number | null
+  creatorPercentage: number
+  metaplexUpdateAuthority: string
+  metaplexOwnerUpdateAuthority: string | null
+  metaplexUpdateAuthorityBalance: number
+  metaplexUpdateAuthorityPercent: number
+  mutableMetadata: boolean
+  top10HolderBalance: number
+  top10HolderPercent: number
+  top10UserBalance: number
+  top10UserPercent: number
+  isTrueToken: boolean | null
+  fakeToken: any | null
+  totalSupply: number
+  preMarketHolder: any[]
+  lockInfo: any | null
+  freezeable: boolean | null
+  freezeAuthority: string | null
+  transferFeeEnable: boolean | null
+  transferFeeData: any | null
+  isToken2022: boolean
+  nonTransferable: boolean | null
+  jupStrictList: boolean
+}
+
+export interface BirdeyeTokenSecurityResponse {
+  success: boolean
+  data: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity
+}
+
+// Token Metadata Types
+export interface BirdeyeTokenMetadataExtensions {
+  coingecko_id?: string
+  website?: string
+  twitter?: string
+  discord?: string
+  medium?: string
+  telegram?: string
+  description?: string
+}
+
+export interface BirdeyeTokenMetadata {
+  address: string
+  symbol: string
+  name: string
+  decimals: number
+  extensions?: BirdeyeTokenMetadataExtensions
+  logo_uri?: string
+}
+
+export interface BirdeyeTokenMetadataResponse {
+  success: boolean
+  data: BirdeyeTokenMetadata
 }
