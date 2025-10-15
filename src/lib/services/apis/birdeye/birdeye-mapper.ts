@@ -1,6 +1,7 @@
+import { TokenDataSource } from "@prisma/client";
 import { ChainId, getInternallySupportedChainIds } from "../../../../shared/chains";
 import { AutoTrackerToken } from "../../../models/token";
-import { TokenData, AutoTrackerTokenDataSource, TokenDataWithMarketCap } from "../../../models/token/types";
+import { TokenData, TokenDataWithMarketCap } from "../../../models/token/types";
 import { SocialMedia } from "../../../models/socials/types";
 import { BirdeyeChain } from "./client/index";
 import { BirdTokenEyeOverview, BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity } from "./client/types";
@@ -99,7 +100,7 @@ export class BirdeyeMapper {
             logoUrl: this.extractLogoUrl(tokenOverview),
             description: this.extractDescription(tokenOverview),
             createdBy: this.extractCreatedBy(tokenSecurity),
-            dataSource: AutoTrackerTokenDataSource.BIRDEYE,
+            dataSource: TokenDataSource.BIRDEYE,
         };
     }
 

@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient, Token, TokenDataSource } from "@prisma/client";
 import { AutoTrackerToken } from "../../models/token";
-import { AutoTrackerTokenDataSource } from "../../models/token/types";
+
 
 export class TokensRepository {
     constructor(private readonly prisma: PrismaClient) { }
@@ -64,17 +64,6 @@ export class TokensRepository {
                 chain_id: chainId
             }
         });
-    }
-
-    dataSourceToEnum(dataSource: TokenDataSource): AutoTrackerTokenDataSource {
-        switch (dataSource) {
-            case TokenDataSource.BIRDEYE:
-                return AutoTrackerTokenDataSource.BIRDEYE;
-            case TokenDataSource.GMGN:
-                return AutoTrackerTokenDataSource.GMGN;
-            case TokenDataSource.MORALIS:
-                return AutoTrackerTokenDataSource.MORALIS;
-        }
     }
 
     toModel(token: Token): AutoTrackerToken {

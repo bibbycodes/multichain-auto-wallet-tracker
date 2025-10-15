@@ -1,15 +1,14 @@
 import { Prisma, Token, TokenDataSource } from "@prisma/client";
 import { GmGnMultiWindowTokenInfo, GmGnTokenSocials } from "python-proxy-scraper-client";
 import { ChainId } from "../../../shared/chains";
+import { deepMergeAll } from "../../../utils/data-aggregator";
+import { BirdeyeMapper } from "../../services/apis/birdeye/birdeye-mapper";
+import { BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity, BirdTokenEyeOverview } from "../../services/apis/birdeye/client/types";
 import { GmGnMapper } from "../../services/apis/gmgn/gmgn-mapper";
 import { MoralisMapper } from "../../services/apis/moralis/moralis-mapper";
 import { MoralisEvmTokenMetaData, MoralisEvmTokenPrice } from "../../services/apis/moralis/types";
 import { SocialMedia } from "../socials/types";
 import { TokenData, TokenDataWithMarketCap } from "./types";
-import { AutoTrackerTokenDataSource } from "./types";
-import { BirdeyeMapper } from "../../services/apis/birdeye/birdeye-mapper";
-import { deepMerge, deepMergeAll } from "../../../utils/data-aggregator";
-import { BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity, BirdTokenEyeOverview } from "../../services/apis/birdeye/client/types";
 
 export class AutoTrackerToken {
     public static readonly requiredFields = ['address', 'name', 'symbol', 'chainId', 'pairAddress', 'decimals', 'totalSupply']
@@ -27,7 +26,7 @@ export class AutoTrackerToken {
     updatedAt: Date;
     totalSupply: number;
     pairAddress: string;
-    dataSource: AutoTrackerTokenDataSource;
+    dataSource: TokenDataSource;
 
     constructor(data: TokenData) {
         this.address = data.address;
@@ -68,7 +67,7 @@ export class AutoTrackerToken {
             creation_time: this.creationTime,
             total_supply: this.totalSupply.toString(),
             pair_address: this.pairAddress,
-            data_source: this.dataSourceToEnum(this.dataSource),
+            data_source: this.dataSource,
         }
     }
 
@@ -92,32 +91,10 @@ export class AutoTrackerToken {
             createdAt: token.created_at ?? undefined,
             updatedAt: token.updated_at ?? undefined,
             totalSupply: Number(token.total_supply),
-            dataSource: this.enumToDataSource(token.data_source),
+            dataSource: token.data_source,
         })
     }
-
-    dataSourceToEnum(dataSource: AutoTrackerTokenDataSource): TokenDataSource {
-        switch (dataSource) {
-            case AutoTrackerTokenDataSource.BIRDEYE:
-                return TokenDataSource.BIRDEYE;
-            case AutoTrackerTokenDataSource.GMGN:
-                return TokenDataSource.GMGN;
-            case AutoTrackerTokenDataSource.MORALIS:
-                return TokenDataSource.MORALIS;
-        }
-    }
-
-    enumToDataSource(dataSource: TokenDataSource): AutoTrackerTokenDataSource {
-        switch (dataSource) {
-            case TokenDataSource.BIRDEYE:
-                return AutoTrackerTokenDataSource.BIRDEYE;
-            case TokenDataSource.GMGN:
-                return AutoTrackerTokenDataSource.GMGN;
-            case TokenDataSource.MORALIS:
-                return AutoTrackerTokenDataSource.MORALIS;
-        }
-    }
-
+    
     toJson() {
         return JSON.stringify(this.toObject())
     }

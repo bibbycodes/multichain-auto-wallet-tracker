@@ -1,99 +1,114 @@
+import { TokenDataSource } from "@prisma/client";
 import { ChainId, ChainsMap, getInternallySupportedChainIds } from "../../../../shared/chains";
 import { AutoTrackerToken } from "../../../models/token";
-import { AutoTrackerTokenDataSource, TokenDataWithMarketCap } from "../../../models/token/types";
-import { MoralisEvmTokenMetaData, MoralisSolanaTokenMetadata, MoralisSolanaTokenPrice, MoralisEvmTokenPrice, MoralisSolanaTokenPairResponseData } from "./types";
+import { TokenData, TokenDataWithMarketCap } from "../../../models/token/types";
+import { SocialMedia } from "../../../models/socials/types";
+import { MoralisEvmTokenMetaData, MoralisEvmTokenPrice, MoralisSolanaTokenMetadata, MoralisSolanaTokenPairResponseData, MoralisSolanaTokenPrice } from "./types";
+import { CHAIN_ID_TO_MORALIS_CHAIN, MORALIS_CHAIN_TO_CHAIN_ID, MoralisChain } from "./moralis-chain-map";
 
 export class MoralisMapper {
-    static chainIdToChain(chainId: ChainId): string {
-        switch (chainId) {
-            case ChainsMap.ethereum:
-                return "eth";
-            case ChainsMap.bsc:
-                return "bsc";
-            case ChainsMap.polygon:
-                return "polygon";
-            case ChainsMap.arbitrum:
-                return "arbitrum";
-            case ChainsMap.avalanche:
-                return "avalanche";
-            case ChainsMap.optimism:
-                return "optimism";
-            case ChainsMap.base:
-                return "base";
-            case ChainsMap.zksync:
-                return "zksync";
-            case ChainsMap.solana:
-                return "solana";
-            default:
-                throw new Error(`Unsupported chain ID: ${chainId}`);
+    static chainIdToChain(chainId: ChainId): MoralisChain {
+        const chain = CHAIN_ID_TO_MORALIS_CHAIN[chainId];
+        if (!chain) {
+            throw new Error(`Unsupported chain ID: ${chainId}`);
         }
+        return chain;
     }
 
-    static chainToChainId(chain: string): ChainId {
-        switch (chain) {
-            case "eth":
-                return ChainsMap.ethereum;
-            case "bsc":
-                return ChainsMap.bsc;
-            case "polygon":
-                return ChainsMap.polygon;
-            case "arbitrum":
-                return ChainsMap.arbitrum;
-            case "avalanche":
-                return ChainsMap.avalanche;
-            case "optimism":
-                return ChainsMap.optimism;
-            case "base":
-                return ChainsMap.base;
-            case "zksync":
-                return ChainsMap.zksync;
-            case "solana":
-                return ChainsMap.solana;
-            default:
-                throw new Error(`Unsupported chain: ${chain}`);
-        }
+    static chainToChainId(chain: MoralisChain): ChainId {
+        return MORALIS_CHAIN_TO_CHAIN_ID[chain];
     }
 
     static getSupportedChains(): ChainId[] {
-        return [
-            ChainsMap.ethereum,
-            ChainsMap.bsc,
-            ChainsMap.polygon,
-            ChainsMap.arbitrum,
-            ChainsMap.avalanche,
-            ChainsMap.optimism,
-            ChainsMap.base,
-            ChainsMap.zksync,
-            ChainsMap.solana,
-        ].filter(chainId => getInternallySupportedChainIds().includes(chainId))
+        return (Object.keys(CHAIN_ID_TO_MORALIS_CHAIN) as ChainId[])
+            .filter(chainId => getInternallySupportedChainIds().includes(chainId));
     }
 
-    static mapMoralisTokenToAutoTrackerToken(
-        moralisToken: MoralisEvmTokenMetaData,
+    /**
+     * Static helper functions for extracting data from Moralis structures
+     */
+    public static extractEvmSocials(tokenMetadata: MoralisEvmTokenMetaData): SocialMedia {
+        return {
+            twitter: tokenMetadata.links.twitter,
+            telegram: tokenMetadata.links.telegram,
+            discord: tokenMetadata.links.discord,
+            website: tokenMetadata.links.website,
+            reddit: tokenMetadata.links.reddit,
+            instagram: tokenMetadata.links.instagram,
+        };
+    }
+
+    public static extractSolanaSocials(tokenMetadata: MoralisSolanaTokenMetadata): SocialMedia {
+        return {
+            twitter: tokenMetadata.links.twitter,
+            telegram: tokenMetadata.links.telegram,
+            discord: tokenMetadata.links.discord,
+            website: tokenMetadata.links.website,
+            reddit: tokenMetadata.links.reddit,
+        };
+    }
+
+    public static extractEvmPrice(tokenPrice: MoralisEvmTokenPrice): number {
+        return tokenPrice.usdPrice;
+    }
+
+    public static extractEvmMarketCap(tokenMetadata: MoralisEvmTokenMetaData): number {
+        return Number(tokenMetadata.market_cap);
+    }
+
+    public static extractEvmLiquidity(tokenPrice: MoralisEvmTokenPrice): number {
+        return Number(tokenPrice.pairTotalLiquidityUsd);
+    }
+
+    public static extractSolanaPrice(price: MoralisSolanaTokenPrice): number {
+        return price.usdPrice;
+    }
+
+    public static extractSolanaMarketCap(tokenMetadata: MoralisSolanaTokenMetadata): number {
+        return Number(tokenMetadata.fullyDilutedValue);
+    }
+
+    public static extractSolanaLiquidity(pair: MoralisSolanaTokenPairResponseData): number {
+        return pair.liquidityUsd;
+    }
+
+    private static buildEvmTokenData(
+        tokenMetadata: MoralisEvmTokenMetaData,
         tokenPrice: MoralisEvmTokenPrice,
         chainId: ChainId
-    ): AutoTrackerToken {
-        return new AutoTrackerToken({
-            address: moralisToken.address,
+    ): TokenData {
+        return {
+            address: tokenMetadata.address,
             chainId,
-            name: moralisToken.name,
-            symbol: moralisToken.symbol,
-            decimals: Number(moralisToken.decimals),
-            totalSupply: Number(moralisToken.total_supply_formatted),
-            socials: {
-                twitter: moralisToken.links.twitter,
-                telegram: moralisToken.links.telegram,
-                discord: moralisToken.links.discord,
-                website: moralisToken.links.website,
-                reddit: moralisToken.links.reddit,
-            },
+            name: tokenMetadata.name,
+            symbol: tokenMetadata.symbol,
+            decimals: Number(tokenMetadata.decimals),
+            totalSupply: Number(tokenMetadata.total_supply_formatted),
+            socials: this.extractEvmSocials(tokenMetadata),
             pairAddress: tokenPrice.pairAddress,
-            description: moralisToken.description,
-            creationTime: new Date(moralisToken.created_at),
-            createdAt: new Date(moralisToken.created_at),
-            updatedAt: new Date(moralisToken.created_at),
-            dataSource: AutoTrackerTokenDataSource.MORALIS,
-        });
+            description: tokenMetadata.description,
+            logoUrl: tokenMetadata.logo ?? tokenMetadata.thumbnail,
+            creationTime: new Date(tokenMetadata.created_at),
+            dataSource: TokenDataSource.MORALIS,
+        };
+    }
+
+    private static buildSolanaTokenData(
+        tokenMetadata: MoralisSolanaTokenMetadata,
+        pair: MoralisSolanaTokenPairResponseData
+    ): TokenData {
+        return {
+            address: tokenMetadata.mint,
+            chainId: ChainsMap.solana,
+            name: tokenMetadata.name,
+            symbol: tokenMetadata.symbol,
+            decimals: Number(tokenMetadata.decimals),
+            totalSupply: Number(tokenMetadata.totalSupplyFormatted),
+            socials: this.extractSolanaSocials(tokenMetadata),
+            pairAddress: pair.pairAddress,
+            description: tokenMetadata.description,
+            dataSource: TokenDataSource.MORALIS,
+        };
     }
 
     static mapEvmTokenMetadataToTokenDataWithMarketCap(
@@ -101,29 +116,13 @@ export class MoralisMapper {
         tokenMetadata: MoralisEvmTokenMetaData, 
         tokenPrice: MoralisEvmTokenPrice
     ): TokenDataWithMarketCap {
+        const baseData = this.buildEvmTokenData(tokenMetadata, tokenPrice, chainId);
         return {
-            address: tokenMetadata.address,
-            name: tokenMetadata.name,
-            symbol: tokenMetadata.symbol,
-            marketCap: Number(tokenMetadata.market_cap),
-            chainId: chainId,
-            decimals: Number(tokenMetadata.decimals),
-            description: tokenMetadata.description,
-            socials: {
-                twitter: tokenMetadata.links.twitter,
-                telegram: tokenMetadata.links.telegram,
-                discord: tokenMetadata.links.discord,
-                website: tokenMetadata.links.website,
-                reddit: tokenMetadata.links.reddit,
-                instagram: tokenMetadata.links.instagram,
-            },
-            totalSupply: Number(tokenMetadata.total_supply_formatted),
-            pairAddress: tokenPrice.pairAddress,
-            price: tokenPrice.usdPrice,
-            liquidity: Number(tokenPrice.pairTotalLiquidityUsd),
-            logoUrl: tokenMetadata.logo ?? tokenMetadata.thumbnail,
-            dataSource: AutoTrackerTokenDataSource.MORALIS,
-        }
+            ...baseData,
+            price: this.extractEvmPrice(tokenPrice),
+            marketCap: this.extractEvmMarketCap(tokenMetadata),
+            liquidity: this.extractEvmLiquidity(tokenPrice),
+        };
     }
 
     static mapSolanaTokenMetadataToTokenDataWithMarketCap(
@@ -131,26 +130,21 @@ export class MoralisMapper {
         price: MoralisSolanaTokenPrice,
         pair: MoralisSolanaTokenPairResponseData
     ): TokenDataWithMarketCap {
+        const baseData = this.buildSolanaTokenData(tokenMetadata, pair);
         return {
-            address: tokenMetadata.mint,
-            name: tokenMetadata.name,
-            symbol: tokenMetadata.symbol,
-            marketCap: Number(tokenMetadata.fullyDilutedValue),
-            totalSupply: Number(tokenMetadata.totalSupplyFormatted),
-            chainId: ChainsMap.solana,
-            decimals: Number(tokenMetadata.decimals),
-            description: tokenMetadata.description,
-            socials: {
-                twitter: tokenMetadata.links.twitter,
-                telegram: tokenMetadata.links.telegram,
-                discord: tokenMetadata.links.discord,
-                website: tokenMetadata.links.website,
-                reddit: tokenMetadata.links.reddit,
-            },
-            price: price.usdPrice,
-            liquidity: pair.liquidityUsd,
-            pairAddress: pair.pairAddress,
-            dataSource: AutoTrackerTokenDataSource.MORALIS,
-        }
+            ...baseData,
+            price: this.extractSolanaPrice(price),
+            marketCap: this.extractSolanaMarketCap(tokenMetadata),
+            liquidity: this.extractSolanaLiquidity(pair),
+        };
+    }
+
+    static mapMoralisTokenToAutoTrackerToken(
+        moralisToken: MoralisEvmTokenMetaData,
+        tokenPrice: MoralisEvmTokenPrice,
+        chainId: ChainId
+    ): AutoTrackerToken {
+        const tokenData = this.buildEvmTokenData(moralisToken, tokenPrice, chainId);
+        return new AutoTrackerToken(tokenData);
     }
 }

@@ -1,11 +1,6 @@
 import { ChainId } from "../../../shared/chains";
 import { SocialMedia } from "../socials/types";
-
-export enum AutoTrackerTokenDataSource {
-    BIRDEYE = "birdeye",
-    GMGN = "gmgn",
-    MORALIS = "moralis",
-}
+import { TokenDataSource } from "@prisma/client";
 
 export interface TokenData {
     id?: string;
@@ -23,7 +18,7 @@ export interface TokenData {
     updatedAt?: Date;
     createdBy?: string;
     creationTime?: Date;
-    dataSource: AutoTrackerTokenDataSource;
+    dataSource: TokenDataSource;
 }
 
 export type TokenDataWithMarketCap = TokenData & TokenPriceDetails
