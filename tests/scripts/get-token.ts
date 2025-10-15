@@ -1,8 +1,10 @@
-import { BirdEyeFetcherService } from "../lib/services/apis/birdeye/birdeye-service";
-import { MoralisService } from "../lib/services/apis/moralis/moralis-service";
-import { ChainId, ChainsMap } from "../shared/chains";
-import { GmGnService } from "../lib/services/apis/gmgn/gmgn-service";
+import { BirdEyeFetcherService } from "../../src/lib/services/apis/birdeye/birdeye-service"
+import { GmGnService } from "../../src/lib/services/apis/gmgn/gmgn-service"
+import { MoralisService } from "../../src/lib/services/apis/moralis/moralis-service"
+import { ChainId, ChainsMap } from "../../src/shared/chains"
 
+const solanaTokenAddress = 'GHE4fYyf3wwZdYrXk2bBQ7mBoCEGDdHpDKtSHv9Zpump'
+const solanaChainId = ChainsMap.solana
 const tokenAddress = '0x10326d1fD404967B617368CcAD3A33B43b5C4444'
 const chainId = ChainsMap.bsc
 export const getToken = async (tokenAddress: string, chainId: ChainId) => {

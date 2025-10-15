@@ -59,7 +59,7 @@ export class TokenAnalyserService {
     // }
 
     async getHolders(tokenAddress: string, chainId: ChainId): Promise<string[]> {
-        const gmgnHolders = await this.gmgnService.getTopHolders(tokenAddress, chainId)
+        const gmgnHolders = await this.gmgnService.getHolders(tokenAddress, chainId)
         return gmgnHolders.map(holder => holder.address)
     }
 }

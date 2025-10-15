@@ -39,30 +39,73 @@ function hasAllRequiredKeys(data: any, requiredKeys: RequiredKeysSpec, prefix: K
 }
 
 /**
- * Deep merges two objects, preferring values from the source that aren't null/undefined
+ * Checks if an object is empty (has no own properties or all values are undefined/null/empty string)
  */
-function deepMerge<T extends Record<string, any>>(target: Partial<T>, source: Partial<T>): Partial<T> {
+function isEmptyObject(obj: any): boolean {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    return false;
+  }
+  
+  const keys = Object.keys(obj);
+  if (keys.length === 0) {
+    return true;
+  }
+  
+  // Check if all values are effectively empty
+  return keys.every(key => {
+    const value = obj[key];
+    return value === null || value === undefined || value === '' || isEmptyObject(value);
+  });
+}
+
+/**
+ * Deep merges two objects, preferring values from the source that aren't null/undefined/empty strings
+ */
+export function deepMerge<T extends Record<string, any>>(target: Partial<T>, source: Partial<T>): Partial<T> {
   const result = { ...target };
 
   for (const key in source) {
     const sourceValue = source[key];
     const targetValue = target[key];
 
-    if (sourceValue === null || sourceValue === undefined) {
+    // Skip null, undefined, and empty strings
+    if (sourceValue === null || sourceValue === undefined || sourceValue === '') {
       continue;
     }
 
-    if (sourceValue && typeof sourceValue === 'object' && !Array.isArray(sourceValue)) {
-      result[key] = deepMerge(
+    // Check if value is a plain object that should be recursively merged
+    const isPlainObject = sourceValue && 
+      typeof sourceValue === 'object' && 
+      !Array.isArray(sourceValue) &&
+      !((sourceValue as any) instanceof Date) &&
+      !((sourceValue as any) instanceof RegExp);
+    
+    if (isPlainObject) {
+      const merged = deepMerge(
         (targetValue as Record<string, any>) || {},
         sourceValue as Record<string, any>
       );
+      
+      // Only set the merged value if it's not an empty object
+      if (!isEmptyObject(merged)) {
+        result[key] = merged as any;
+      }
     } else {
       result[key] = sourceValue;
     }
   }
 
   return result;
+}
+
+/**
+ * Deep merges an array of objects, taking the first non-empty value for each field
+ * @param objects Array of objects to merge
+ * @returns Merged object with all non-empty values from the array
+ */
+export function deepMergeAll<T extends Record<string, any>>(objects: Partial<T>[]): Partial<T> {
+  // Reverse the merge order so that first non-empty values win
+  return objects.reduce((merged, current) => deepMerge(current, merged), {} as Partial<T>);
 }
 
 /**
@@ -97,4 +140,5 @@ export async function aggregateData<T extends Record<string, any>>(
   }
 
   return mergedData;
-} 
+}
+

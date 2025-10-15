@@ -1,4 +1,5 @@
 import { TelegramMessageData } from "../../lib/services/telegram-message-processor/types";
+import { ChainId } from "../../shared/chains";
 import { BaseQueueJobData, BaseQueueJobResult } from "../types";
 
 export enum TokenDetectionJobTypes {
@@ -11,5 +12,6 @@ export interface TokenDetectionJobResult<T = any> extends BaseQueueJobResult<Tok
 
 export interface TelegramTokenDetectionJobData {
     tokenAddress: string;
+    chainId?: ChainId;
     messageData: TelegramMessageData;
 }

@@ -1,0 +1,653 @@
+{
+  "tokenDistribution": {
+    "tokenDistributionStats": {
+      "top10Percentage": 47.91,
+      "top20Percentage": 54.23,
+      "creatorTokenPercentage": 0,
+      "numberOfHolders": 26790
+    },
+    "tokenHolders": [
+      {
+        "address": "0x128463a60784c4d3f46c23af3f65ed859ba87974",
+        "amount": 145329025.57281417,
+        "percentage": 14.53,
+        "dollarValue": 32613509.726259023,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x73d8bd54f7cf5fab43fe4ef40a62d390644946db",
+        "amount": 133233330.40866518,
+        "percentage": 13.32,
+        "dollarValue": 29899096.20613128,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x4982085c9e2f89f2ecb8131eca71afad896e89cb",
+        "amount": 71759840.20131694,
+        "percentage": 7.18,
+        "dollarValue": 16103735.89952864,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0xce5ad0ff16863f54a0daa27ff831177ad1144c07",
+        "amount": 44444445.88888844,
+        "percentage": 4.44,
+        "dollarValue": 9973846.329474071,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0xa759333921f36aa5256ed10f51370dd58457a4bb",
+        "amount": 20695895.57816392,
+        "percentage": 2.07,
+        "dollarValue": 4644397.697374722,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x3e8734ec146c981e3ed1f6b582d447dde701d90c",
+        "amount": 18623139.94734966,
+        "percentage": 1.86,
+        "dollarValue": 4179247.4243354965,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0xf8191d98ae98d2f7abdfb63a9b0b812b93c873aa",
+        "amount": 16462393.76,
+        "percentage": 1.65,
+        "dollarValue": 3694351.055428117,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x9fdc4dbf8570df68e4b0d6a812de49c6147210aa",
+        "amount": 9931985.031341888,
+        "percentage": 0.99,
+        "dollarValue": 2228852.0076702484,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x83eeb6485b92bcca43cacfa408c14d3506b33600",
+        "amount": 9438566.029421844,
+        "percentage": 0.94,
+        "dollarValue": 2118123.0919920946,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0xf0a949d3d93b833c183a27ee067165b6f2c9625e",
+        "amount": 9311956.605120087,
+        "percentage": 0.93,
+        "dollarValue": 2089710.4767239038,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": true,
+        "isCreator": false
+      },
+      {
+        "address": "0x2f50212845b09bce0e575e3cf21bfc1052466cf6",
+        "amount": 8684264.931867069,
+        "percentage": 0.87,
+        "dollarValue": 1948849.224747282,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x6d67b327ba277ca39d633bf62390114d74194762",
+        "amount": 7694341.579652218,
+        "percentage": 0.77,
+        "dollarValue": 1726699.005625815,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x24109270a0264c8a9092db255f92457d22a5ddaa",
+        "amount": 6273093.310054485,
+        "percentage": 0.63,
+        "dollarValue": 1407754.4996590368,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x872a4f6aa517908fe77978f21a9f5c8c9ab0e6b8",
+        "amount": 6064499.503396698,
+        "percentage": 0.61,
+        "dollarValue": 1360943.6432904813,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x442824afe0f5a64d3dbe1b13d44e95fc5c9cf5cd",
+        "amount": 6049613.71468483,
+        "percentage": 0.6,
+        "dollarValue": 1357603.100594182,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x337640f11ba5f4f6ee08ce2bd7a04d1464aef47f",
+        "amount": 6000444.181440986,
+        "percentage": 0.6,
+        "dollarValue": 1346568.8901578072,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0xa1df5a39d5e779592bb76b9484745732e723f9ef",
+        "amount": 5953020.457864279,
+        "percentage": 0.6,
+        "dollarValue": 1335926.4595488617,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0x08f6220ce7afa298576457463bb7dc4c23400044",
+        "amount": 5839253.076667416,
+        "percentage": 0.58,
+        "dollarValue": 1310395.7468879148,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0xb8bd3e34e33541cca1571c3e55e337a09a3225c0",
+        "amount": 5573840.807957102,
+        "percentage": 0.56,
+        "dollarValue": 1250834.172227006,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      },
+      {
+        "address": "0xac04a60560c4f2ef59cdab8275eeb562c98e9481",
+        "amount": 5000000,
+        "percentage": 0.5,
+        "dollarValue": 1122057.67559897,
+        "isKOL": false,
+        "isWhale": false,
+        "significantHolderIn": [],
+        "isPool": false,
+        "isCreator": false
+      }
+    ]
+  },
+  "tokenSecurity": {
+    "isHoneypot": false,
+    "isMintable": false,
+    "isLpTokenBurned": true,
+    "isPausable": false,
+    "isFreezable": false,
+    "buyTax": 0,
+    "sellTax": 0,
+    "isBlacklist": true,
+    "isRenounced": false
+  },
+  "priceDetails": {
+    "price": 0.22441153511979398,
+    "marketCap": 224411535.11979398,
+    "liquidity": 8791997.45934559
+  },
+  "rawData": {
+    "birdeye": {
+      "tokenOverview": {
+        "address": "0x0A43fC31a73013089DF59194872Ecae4cAe14444",
+        "decimals": 18,
+        "symbol": "4",
+        "name": "4",
+        "marketCap": 224411535.11979398,
+        "fdv": 224411535.11979398,
+        "extensions": {
+          "twitter": null,
+          "website": null,
+          "telegram": null
+        },
+        "logoURI": "https://static.four.meme/market/e3447c5e-0d2b-4396-82fb-41728a307c1810742350536792931068.jpeg",
+        "liquidity": 8791997.45934559,
+        "lastTradeUnixTime": 1760481007,
+        "lastTradeHumanTime": "2025-10-14T22:30:07",
+        "price": 0.22441153511979398,
+        "history1hPrice": 0.19917546200804093,
+        "priceChange1hPercent": 12.670272159697182,
+        "uniqueWallet1h": 1547,
+        "uniqueWalletHistory1h": 1036,
+        "uniqueWallet1hChangePercent": 49.32432432432432,
+        "totalSupply": 1000000000,
+        "circulatingSupply": 1000000000,
+        "holder": 27037,
+        "trade1h": 8355,
+        "tradeHistory1h": 4201,
+        "trade1hChangePercent": 98.8812187574387,
+        "sell1h": 4301,
+        "sellHistory1h": 2087,
+        "sell1hChangePercent": 106.08528988979396,
+        "buy1h": 4054,
+        "buyHistory1h": 2114,
+        "buy1hChangePercent": 91.76915799432356,
+        "v1h": 41468463.882186085,
+        "v1hUSD": 8899145.121243872,
+        "vHistory1h": 14460130.77819907,
+        "vHistory1hUSD": 2854034.6233534757,
+        "v1hChangePercent": 186.7779311146089,
+        "vBuy1h": 21659407.41144022,
+        "vBuy1hUSD": 4661844.458934314,
+        "vBuyHistory1h": 7767131.662548969,
+        "vBuyHistory1hUSD": 1538045.1159471325,
+        "vBuy1hChangePercent": 178.85979474090917,
+        "vSell1h": 19809056.470745865,
+        "vSell1hUSD": 4237300.662309559,
+        "vSellHistory1h": 6692999.1156501,
+        "vSellHistory1hUSD": 1315989.5074063435,
+        "vSell1hChangePercent": 195.9668173932186,
+        "numberMarkets": 43
+      },
+      "tokenSecurity": {
+        "antiWhaleModifiable": "0",
+        "buyTax": "0",
+        "canTakeBackOwnership": "0",
+        "cannotBuy": "0",
+        "cannotSellAll": "0",
+        "creatorAddress": "0x5511b9cba5f6a01f7685236393faca4415777f3d",
+        "creatorBalance": "0.000000000000000001",
+        "creatorPercentage": "0.000000",
+        "externalCall": "0",
+        "hiddenOwner": "0",
+        "holderCount": "26790",
+        "honeypotWithSameCreator": "0",
+        "isAntiWhale": "0",
+        "isBlacklisted": "0",
+        "isHoneypot": "0",
+        "isInDex": "1",
+        "isMintable": "0",
+        "isOpenSource": "1",
+        "isProxy": "0",
+        "isWhitelisted": "0",
+        "launchpadToken": {
+          "is_launchpad_token": "1",
+          "launchpad_name": "four.meme"
+        },
+        "lpHolderCount": "21",
+        "lpHolders": [
+          {
+            "address": "0x000000000000000000000000000000000000dead",
+            "tag": "",
+            "value": null,
+            "is_contract": 0,
+            "balance": "59396.96961656815029505",
+            "percent": "0.951151029563833988",
+            "NFT_list": null,
+            "is_locked": 1
+          },
+          {
+            "address": "0x09d0fa3722339a0810409f2ce70dbebdeb87b5b6",
+            "tag": "",
+            "value": null,
+            "is_contract": 0,
+            "balance": "1108.606513525003361552",
+            "percent": "0.017752626666434363",
+            "NFT_list": null,
+            "is_locked": 0
+          },
+          {
+            "address": "0x897514c38477b6b9c756cebd7b531768cac1e2d0",
+            "tag": "",
+            "value": null,
+            "is_contract": 0,
+            "balance": "346.853971137553896545",
+            "percent": "0.005554332382367260",
+            "NFT_list": null,
+            "is_locked": 0
+          },
+          {
+            "address": "0xab4fa35b93156b9e492635ae149886026d315855",
+            "tag": "",
+            "value": null,
+            "is_contract": 1,
+            "balance": "175.435858591536275942",
+            "percent": "0.002809335200077436",
+            "NFT_list": null,
+            "is_locked": 0
+          },
+          {
+            "address": "0x5b8dbcb859dd52865936d96b05ff12ffae866ef2",
+            "tag": "",
+            "value": null,
+            "is_contract": 1,
+            "balance": "52.84192422857189575",
+            "percent": "0.000846182068859630",
+            "NFT_list": null,
+            "is_locked": 0
+          },
+          {
+            "address": "0xc51f0e83cc389271ba0e502204bc2c3b646f04c5",
+            "tag": "",
+            "value": null,
+            "is_contract": 0,
+            "balance": "25.157700477422493313",
+            "percent": "0.000402861844047415",
+            "NFT_list": null,
+            "is_locked": 0
+          },
+          {
+            "address": "0xdfffaeeaabf1140d1ddf98a7138b96cf1e63a08b",
+            "tag": "",
+            "value": null,
+            "is_contract": 0,
+            "balance": "15.832662485567183273",
+            "percent": "0.000253535716065947",
+            "NFT_list": null,
+            "is_locked": 0
+          },
+          {
+            "address": "0x0ed943ce24baebf257488771759f9bf482c39706",
+            "tag": "",
+            "value": null,
+            "is_contract": 1,
+            "balance": "10.186618950800893381",
+            "percent": "0.000163123020675554",
+            "NFT_list": null,
+            "is_locked": 0
+          },
+          {
+            "address": "0x70447ae6411513d9644f0b06b4be09c7a0e90ed2",
+            "tag": "",
+            "value": null,
+            "is_contract": 1,
+            "balance": "9.663300889184755634",
+            "percent": "0.000154742887542353",
+            "NFT_list": null,
+            "is_locked": 0
+          },
+          {
+            "address": "0xac298df52a27b8dbacd7ce1e2523d1bf6b92c29b",
+            "tag": "",
+            "value": null,
+            "is_contract": 1,
+            "balance": "6.14109110104110824",
+            "percent": "0.000098340120061802",
+            "NFT_list": null,
+            "is_locked": 0
+          }
+        ],
+        "lpTotalSupply": "62447.463936201185205921",
+        "ownerAddress": "0x0000000000000000000000000000000000000000",
+        "ownerBalance": "0",
+        "ownerChangeBalance": "0",
+        "ownerPercentage": "0.000000",
+        "personalSlippageModifiable": "0",
+        "sellTax": "0",
+        "slippageModifiable": "0",
+        "tokenName": "4",
+        "tokenSymbol": "4",
+        "totalSupply": "1000000000",
+        "tradingCooldown": "0",
+        "transferPausable": "0",
+        "transferTax": "0"
+      }
+    },
+    "gmgn": {
+      "holders": [],
+      "socials": {
+        "address": "0x0A43fC31a73013089DF59194872Ecae4cAe14444",
+        "link": {
+          "address": "",
+          "gmgn": "https://gmgn.ai/bsc/token/0x0A43fC31a73013089DF59194872Ecae4cAe14444",
+          "geckoterminal": "",
+          "twitter_username": "",
+          "website": "",
+          "telegram": "",
+          "bitbucket": "",
+          "discord": "",
+          "description": "",
+          "facebook": "",
+          "github": "",
+          "instagram": "",
+          "linkedin": "",
+          "medium": "",
+          "reddit": "",
+          "tiktok": "",
+          "youtube": "",
+          "verify_status": 0
+        },
+        "rug": {
+          "address": "0x0a43fc31a73013089df59194872ecae4cae14444",
+          "rug_ratio": "0.03797468",
+          "holder_rugged_num": 6,
+          "holder_token_num": 158,
+          "rugged_tokens": [
+            {
+              "address": "0x6709d2b542fc540534e3270d002c23ca3181471c",
+              "symbol": "PE",
+              "name": "PEPE",
+              "logo": ""
+            },
+            {
+              "address": "0x1d9699b0ee033641507960cb2ce8e1964866e657",
+              "symbol": "NOODLE",
+              "name": "Noodleface",
+              "logo": ""
+            },
+            {
+              "address": "0x71ed8d6c04b0791023cc0caba2a6a2a5c4fc149f",
+              "symbol": "AINFT",
+              "name": "EternaFi Agents",
+              "logo": ""
+            },
+            {
+              "address": "0xbbb2ac583d975ac89bfe93428997f1a3e395b3e7",
+              "symbol": "ZENQ",
+              "name": "Zenqira",
+              "logo": ""
+            },
+            {
+              "address": "0xc46b8395274a3b421a7782ac13bed6bd65898888",
+              "symbol": "LUNCH",
+              "name": "Lunch For Kids",
+              "logo": "https://gmgn.ai/external-res/e741f56911e2a85011bf4fb888a76638.webp"
+            }
+          ]
+        },
+        "vote": {
+          "like": 0,
+          "unlike": 0
+        }
+      }
+    },
+    "chainBase": {
+      "topHolders": [
+        {
+          "amount": "145329025.572814173537670403",
+          "original_amount": "145329025572814173537670403",
+          "usd_value": "0.000000",
+          "wallet_address": "0x128463a60784c4d3f46c23af3f65ed859ba87974"
+        },
+        {
+          "amount": "133233330.408665177106446790",
+          "original_amount": "133233330408665177106446790",
+          "usd_value": "0.000000",
+          "wallet_address": "0x73d8bd54f7cf5fab43fe4ef40a62d390644946db"
+        },
+        {
+          "amount": "71759840.201316936075263263",
+          "original_amount": "71759840201316936075263263",
+          "usd_value": "0.000000",
+          "wallet_address": "0x4982085c9e2f89f2ecb8131eca71afad896e89cb"
+        },
+        {
+          "amount": "44444445.888888444444444440",
+          "original_amount": "44444445888888444444444440",
+          "usd_value": "0.000000",
+          "wallet_address": "0xce5ad0ff16863f54a0daa27ff831177ad1144c07"
+        },
+        {
+          "amount": "20695895.578163921198829613",
+          "original_amount": "20695895578163921198829613",
+          "usd_value": "0.000000",
+          "wallet_address": "0xa759333921f36aa5256ed10f51370dd58457a4bb"
+        },
+        {
+          "amount": "18623139.947349658475397940",
+          "original_amount": "18623139947349658475397940",
+          "usd_value": "0.000000",
+          "wallet_address": "0x3e8734ec146c981e3ed1f6b582d447dde701d90c"
+        },
+        {
+          "amount": "16462393.760000000130285568",
+          "original_amount": "16462393760000000130285568",
+          "usd_value": "0.000000",
+          "wallet_address": "0xf8191d98ae98d2f7abdfb63a9b0b812b93c873aa"
+        },
+        {
+          "amount": "9931985.031341888840809726",
+          "original_amount": "9931985031341888840809726",
+          "usd_value": "0.000000",
+          "wallet_address": "0x9fdc4dbf8570df68e4b0d6a812de49c6147210aa"
+        },
+        {
+          "amount": "9438566.029421843746701866",
+          "original_amount": "9438566029421843746701866",
+          "usd_value": "0.000000",
+          "wallet_address": "0x83eeb6485b92bcca43cacfa408c14d3506b33600"
+        },
+        {
+          "amount": "9311956.605120087032291493",
+          "original_amount": "9311956605120087032291493",
+          "usd_value": "0.000000",
+          "wallet_address": "0xf0a949d3d93b833c183a27ee067165b6f2c9625e"
+        },
+        {
+          "amount": "8684264.931867068165773462",
+          "original_amount": "8684264931867068165773462",
+          "usd_value": "0.000000",
+          "wallet_address": "0x2f50212845b09bce0e575e3cf21bfc1052466cf6"
+        },
+        {
+          "amount": "7694341.579652217682553599",
+          "original_amount": "7694341579652217682553599",
+          "usd_value": "0.000000",
+          "wallet_address": "0x6d67b327ba277ca39d633bf62390114d74194762"
+        },
+        {
+          "amount": "6273093.310054485043908004",
+          "original_amount": "6273093310054485043908004",
+          "usd_value": "0.000000",
+          "wallet_address": "0x24109270a0264c8a9092db255f92457d22a5ddaa"
+        },
+        {
+          "amount": "6064499.503396698721563133",
+          "original_amount": "6064499503396698721563133",
+          "usd_value": "0.000000",
+          "wallet_address": "0x872a4f6aa517908fe77978f21a9f5c8c9ab0e6b8"
+        },
+        {
+          "amount": "6049613.714684830448698784",
+          "original_amount": "6049613714684830448698784",
+          "usd_value": "0.000000",
+          "wallet_address": "0x442824afe0f5a64d3dbe1b13d44e95fc5c9cf5cd"
+        },
+        {
+          "amount": "6000444.181440985536181522",
+          "original_amount": "6000444181440985536181522",
+          "usd_value": "0.000000",
+          "wallet_address": "0x337640f11ba5f4f6ee08ce2bd7a04d1464aef47f"
+        },
+        {
+          "amount": "5953020.457864278637167020",
+          "original_amount": "5953020457864278637167020",
+          "usd_value": "0.000000",
+          "wallet_address": "0xa1df5a39d5e779592bb76b9484745732e723f9ef"
+        },
+        {
+          "amount": "5839253.076667416054327743",
+          "original_amount": "5839253076667416054327743",
+          "usd_value": "0.000000",
+          "wallet_address": "0x08f6220ce7afa298576457463bb7dc4c23400044"
+        },
+        {
+          "amount": "5573840.807957101740027478",
+          "original_amount": "5573840807957101740027478",
+          "usd_value": "0.000000",
+          "wallet_address": "0xb8bd3e34e33541cca1571c3e55e337a09a3225c0"
+        },
+        {
+          "amount": "5000000.000000000000000000",
+          "original_amount": "5000000000000000000000000",
+          "usd_value": "0.000000",
+          "wallet_address": "0xac04a60560c4f2ef59cdab8275eeb562c98e9481"
+        }
+      ]
+    }
+  },
+  "token": {
+    "address": "0x0A43fC31a73013089DF59194872Ecae4cAe14444",
+    "chainId": "56",
+    "name": "4",
+    "symbol": "4",
+    "decimals": 18,
+    "socials": {},
+    "logoUrl": "https://static.four.meme/market/e3447c5e-0d2b-4396-82fb-41728a307c1810742350536792931068.jpeg",
+    "createdBy": "0x5511b9cba5f6a01f7685236393faca4415777f3d",
+    "pairAddress": "0xF0a949d3D93B833C183a27Ee067165B6F2C9625e",
+    "createdAt": "2025-10-14T21:14:51.735Z",
+    "updatedAt": "2025-10-14T21:14:51.735Z",
+    "totalSupply": 1000000000,
+    "dataSource": "birdeye"
+  }
+}

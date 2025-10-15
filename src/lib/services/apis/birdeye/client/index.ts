@@ -5,6 +5,7 @@ import {
   BirdEyeHistoricalPriceDataResponse,
   BirdEyeOverviewResponse,
   BirdEyeResponse,
+  BirdeyeSearchResponse,
   BirdeyeTokenListResponse,
   BirdeyeTokenMetadataResponse,
   BirdeyeTokenSecurityResponse,
@@ -15,7 +16,7 @@ import {
   MarketsResponse,
   OhlcDataResponse,
   OhlcvItem,
-  TimeInterval,
+  BirdeyeTimeInterval,
   TokenListItem,
   TokenPriceResponse,
   TopHolder,
@@ -36,13 +37,16 @@ export class BirdEyeClient {
     this.apiKey = apiKey;
   }
 
-  private async get<T>(url: string, apiKey: string = this.apiKey, chain: BirdeyeChain): Promise<T> {
+  private async get<T>(url: string, apiKey: string = this.apiKey, chain?: BirdeyeChain): Promise<T> {
     try {
       const headers: Record<string, string> = {
         'X-API-KEY': apiKey,
         'accept': 'application/json',
-        'x-chain': chain
       };
+
+      if (chain) {
+        headers['x-chain'] = chain;
+      }
       
       const response: AxiosResponse<T> = await axios.get(url, { headers });
       if (response.status !== 200) {
@@ -88,19 +92,19 @@ export class BirdEyeClient {
   }
 
   async getTokenPrice(tokenAddress: string, chain: BirdeyeChain = 'solana'): Promise<number> {
-    const url = `${this.baseUrl}/defi/price?address=${tokenAddress}`;
+    const url = `${this.baseUrl}/defi/price?address=${encodeURIComponent(tokenAddress)}`;
     const {data} = await this.get<TokenPriceResponse>(url, this.apiKey, chain);
     return data?.value
   }
 
   async getTopHolders(tokenAddress: string, limit: number = 20, chain: BirdeyeChain = 'solana'): Promise<TopHolder[]> {
-    const url = `${this.baseUrl}/defi/v3/token/holder?offset=0&limit=${limit}&address=${tokenAddress}`;
+    const url = `${this.baseUrl}/defi/v3/token/holder?offset=0&limit=${limit}&address=${encodeURIComponent(tokenAddress)}`;
     const {data} = await this.get<TopHolderResponse>(url, this.apiKey, chain);
     return data.items.map(holder => (holder))
   }
 
   async getCreationData(tokenAddress: string, chain: BirdeyeChain = 'solana'): Promise<CreationData | null> {
-    const url = `${this.baseUrl}/defi/token_creation_info?address=${tokenAddress}`;
+    const url = `${this.baseUrl}/defi/token_creation_info?address=${encodeURIComponent(tokenAddress)}`;
     let {data, success} = await this.get<BirdEyeResponse<CreationData>>(url, this.apiKey, chain);
     if (!data || !success) {
       return null
@@ -110,23 +114,23 @@ export class BirdEyeClient {
   }
 
   async getTokenSecurity(tokenAddress: string, chain: BirdeyeChain = 'solana'): Promise<BirdeyeTokenSecurityResponse> {
-    const url = `${this.baseUrl}/defi/token_security?address=${tokenAddress}`;
+    const url = `${this.baseUrl}/defi/token_security?address=${encodeURIComponent(tokenAddress)}`;
     return await this.get<BirdeyeTokenSecurityResponse>(url, this.apiKey, chain);
   }
 
   async getTokenMetadata(tokenAddress: string, chain: BirdeyeChain = 'solana'): Promise<BirdeyeTokenMetadataResponse> {
-    const url = `${this.baseUrl}/defi/v3/token/meta-data/single?address=${tokenAddress}`;
+    const url = `${this.baseUrl}/defi/v3/token/meta-data/single?address=${encodeURIComponent(tokenAddress)}`;
     return await this.get<BirdeyeTokenMetadataResponse>(url, this.apiKey, chain);
   }
 
   async getTokenPriceWithApiKey(tokenAddress: string, apiKey: string, chain: BirdeyeChain = 'solana'): Promise<number> {
-    const url = `${this.baseUrl}/defi/price?address=${tokenAddress}`;
+    const url = `${this.baseUrl}/defi/price?address=${encodeURIComponent(tokenAddress)}`;
     const {data} = await this.get<TokenPriceResponse>(url, apiKey, chain);
     return data.value
   }
 
-  async getOhlcData(tokenAddress: string, to: number, from: number, interval: TimeInterval = '30m', chain: BirdeyeChain = 'solana'): Promise<OhlcvItem[]> {
-    const data = await this.get<OhlcDataResponse>(`${this.baseUrl}/defi/ohlcv?address=${tokenAddress}&type=${interval}&time_from=${from}&time_to=${to}`, this.apiKey, chain);
+  async getOhlcData(tokenAddress: string, to: number, from: number, interval: BirdeyeTimeInterval = '30m', chain: BirdeyeChain = 'solana'): Promise<OhlcvItem[]> {
+    const data = await this.get<OhlcDataResponse>(`${this.baseUrl}/defi/ohlcv?address=${encodeURIComponent(tokenAddress)}&type=${encodeURIComponent(interval)}&time_from=${from}&time_to=${to}`, this.apiKey, chain);
     return data.data.items.map(item => {
       const {unixTime, ...rest} = item;
       return {
@@ -136,7 +140,7 @@ export class BirdEyeClient {
     });
   }
 
-  async getAllTimeHighForTokenAfterDate(tokenAddress: string, from: Date, to: Date = new Date(), interval: TimeInterval = '30m', chain: BirdeyeChain = 'solana'): Promise<HistoricalPriceItem> {
+  async getAllTimeHighForTokenAfterDate(tokenAddress: string, from: Date, to: Date = new Date(), interval: BirdeyeTimeInterval = '30m', chain: BirdeyeChain = 'solana'): Promise<HistoricalPriceItem> {
     const fromInSeconds = Math.floor(from.getTime() / 1000);
     const toInSeconds = Math.floor(to.getTime() / 1000);
     const ohlcData = await this.getOhlcData(tokenAddress, toInSeconds, fromInSeconds, interval, chain);
@@ -173,13 +177,15 @@ export class BirdEyeClient {
     return data.tokens;
   }
 
-  async getTokenOverview(tokenAddress: string, timeFrames: TimeInterval[] = ['1H'], chain: BirdeyeChain = 'solana'): Promise<BirdTokenEyeOverview> {
+  async getTokenOverview(tokenAddress: string, timeFrames: BirdeyeTimeInterval[] = ['1h'], chain: BirdeyeChain = 'solana'): Promise<BirdTokenEyeOverview> {
     const frames = timeFrames.join(',');
-    const url = `${this.baseUrl}/defi/token_overview?address=${tokenAddress}&frames=${frames}`;
+    const url = `${this.baseUrl}/defi/token_overview?address=${encodeURIComponent(tokenAddress)}&frames=${encodeURIComponent(frames)}&ui_amount_mode=scaled`;
+
     const {data} = await this.get<BirdEyeOverviewResponse>(url, this.apiKey, chain);
     if (!data) {
       throw new Error('No data found')
     }
+
     return data
   }
 
@@ -232,7 +238,7 @@ export class BirdEyeClient {
       chain
     } = options;
 
-    const url = `${this.baseUrl}/defi/v2/markets?address=${tokenAddress}&time_frame=${timeFrame}&sort_type=${sortType}&sort_by=${sortBy}&offset=${offset}&limit=${limit}`;
+    const url = `${this.baseUrl}/defi/v2/markets?address=${encodeURIComponent(tokenAddress)}&time_frame=${encodeURIComponent(timeFrame)}&sort_type=${encodeURIComponent(sortType)}&sort_by=${encodeURIComponent(sortBy)}&offset=${offset}&limit=${limit}`;
 
     return await this.get<MarketsResponse>(url, this.apiKey, chain);
   }
@@ -260,7 +266,7 @@ export class BirdEyeClient {
       uiAmountMode = 'scaled',
       chain = 'solana'
     } = options
-    const url = `${this.baseUrl}/defi/v3/txs?address=${tokenAddress}&offset=${offset}&limit=${limit}&sort_by=${sortBy}&sort_type=${sortType}&tx_type=${txType}&ui_amount_mode=${uiAmountMode}&before_time=${beforeTimestamp}&after_time=${afterTimestamp}`
+    const url = `${this.baseUrl}/defi/v3/txs?address=${encodeURIComponent(tokenAddress)}&offset=${offset}&limit=${limit}&sort_by=${encodeURIComponent(sortBy)}&sort_type=${encodeURIComponent(sortType)}&tx_type=${encodeURIComponent(txType)}&ui_amount_mode=${encodeURIComponent(uiAmountMode)}&before_time=${beforeTimestamp}&after_time=${afterTimestamp}`
     
     return await this.get<TradesResponse>(url, this.apiKey, chain)
   }
@@ -330,7 +336,7 @@ export class BirdEyeClient {
       chain = 'solana'
     } = options
 
-    let url = `${this.baseUrl}/defi/txs/token/seek_by_time?address=${tokenAddress}&offset=${offset}&limit=${limit}&tx_type=${txType}&ui_amount_mode=${uiAmountMode}`
+    let url = `${this.baseUrl}/defi/txs/token/seek_by_time?address=${encodeURIComponent(tokenAddress)}&offset=${offset}&limit=${limit}&tx_type=${encodeURIComponent(txType)}&ui_amount_mode=${encodeURIComponent(uiAmountMode)}`
     
     if (beforeTime) {
       url += `&before_time=${beforeTime}`
@@ -353,10 +359,10 @@ export class BirdEyeClient {
     return await this.get<WalletPnlResponse>(url, this.apiKey, chain)
   }
 
-  async getHistoricalPriceData(tokenAddress: string, from: number, to: number, interval: TimeInterval = '5m', chain: BirdeyeChain = 'solana'): Promise<HistoricalPriceItem[]> {
+  async getHistoricalPriceData(tokenAddress: string, from: number, to: number, interval: BirdeyeTimeInterval = '5m', chain: BirdeyeChain = 'solana'): Promise<HistoricalPriceItem[]> {
     const fromInSeconds = Math.floor(from / 1000);
     const toInSeconds = Math.floor(to / 1000);
-    const url = `${this.baseUrl}/defi/history_price?address=${tokenAddress}&address_type=token&type=${interval}&time_from=${fromInSeconds}&time_to=${toInSeconds}`;
+    const url = `${this.baseUrl}/defi/history_price?address=${encodeURIComponent(tokenAddress)}&address_type=token&type=${encodeURIComponent(interval)}&time_from=${fromInSeconds}&time_to=${toInSeconds}`;
     const data = await this.get<BirdEyeHistoricalPriceDataResponse>(url, this.apiKey, chain);
     return data.data.items.map(time => {
       const {timestamp, ...rest} = time;
@@ -367,20 +373,36 @@ export class BirdEyeClient {
     });
   }
 
-  intervalToMilliseconds = (interval: TimeInterval): number => {
-    const intervalMap: { [key in TimeInterval]: number } = {
-      "1D": 24 * 60 * 60 * 1000,
-      "1H": 60 * 60 * 1000,
-      "1W": 7 * 24 * 60 * 60 * 1000,
+  async search(
+    query: string,
+    options: {
+      limit?: number
+      offset?: number
+      chain?: BirdeyeChain
+      searchBy?: 'name' | 'symbol' | 'address' | 'combination'
+    } = {}
+  ): Promise<BirdeyeSearchResponse> {
+    const {
+      limit = 20,
+      offset = 0,
+      chain,
+      searchBy = 'address'
+    } = options
+
+    const url = `${this.baseUrl}/defi/v3/search?keyword=${encodeURIComponent(query)}&offset=${offset}&limit=${limit}&search_by=${searchBy}`
+    return await this.get<BirdeyeSearchResponse>(url, this.apiKey, chain)
+  }
+
+  intervalToMilliseconds = (interval: BirdeyeTimeInterval): number => {
+    const intervalMap: { [key in BirdeyeTimeInterval]: number } = {
+      "1h": 60 * 60 * 1000,
       "1m": 60 * 1000,
-      "2H": 2 * 60 * 60 * 1000,
-      "3m": 3 * 60 * 1000,
+      "2h": 2 * 60 * 60 * 1000,
+      "5m": 3 * 60 * 1000,
       "30m": 30 * 60 * 1000,
-      "4H": 4 * 60 * 60 * 1000,
-      "5m": 5 * 60 * 1000,
-      "6H": 6 * 60 * 60 * 1000,
-      "12H": 12 * 60 * 60 * 1000,
-      "15m": 15 * 60 * 1000
+      "4h": 4 * 60 * 60 * 1000,
+      "8h": 8 * 60 * 60 * 1000,
+      "24h": 24 * 60 * 60 * 1000,
     };
 
     return intervalMap[interval];

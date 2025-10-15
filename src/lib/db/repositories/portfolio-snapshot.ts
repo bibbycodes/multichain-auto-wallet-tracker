@@ -2,7 +2,6 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { Database } from "../database";
 export class PortfolioSnapshotRepository {
     constructor(private prisma: PrismaClient = Database.getInstance().prismaClient) {}
-    
     async create(portfolioSnapshot: Prisma.PortfolioSnapshotCreateInput) {
         return this.prisma.portfolioSnapshot.create({
             data: portfolioSnapshot

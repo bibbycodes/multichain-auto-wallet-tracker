@@ -33,33 +33,33 @@ model Chain {
   tracked_wallets       TrackedWallet[]
   wallet_performances   WalletPerformance[]
   mentions              Mentions[]
-  
+
   @@index([chain_id])
 }
 
 model Token {
-  id            String    @id @unique @default(uuid())
-  address       String    @unique
-  chain_id      String
-  name          String
-  symbol        String
-  created_by    String?
-  creation_time DateTime?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  decimals      Int
-  logo_url      String?
-  website_url   String?
-  telegram_url  String?
-  twitter_url   String?
-  discord_url   String?
-  reddit_url    String?
-  github_url    String?
-  description   String?
-  total_supply  String
-  pair_address  String
-  chain               Chain                @relation(fields: [chain_id], references: [chain_id])
-  data_source         TokenDataSource  @default(BIRDEYE)
+  id                  String                 @id @unique @default(uuid())
+  address             String                 @unique
+  chain_id            String
+  name                String
+  symbol              String
+  created_by          String?
+  creation_time       DateTime?
+  created_at          DateTime               @default(now())
+  updated_at          DateTime               @updatedAt
+  decimals            Int
+  logo_url            String?
+  website_url         String?
+  telegram_url        String?
+  twitter_url         String?
+  discord_url         String?
+  reddit_url          String?
+  github_url          String?
+  description         String?
+  total_supply        String
+  pair_address        String
+  chain               Chain                  @relation(fields: [chain_id], references: [chain_id])
+  data_source         TokenDataSource        @default(BIRDEYE)
   token_relationships TokenToWalletMapping[]
   token_holdings      TokenHolding[]
   token_distribution  TokenDistribution[]
@@ -73,10 +73,10 @@ model Token {
 }
 
 model Wallet {
-  id                  String               @id @default(uuid())
+  id                  String                 @id @default(uuid())
   address             String
   chain_id            String
-  chain               Chain                @relation(fields: [chain_id], references: [chain_id])
+  chain               Chain                  @relation(fields: [chain_id], references: [chain_id])
   created_at          DateTime
   updated_at          DateTime
   tracked_wallets     TrackedWallet[]
@@ -93,54 +93,54 @@ model Wallet {
 }
 
 model WalletSwaps {
-  id                 String   @id @default(uuid())
-  created_at         DateTime
-  updated_at         DateTime
-  token_id           String
-  wallet_id          String
-  wallet_address     String
-  amount_in          Float
-  amount_out         Float
-  amount_usd         Float
-  price              Float
-  market_cap         Float
-  hash               String
-  link               String
-  timestamp          DateTime
+  id             String   @id @default(uuid())
+  created_at     DateTime
+  updated_at     DateTime
+  token_id       String
+  wallet_id      String
+  wallet_address String
+  amount_in      Float
+  amount_out     Float
+  amount_usd     Float
+  price          Float
+  market_cap     Float
+  hash           String
+  link           String
+  timestamp      DateTime
 
   token  Token  @relation(fields: [token_id], references: [id])
   wallet Wallet @relation(fields: [wallet_id], references: [id])
 }
 
 model Mentions {
-  id         String   @id @default(uuid())
-  created_at DateTime
-  updated_at DateTime
-  token_address String
-  chain_id String
+  id                String        @id @default(uuid())
+  created_at        DateTime
+  updated_at        DateTime
+  token_address     String
+  chain_id          String
   social_channel_id String
-  social_channel SocialChannel @relation(fields: [social_channel_id], references: [id])
-  chain Chain @relation(fields: [chain_id], references: [chain_id])
-  token Token @relation(fields: [token_address], references: [address])
+  social_channel    SocialChannel @relation(fields: [social_channel_id], references: [id])
+  chain             Chain         @relation(fields: [chain_id], references: [chain_id])
+  token             Token         @relation(fields: [token_address], references: [address])
 }
 
 model WalletTransactions {
-  id         String          @id @default(uuid())
-  created_at DateTime
-  updated_at DateTime
-  wallet_id  String
+  id             String          @id @default(uuid())
+  created_at     DateTime
+  updated_at     DateTime
+  wallet_id      String
   wallet_address String
-  token_id   String
-  hash       String
-  timestamp  DateTime
-  type       TransactionType
-  status     String
-  from       String
-  to         String
-  value      Float
-  value_usd  Float
-  wallet     Wallet          @relation(fields: [wallet_id], references: [id])
-  token      Token           @relation(fields: [token_id], references: [id])
+  token_id       String
+  hash           String
+  timestamp      DateTime
+  type           TransactionType
+  status         String
+  from           String
+  to             String
+  value          Float
+  value_usd      Float
+  wallet         Wallet          @relation(fields: [wallet_id], references: [id])
+  token          Token           @relation(fields: [token_id], references: [id])
 }
 
 model LiquidityPool {
@@ -158,13 +158,13 @@ model LiquidityPool {
 }
 
 model TrackedWallet {
-  id         String   @id @default(uuid())
+  id         String              @id @default(uuid())
   wallet_id  String
   address    String
   chain_id   String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  types       TrackedWalletType[]
+  created_at DateTime            @default(now())
+  updated_at DateTime            @updatedAt
+  types      TrackedWalletType[]
 
   wallet Wallet @relation(fields: [wallet_id], references: [id])
   chain  Chain  @relation(fields: [chain_id], references: [chain_id])
@@ -175,15 +175,16 @@ model TrackedWallet {
 
 model TokenToWalletMapping {
   id         String                @id @default(uuid())
-  token_id   String 
-  wallet_id  String 
+  token_id   String
+  wallet_id  String
   type       TokenRelationshipType
   created_at DateTime              @default(now())
   updated_at DateTime              @updatedAt
 
   token  Token  @relation(fields: [token_id], references: [id])
   wallet Wallet @relation(fields: [wallet_id], references: [id])
-	@@map("TokenToWalletMapping")
+
+  @@map("TokenToWalletMapping")
 }
 
 model TokenHolding {
@@ -204,36 +205,36 @@ model TokenHolding {
 }
 
 model PortfolioSnapshot {
-  id         String   @id @default(uuid())
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  wallet_id  String
+  id             String   @id @default(uuid())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  wallet_id      String
   wallet_address String
-  usd_value  Float
-  data       Json
-  wallet     Wallet   @relation(fields: [wallet_id], references: [id])
+  usd_value      Float
+  data           Json
+  wallet         Wallet   @relation(fields: [wallet_id], references: [id])
 }
 
 model WalletPerformance {
-  id         String   @id @default(uuid())
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  wallet_id  String
-  wallet_address String
-  pnl        Float
-  win_rate   Float
-  total_profit Float
+  id                       String   @id @default(uuid())
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+  wallet_id                String
+  wallet_address           String
+  pnl                      Float
+  win_rate                 Float
+  total_profit             Float
   num_5x_profitable_trades Int
   num_2x_profitable_trades Int
   num_1x_profitable_trades Int
-  num_losses Int
-  num_wins Int
-  pnl_1d_percentage Float
-  pnl_7d_percentage Float
-  pnl_30d_percentage Float
-  realized_profit Float
-  unrealized_profit Float
-  chain_id   String
+  num_losses               Int
+  num_wins                 Int
+  pnl_1d_percentage        Float
+  pnl_7d_percentage        Float
+  pnl_30d_percentage       Float
+  realized_profit          Float
+  unrealized_profit        Float
+  chain_id                 String
 
   wallet Wallet @relation(fields: [wallet_id], references: [id])
   chain  Chain  @relation(fields: [chain_id], references: [chain_id])
@@ -293,11 +294,11 @@ model SocialChannel {
 }
 
 model Settings {
-  id String @id @default(uuid())
+  id         String   @id @default(uuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  version Int
-  data Json
+  version    Int
+  data       Json
 }
 
 enum SocialPlatform {
@@ -349,4 +350,3 @@ enum ChainType {
   EVM
   SOLANA
 }
-

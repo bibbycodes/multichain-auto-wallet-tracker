@@ -19,7 +19,7 @@ export class WalletDiscoveryService extends Singleton {
     const trendingTokens = await this.getTrackableTrendingTokens(chainId)
     for (const tokenAddress of trendingTokens) {
       const gmGnTopTraders = await this.gmgnService.getTopTraders(tokenAddress, chainId)
-      const gmGnTopHolders = await this.gmgnService.getTopHolders(tokenAddress, chainId)
+      const gmGnTopHolders = await this.gmgnService.getHolders(tokenAddress, chainId)
       const uniqueWallets = new Set<string>([...gmGnTopTraders.map(trader => trader.address), ...gmGnTopHolders.map(holder => holder.address)])
       for (const trader of uniqueWallets) {
         try {

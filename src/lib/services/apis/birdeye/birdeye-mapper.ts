@@ -1,71 +1,107 @@
 import { ChainId, getInternallySupportedChainIds } from "../../../../shared/chains";
-import { ChainsMap } from "../../../../shared/chains";
+import { AutoTrackerToken } from "../../../models/token";
 import { TokenData, AutoTrackerTokenDataSource, TokenDataWithMarketCap } from "../../../models/token/types";
+import { SocialMedia } from "../../../models/socials/types";
 import { BirdeyeChain } from "./client/index";
 import { BirdTokenEyeOverview, BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity } from "./client/types";
+import { CHAIN_ID_TO_BIRDEYE_CHAIN, BIRDEYE_CHAIN_TO_CHAIN_ID } from "./birdeye-chain-map";
 
 export class BirdeyeMapper {
     static chainIdToChain(chainId: ChainId): BirdeyeChain {
-        switch (chainId) {
-            case ChainsMap.ethereum:
-                return "ethereum";
-            case ChainsMap.bsc:
-                return "bsc";
-            case ChainsMap.polygon:
-                return "polygon";
-            case ChainsMap.arbitrum:
-                return "arbitrum";
-            case ChainsMap.avalanche:
-                return "avalanche";
-            case ChainsMap.optimism:
-                return "optimism";
-            case ChainsMap.base:
-                return "base";
-            case ChainsMap.zksync:
-                return "zksync";
-            case ChainsMap.solana:
-                return "solana";
-            default:
-                throw new Error(`Unsupported chain ID: ${chainId}`);
+        const chain = CHAIN_ID_TO_BIRDEYE_CHAIN[chainId];
+        if (!chain) {
+            throw new Error(`Unsupported chain ID: ${chainId}`);
         }
+        return chain;
     }
 
     static chainToChainId(chain: BirdeyeChain): ChainId {
-        switch (chain) {
-            case "ethereum":
-                return ChainsMap.ethereum;
-            case "bsc":
-                return ChainsMap.bsc;
-            case "polygon":
-                return ChainsMap.polygon;
-            case "arbitrum":
-                return ChainsMap.arbitrum;
-            case "avalanche":
-                return ChainsMap.avalanche;
-            case "optimism":
-                return ChainsMap.optimism;
-            case "base":
-                return ChainsMap.base;
-            case "zksync":
-                return ChainsMap.zksync;
-            case "solana":
-                return ChainsMap.solana;
-        }
+        return BIRDEYE_CHAIN_TO_CHAIN_ID[chain];
     }
 
     static getSupportedChains(): ChainId[] {
-        return [
-            ChainsMap.ethereum,
-            ChainsMap.bsc,
-            ChainsMap.polygon,
-            ChainsMap.arbitrum,
-            ChainsMap.avalanche,
-            ChainsMap.optimism,
-            ChainsMap.base,
-            ChainsMap.zksync,
-            ChainsMap.solana,
-        ].filter(chainId => getInternallySupportedChainIds().includes(chainId))
-    } 
+        return (Object.keys(CHAIN_ID_TO_BIRDEYE_CHAIN) as ChainId[])
+            .filter(chainId => getInternallySupportedChainIds().includes(chainId));
+    }
+
+    /**
+     * Static helper functions for extracting data from Birdeye structures
+     */
+    public static extractPrice(tokenOverview: BirdTokenEyeOverview): number {
+        return tokenOverview.price;
+    }
+
+    public static extractMarketCap(tokenOverview: BirdTokenEyeOverview): number {
+        return tokenOverview.mc ?? tokenOverview.marketCap ?? tokenOverview.fdv;
+    }
+
+    public static extractLiquidity(tokenOverview: BirdTokenEyeOverview): number {
+        return tokenOverview.liquidity;
+    }
+
+    public static extractSupply(tokenOverview: BirdTokenEyeOverview): number {
+        return tokenOverview.supply ?? tokenOverview.circulatingSupply ?? tokenOverview.totalSuply;
+    }
+
+    public static extractTotalSupply(tokenOverview: BirdTokenEyeOverview): number {
+        return tokenOverview.supply ?? tokenOverview.circulatingSupply ?? tokenOverview.totalSuply;
+    }
+
+    public static extractDecimals(tokenOverview: BirdTokenEyeOverview): number {
+        return tokenOverview.decimals;
+    }
+
+    public static extractName(tokenOverview: BirdTokenEyeOverview): string {
+        return tokenOverview.name;
+    }
+
+    public static extractSymbol(tokenOverview: BirdTokenEyeOverview): string {
+        return tokenOverview.symbol;
+    }
+
+    public static extractLogoUrl(tokenOverview: BirdTokenEyeOverview): string {
+        return tokenOverview.logoURI;
+    }
+
+    public static extractDescription(tokenOverview: BirdTokenEyeOverview): string | undefined {
+        return tokenOverview.extensions?.description;
+    }
+
+    public static extractSocials(tokenOverview: BirdTokenEyeOverview): SocialMedia {
+        return {
+            twitter: tokenOverview.extensions?.twitter || undefined,
+            telegram: tokenOverview.extensions?.telegram || undefined,
+            discord: tokenOverview.extensions?.discord || undefined,
+            website: tokenOverview.extensions?.website || undefined,
+        };
+    }
+
+    public static extractCreatedBy(tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity): string | undefined {
+        return tokenSecurity.creatorAddress ?? undefined;
+    }
+
+    private static buildTokenData(
+        address: string,
+        chainId: ChainId,
+        tokenOverview: BirdTokenEyeOverview,
+        tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity,
+        pairAddress: string
+    ): TokenData {
+        return {
+            address,
+            name: this.extractName(tokenOverview),
+            symbol: this.extractSymbol(tokenOverview),
+            chainId,
+            decimals: this.extractDecimals(tokenOverview),
+            totalSupply: this.extractTotalSupply(tokenOverview),
+            socials: this.extractSocials(tokenOverview),
+            pairAddress,
+            logoUrl: this.extractLogoUrl(tokenOverview),
+            description: this.extractDescription(tokenOverview),
+            createdBy: this.extractCreatedBy(tokenSecurity),
+            dataSource: AutoTrackerTokenDataSource.BIRDEYE,
+        };
+    }
 
     static mapTokenOverviewToTokenDataWithMarketCap(
         tokenAddress: string,
@@ -74,30 +110,13 @@ export class BirdeyeMapper {
         tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity,
         pairAddress: string
     ): TokenDataWithMarketCap {
+        const baseData = this.buildTokenData(tokenAddress, chainId, tokenOverview, tokenSecurity, pairAddress);
         return {
-            address: tokenAddress,
-            name: tokenOverview.name,
-            symbol: tokenOverview.symbol,
-            marketCap: tokenOverview.mc ?? tokenOverview.marketCap ?? tokenOverview.fdv,
-            chainId: chainId,
-            decimals: tokenOverview.decimals,
-            totalSupply: tokenOverview.supply ?? tokenOverview.circulatingSupply ?? tokenOverview.totalSuply,
-            socials: {
-                twitter: tokenOverview.extensions?.twitter ?? undefined,
-                telegram: tokenOverview.extensions?.telegram ?? undefined,
-                discord: tokenOverview.extensions?.discord ?? undefined,
-                website: tokenOverview.extensions?.website ?? undefined,
-                reddit: undefined,
-                instagram: undefined,
-            },
-            createdBy: tokenSecurity.creatorAddress,
-            pairAddress: pairAddress,
-            price: tokenOverview.price,
-            liquidity: tokenOverview.liquidity,
-            logoUrl: tokenOverview.logoURI,
-            description: tokenOverview.extensions?.description ?? undefined,
-            dataSource: AutoTrackerTokenDataSource.BIRDEYE,
-        }
+            ...baseData,
+            marketCap: this.extractMarketCap(tokenOverview),
+            price: this.extractPrice(tokenOverview),
+            liquidity: this.extractLiquidity(tokenOverview),
+        };
     }
 
     static mapTokenMetadataToTokenData(
@@ -107,26 +126,23 @@ export class BirdeyeMapper {
         tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity,
         pairAddress: string
     ): TokenData {
-        return {
-            address: tokenAddress,
-            name: tokenOverview.name,
-            symbol: tokenOverview.symbol,
-            chainId: chainId,
-            decimals: tokenOverview.decimals,
-            totalSupply: tokenOverview.supply ?? tokenOverview.circulatingSupply ?? tokenOverview.totalSuply,
-            socials: {
-                twitter: tokenOverview.extensions?.twitter ?? undefined,
-                telegram: tokenOverview.extensions?.telegram ?? undefined,
-                discord: tokenOverview.extensions?.discord ?? undefined,
-                website: tokenOverview.extensions?.website ?? undefined,
-                reddit: undefined,
-                instagram: undefined,
-            },
-            pairAddress: pairAddress,
-            logoUrl: tokenOverview.logoURI,
-            description: tokenOverview.extensions?.description ?? undefined,
-            createdBy: tokenSecurity.creatorAddress,
-            dataSource: AutoTrackerTokenDataSource.BIRDEYE,
-        }
+        return this.buildTokenData(tokenAddress, chainId, tokenOverview, tokenSecurity, pairAddress);
+    }
+
+    public static mapBirdeyeTokenToAutoTrackerToken(
+        tokenOverview: BirdTokenEyeOverview,
+        tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity,
+        pairAddress: string,
+        chainId: ChainId
+    ): AutoTrackerToken {
+        const tokenData = this.buildTokenData(
+            tokenOverview.address,
+            chainId,
+            tokenOverview,
+            tokenSecurity,
+            pairAddress
+        );
+
+        return new AutoTrackerToken(tokenData);
     }
 }

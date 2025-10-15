@@ -72,12 +72,12 @@ export interface TokenSecurity {
     isLpTokenBurned: boolean; // Is the LP token burned
     isPausable: boolean; // Can the token be paused
     isFreezable: boolean; // Can the token be freezed
+    isRenounced: boolean; // is token ownership renounced
     buyTax?: number;
     sellTax?: number;
     transferTax?: number;
     transferFee?: number;
     transferFeeUpgradeable?: boolean;
-    slippageModifiable?: boolean;
     isBlacklist?: boolean;
 }
 

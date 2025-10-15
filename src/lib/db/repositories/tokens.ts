@@ -1,8 +1,6 @@
-import { Prisma, PrismaClient, Token } from "@prisma/client";
+import { Prisma, PrismaClient, Token, TokenDataSource } from "@prisma/client";
 import { AutoTrackerToken } from "../../models/token";
-import { ChainId } from "../../../shared/chains";
 import { AutoTrackerTokenDataSource } from "../../models/token/types";
-import { TokenDataSource } from "@prisma/client";
 
 export class TokensRepository {
     constructor(private readonly prisma: PrismaClient) { }
@@ -80,27 +78,7 @@ export class TokensRepository {
     }
 
     toModel(token: Token): AutoTrackerToken {
-        return new AutoTrackerToken({
-            address: token.address,
-            chainId: token.chain_id as ChainId,
-            name: token.name,
-            symbol: token.symbol,
-            decimals: token.decimals,
-            socials: {
-                telegram: token.telegram_url ?? undefined,
-                twitter: token.twitter_url ?? undefined,
-                website: token.website_url ?? undefined,
-            },
-            logoUrl: token.logo_url ?? undefined,
-            description: token.description ?? undefined,
-            createdBy: token.created_by ?? undefined,
-            creationTime: token.creation_time ?? undefined,
-            pairAddress: token.pair_address ?? undefined,
-            createdAt: token.created_at ?? undefined,
-            updatedAt: token.updated_at ?? undefined,
-            totalSupply: Number(token.total_supply),
-            dataSource: this.dataSourceToEnum(token.data_source),
-        });
+        return AutoTrackerToken.fromDb(token)
     }
 }
 

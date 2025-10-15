@@ -75,7 +75,7 @@ export interface HistoricalPriceItem {
   value: number;
 }
 
-export type TimeInterval = '1m' | '3m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W'
+export type BirdeyeTimeInterval = '1m' | '5m' | '30m' | '1h' | '2h' | '4h' | '8h' | '24h'
 
 export interface BirdEyeOverviewResponse {
   data: BirdTokenEyeOverview;
@@ -660,4 +660,38 @@ export interface BirdeyeTokenMetadata {
 export interface BirdeyeTokenMetadataResponse {
   success: boolean
   data: BirdeyeTokenMetadata
+}
+
+export interface BirdeyeSearchToken {
+  address: string
+  symbol: string
+  name: string
+  decimals: number
+  chain: string
+  logo_uri?: string
+  verified?: boolean
+  mc?: number
+  liquidity?: number
+  price?: number
+  volume_24h?: number
+  price_change_24h?: number
+}
+
+export interface BirdeyeSearchMarket {
+  address: string
+  base_address: string
+  quote_address: string
+  base_symbol: string
+  quote_symbol: string
+  chain: string
+  liquidity?: number
+  volume_24h?: number
+}
+
+export interface BirdeyeSearchResponse {
+  success: boolean
+  data: {
+    tokens: BirdeyeSearchToken[]
+    markets: BirdeyeSearchMarket[]
+  }
 }

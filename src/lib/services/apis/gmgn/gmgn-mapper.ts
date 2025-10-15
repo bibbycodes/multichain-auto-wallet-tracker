@@ -3,8 +3,72 @@ import { AutoTrackerToken } from "../../../models/token";
 import { AutoTrackerTokenDataSource, TokenDataWithMarketCap } from "../../../models/token/types";
 import { GmGnMultiWindowTokenInfo, GmGnTokenSocials } from "python-proxy-scraper-client";
 import { getTwitterUrlFromUsername } from "../../../../utils/links";
+import { SocialMedia } from "../../../models/socials/types";
 
 export class GmGnMapper {
+    /**
+     * Static helper functions for extracting data from GmGn structures
+     */
+    static extractPrice(tokenInfo: GmGnMultiWindowTokenInfo): number {
+        return parseFloat(tokenInfo.price.price);
+    }
+
+    static extractMarketCap(tokenInfo: GmGnMultiWindowTokenInfo): number {
+        const circulatingSupply = parseFloat(tokenInfo.circulating_supply);
+        const price = parseFloat(tokenInfo.price.price);
+        return circulatingSupply * price;
+    }
+
+    static extractLiquidity(tokenInfo: GmGnMultiWindowTokenInfo): number {
+        return parseFloat(tokenInfo.liquidity);
+    }
+
+    static extractSupply(tokenInfo: GmGnMultiWindowTokenInfo): number {
+        return parseFloat(tokenInfo.circulating_supply);
+    }
+
+    static extractDecimals(tokenInfo: GmGnMultiWindowTokenInfo): number {
+        return tokenInfo.decimals;
+    }
+
+    static extractName(tokenInfo: GmGnMultiWindowTokenInfo): string {
+        return tokenInfo.name;
+    }
+
+    static extractSymbol(tokenInfo: GmGnMultiWindowTokenInfo): string {
+        return tokenInfo.symbol;
+    }
+
+    static extractLogoUrl(tokenInfo: GmGnMultiWindowTokenInfo): string {
+        return tokenInfo.logo;
+    }
+
+    static extractDescription(socials: GmGnTokenSocials): string | undefined {
+        return socials.link.description ?? undefined;
+    }
+
+    static extractSocials(socials: GmGnTokenSocials): SocialMedia {
+        return {
+            twitter: socials.link.twitter_username 
+                ? getTwitterUrlFromUsername(socials.link.twitter_username) 
+                : undefined,
+            telegram: socials.link.telegram || undefined, 
+            discord: socials.link.discord || undefined,
+            website: socials.link.website || undefined,
+            instagram: socials.link.instagram || undefined,
+            facebook: socials.link.facebook || undefined,
+            youtube: socials.link.youtube || undefined,
+            tiktok: socials.link.tiktok || undefined,
+            linkedin: socials.link.linkedin || undefined,
+            github: socials.link.github || undefined,
+            reddit: socials.link.reddit || undefined,
+        };
+    }
+
+    static extractCreatedBy(tokenInfo: GmGnMultiWindowTokenInfo): string {
+        return tokenInfo.dev.creator_address;
+    }
+
     static chainIdToChain(chainId: ChainId): string {
         switch (chainId) {
             case 'solana': return 'sol';
@@ -47,28 +111,16 @@ export class GmGnMapper {
         return new AutoTrackerToken({
             address: gmGnToken.address,
             chainId,
-            name: gmGnToken.name,
-            symbol: gmGnToken.symbol,
-            decimals: gmGnToken.decimals,
+            name: this.extractName(gmGnToken),
+            symbol: this.extractSymbol(gmGnToken),
+            decimals: this.extractDecimals(gmGnToken),
             totalSupply: Number(gmGnToken.total_supply),
-            socials: {
-                telegram: gmGnSocials.link.telegram,
-                twitter: gmGnSocials.link.twitter_username 
-                    ? getTwitterUrlFromUsername(gmGnSocials.link.twitter_username) 
-                    : undefined,
-                website: gmGnSocials.link.website,
-                instagram: gmGnSocials.link.instagram,
-                facebook: gmGnSocials.link.facebook,
-                youtube: gmGnSocials.link.youtube,
-                tiktok: gmGnSocials.link.tiktok,
-                linkedin: gmGnSocials.link.linkedin,
-                github: gmGnSocials.link.github,
-                reddit: gmGnSocials.link.reddit,
-            },
+            socials: this.extractSocials(gmGnSocials),
             pairAddress: gmGnToken.biggest_pool_address,
-            description: gmGnSocials.link.description,
-            logoUrl: gmGnToken.logo,
+            description: this.extractDescription(gmGnSocials),
+            logoUrl: this.extractLogoUrl(gmGnToken),
             creationTime: new Date(gmGnToken.creation_timestamp * 1000),
+            createdBy: this.extractCreatedBy(gmGnToken),
             createdAt: new Date(gmGnToken.creation_timestamp * 1000),
             updatedAt: new Date(),
             dataSource: AutoTrackerTokenDataSource.GMGN,
@@ -80,37 +132,22 @@ export class GmGnMapper {
         gmGnSocials: GmGnTokenSocials,
         chainId: ChainId
     ): TokenDataWithMarketCap {
-        const circulatingSupply = parseFloat(gmGnToken.circulating_supply);
-        const price = parseFloat(gmGnToken.price.price);
-        const marketCap = circulatingSupply * price;
-
         return {
             address: gmGnToken.address,
             chainId,
-            name: gmGnToken.name,
-            symbol: gmGnToken.symbol,
-            decimals: gmGnToken.decimals,
-            totalSupply: circulatingSupply,
-            socials: {
-                twitter: gmGnSocials.link.twitter_username 
-                    ? getTwitterUrlFromUsername(gmGnSocials.link.twitter_username) 
-                    : undefined,
-                telegram: gmGnSocials.link.telegram,
-                website: gmGnSocials.link.website,
-                instagram: gmGnSocials.link.instagram,
-                facebook: gmGnSocials.link.facebook,
-                youtube: gmGnSocials.link.youtube,
-                tiktok: gmGnSocials.link.tiktok,
-                linkedin: gmGnSocials.link.linkedin,
-                github: gmGnSocials.link.github,
-                reddit: gmGnSocials.link.reddit,
-            },
+            name: this.extractName(gmGnToken),
+            symbol: this.extractSymbol(gmGnToken),
+            decimals: this.extractDecimals(gmGnToken),
+            creationTime: new Date(gmGnToken.creation_timestamp * 1000),
+            totalSupply: this.extractSupply(gmGnToken),
+            socials: this.extractSocials(gmGnSocials),
             pairAddress: gmGnToken.biggest_pool_address,
-            description: gmGnSocials.link.description,
-            logoUrl: gmGnToken.logo,
-            price,
-            marketCap,
-            liquidity: Number(gmGnToken.liquidity),
+            description: this.extractDescription(gmGnSocials),
+            logoUrl: this.extractLogoUrl(gmGnToken),
+            price: this.extractPrice(gmGnToken),
+            marketCap: this.extractMarketCap(gmGnToken),
+            liquidity: this.extractLiquidity(gmGnToken),
+            createdBy: this.extractCreatedBy(gmGnToken),
             dataSource: AutoTrackerTokenDataSource.GMGN,
         };
     }

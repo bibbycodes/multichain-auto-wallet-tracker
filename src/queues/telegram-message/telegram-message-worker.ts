@@ -34,7 +34,7 @@ export class TelegramMessageWorker extends BaseWorker<TelegramMessageJobData, Te
     private async routeJob(type: TelegramMessageJobTypes, data: any): Promise<any> {
         console.log('Routing job:', type);
         switch (type) {
-            case TelegramMessageJobTypes.SEND_MESSAGE:
+            case TelegramMessageJobTypes.SEND_ALERT:
                 return await this.telegramMessageService.sendMessageToChannel(data);
             default:
                 throw new Error(`Unknown job type: ${type}`);

@@ -1,4 +1,4 @@
-import { GmGnClient, GmGnEvmTokenSecurity, GmGnMultiWindowTokenInfo, GmGnSmartMoneyWalletData, GmGnSolanaTokenSecurity, GmGnTokenSecurityAndLaunchpad, GmGnTokenSocials, GmGnTopHolder, GmGnTopTrader, GmGnTrendingTokenResponse, GmGnWalletHoldings } from "python-proxy-scraper-client"
+import { GmGnClient, GmGnEvmTokenSecurity, GmGnMultiWindowTokenInfo, GmGnSmartMoneyWalletData, GmGnSolanaTokenSecurity, GmGnTokenHolder, GmGnTokenSecurityAndLaunchpad, GmGnTokenSocials, GmGnTopHolder, GmGnTopTrader, GmGnTrendingTokenResponse, GmGnWalletHoldings } from "python-proxy-scraper-client"
 import { ChainId, isEvmChainId, isSolanaChainId } from "../../../../shared/chains"
 import { withRetryOrFail } from "../../../../utils/fetch"
 import { TokenData, TokenSecurity } from "../../../models/token/types"
@@ -70,9 +70,10 @@ export class GmGnService extends BaseTokenFetcherService {
     return withRetryOrFail(() => this.gmgnClient.getTopTraders(tokenAddress, chain))
   }
 
-  async getTopHolders(tokenAddress: string, chainId: ChainId): Promise<GmGnTopHolder[]> {
+  async getHolders(tokenAddress: string, chainId: ChainId): Promise<GmGnTokenHolder[]> {
     const chain = GmGnMapper.chainIdToChain(chainId)
-    return withRetryOrFail(() => this.gmgnClient.getTopHolders(tokenAddress, chain))
+    const res = await withRetryOrFail(() => this.gmgnClient.getTokenHolders(tokenAddress, chain))
+    return res.list
   }
 
   async getWalletData(walletAddress: string, chainId: ChainId): Promise<GmGnSmartMoneyWalletData> {
@@ -137,13 +138,12 @@ export class GmGnService extends BaseTokenFetcherService {
     
     const tokenData = GmGnMapper.mapGmGnTokenToTokenDataWithMarketCap(gmGnToken, socials, chainId)
     
-    this.validateTokenDataWithMarketCap(tokenData)
-    
     return {
       token: tokenData,
       rawData: {
         tokenInfo: gmGnToken,
-        socials
+        socials,
+        holders: []
       }
     }
   }

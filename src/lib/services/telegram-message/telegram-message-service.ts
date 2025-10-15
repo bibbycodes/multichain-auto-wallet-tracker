@@ -15,10 +15,12 @@ export class TelegramMessageWorkerService {
             ? data.token 
             : new AutoTrackerToken(data.token);
 
+        console.log({token});
+
         await this.telegramClient.broadcast({
             channelId: data.channelId,
             text: data.caption,
-            photoUrl: data.photo,
+            photoUrl: token.logoUrl,
             disableWebPagePreview: true,
         });
 

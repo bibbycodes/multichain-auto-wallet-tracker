@@ -67,8 +67,6 @@ export class MoralisService extends BaseTokenFetcherService {
       throw new Error(`Unsupported chainId: ${chainId}`)
     }
     
-    this.validateTokenDataWithMarketCap(tokenData.token)
-    
     return tokenData
   }
 
@@ -84,7 +82,6 @@ export class MoralisService extends BaseTokenFetcherService {
 
     const tokenPrice = await this.client.getEvmTokenPrice(tokenAddress, tokenMetadata.chainId)
     const tokenData =  MoralisMapper.mapEvmTokenMetadataToTokenDataWithMarketCap(tokenMetadata.chainId, tokenMetadata.token as MoralisEvmTokenMetaData, tokenPrice as unknown as MoralisEvmTokenPrice)
-    this.validateTokenDataWithMarketCap(tokenData)
     return {token: tokenData, rawData: {
       tokenMetadata: tokenMetadata.token,
       tokenPrice

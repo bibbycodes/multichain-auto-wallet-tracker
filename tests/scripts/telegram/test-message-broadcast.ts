@@ -44,7 +44,7 @@ async function testMessageBroadcast() {
     console.log('Adding test message to queue...');
     
     const jobId = await queue.addJob({
-        type: TelegramMessageJobTypes.SEND_MESSAGE,
+        type: TelegramMessageJobTypes.SEND_ALERT,
         data: messageData
     });
 

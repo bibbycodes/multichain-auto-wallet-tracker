@@ -1,10 +1,10 @@
 import { TokenDataWithMarketCapAndRawData } from '../../../models/token/types'
-import { BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity, BirdTokenEyeOverview, MarketsResponse } from './client/types'
+import { BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity, BirdTokenEyeOverview, MarketsData, Markets  Response } from './client/types'
 
 export interface BirdEyeTokenDataRawData {
   tokenOverview: BirdTokenEyeOverview
   tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity
-  marketsResponse: MarketsResponse
+  markets: MarketsData
 }
 
 export type BirdEyeTokenDataWithMarketCap = TokenDataWithMarketCapAndRawData<BirdEyeTokenDataRawData>   

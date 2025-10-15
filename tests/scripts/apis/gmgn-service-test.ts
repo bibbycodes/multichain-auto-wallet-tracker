@@ -76,7 +76,7 @@ async function testGmGnService() {
 
         // Test 5: Get top holders
         console.log('\nTest 5: Getting top holders...');
-        const topHolders = await gmgnService.getTopHolders(tokenAddress, chainId);
+        const topHolders = await gmgnService.getHolders(tokenAddress, chainId);
         console.log(`✅ Retrieved ${topHolders.length} top holders`);
         if (topHolders.length > 0) {
             console.log('First holder:', {
