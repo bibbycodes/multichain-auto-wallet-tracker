@@ -27,14 +27,24 @@ model Chain {
   dai_address           String?
   tokens                Token[]
   wallets               Wallet[]
-  liquidity_pools       LiquidityPool[]
   trending_tokens       TrendingToken[]
-  token_distributions   TokenDistribution[]
   tracked_wallets       TrackedWallet[]
   wallet_performances   WalletPerformance[]
   mentions              Mentions[]
 
   @@index([chain_id])
+}
+
+model Alert {
+  id                  String                 @id @unique @default(uuid())
+  created_at          DateTime               @default(now())
+  updated_at          DateTime               @updatedAt
+  token_id            String
+  token_address       String
+  token               Token                  @relation(fields: [token_address], references: [address])
+  social_platform      SocialPlatform
+  market_cap          Float
+  price               Float
 }
 
 model Token {
@@ -60,15 +70,11 @@ model Token {
   pair_address        String
   chain               Chain                  @relation(fields: [chain_id], references: [chain_id])
   data_source         TokenDataSource        @default(BIRDEYE)
-  token_relationships TokenToWalletMapping[]
-  token_holdings      TokenHolding[]
-  token_distribution  TokenDistribution[]
-  liquidity_pools     LiquidityPool[]
   trending_tokens     TrendingToken[]
   wallet_swaps        WalletSwaps[]
   wallet_transactions WalletTransactions[]
   mentions            Mentions[]
-
+  alerts              Alert[]
   @@unique([address, chain_id])
 }
 
@@ -80,10 +86,7 @@ model Wallet {
   created_at          DateTime
   updated_at          DateTime
   tracked_wallets     TrackedWallet[]
-  token_relationships TokenToWalletMapping[]
-  token_holdings      TokenHolding[]
   wallet_performance  WalletPerformance[]
-  token_distribution  TokenDistribution[]
   social_channels     SocialChannel[]
   wallet_swaps        WalletSwaps[]
   wallet_transactions WalletTransactions[]
@@ -105,7 +108,6 @@ model WalletSwaps {
   price          Float
   market_cap     Float
   hash           String
-  link           String
   timestamp      DateTime
 
   token  Token  @relation(fields: [token_id], references: [id])
@@ -122,6 +124,8 @@ model Mentions {
   social_channel    SocialChannel @relation(fields: [social_channel_id], references: [id])
   chain             Chain         @relation(fields: [chain_id], references: [chain_id])
   token             Token         @relation(fields: [token_address], references: [address])
+  market_cap        Float
+  price             Float
 }
 
 model WalletTransactions {
@@ -143,20 +147,6 @@ model WalletTransactions {
   token          Token           @relation(fields: [token_id], references: [id])
 }
 
-model LiquidityPool {
-  id                  String   @id @default(uuid())
-  address             String
-  chain_id            String
-  chain               Chain    @relation(fields: [chain_id], references: [id])
-  token_address       String
-  base_token_address  String
-  vault_address       String?
-  quote_token_address String
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
-  token               Token    @relation(fields: [token_address], references: [address])
-}
-
 model TrackedWallet {
   id         String              @id @default(uuid())
   wallet_id  String
@@ -170,37 +160,6 @@ model TrackedWallet {
   chain  Chain  @relation(fields: [chain_id], references: [chain_id])
 
   @@unique([address, chain_id])
-  @@index([wallet_id])
-}
-
-model TokenToWalletMapping {
-  id         String                @id @default(uuid())
-  token_id   String
-  wallet_id  String
-  type       TokenRelationshipType
-  created_at DateTime              @default(now())
-  updated_at DateTime              @updatedAt
-
-  token  Token  @relation(fields: [token_id], references: [id])
-  wallet Wallet @relation(fields: [wallet_id], references: [id])
-
-  @@map("TokenToWalletMapping")
-}
-
-model TokenHolding {
-  id             String   @id @default(uuid())
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
-  token_id       String
-  wallet_id      String
-  token_address  String
-  wallet_address String
-  balance        Float
-  usd_value      Float
-  token          Token    @relation(fields: [token_id], references: [id])
-  wallet         Wallet   @relation(fields: [wallet_id], references: [id])
-
-  @@index([token_id])
   @@index([wallet_id])
 }
 
@@ -242,30 +201,6 @@ model WalletPerformance {
   @@index([wallet_id])
 }
 
-model TokenDistribution {
-  id                     String   @id @default(uuid())
-  created_at             DateTime @default(now())
-  updated_at             DateTime @updatedAt
-  token_id               String
-  top_10_holder_rate     Float
-  top_20_holder_rate     Float
-  creator_token_rate     Float
-  creator_wallet_address String
-  bundle_rate            Float
-  wallets                Wallet[]
-  chain_id               String
-  chain                  Chain    @relation(fields: [chain_id], references: [chain_id])
-
-  wallet_to_balance_map Json
-  fresh_wallets         String[]
-  same_balance_wallets  String[]
-  locked_wallets        String[]
-  bundled_wallets       String[]
-  clusters              Json
-
-  token Token @relation(fields: [token_id], references: [id])
-}
-
 model TrendingToken {
   id         String        @id @default(uuid())
   created_at DateTime      @default(now())
@@ -283,7 +218,6 @@ model SocialChannel {
   id             String         @id @default(uuid())
   created_at     DateTime       @default(now())
   updated_at     DateTime       @updatedAt
-  token_id       String
   id_on_platform String
   username       String
   platform       SocialPlatform

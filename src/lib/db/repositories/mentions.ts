@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, Mentions } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 export class MentionsRepository {
     constructor(private readonly prisma: PrismaClient) { }
