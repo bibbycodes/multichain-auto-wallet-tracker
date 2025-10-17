@@ -6,3 +6,4 @@ logs
 .DS_Store
 telegram-updates/
 src/lib/services/telegram-message-processor/tests/fixtures/channels.json
+.env.test

@@ -8,7 +8,7 @@ import { MoralisTokenDataRawData } from "../apis/moralis/types"
  * Each data source field is optional and can contain partial data
  * since data is fetched and cached lazily.
  */
-export interface RawDataInput {
+export interface RawDataData {
     birdeye?: Partial<BirdEyeTokenDataRawData>
     gmgn?: Partial<GmGnTokenDataRawData>
     moralis?: Partial<MoralisTokenDataRawData>

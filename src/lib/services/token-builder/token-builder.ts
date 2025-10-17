@@ -6,13 +6,13 @@ import { BirdeyeMapper } from "../apis/birdeye/birdeye-mapper";
 import { BirdEyeFetcherService } from "../apis/birdeye/birdeye-service";
 import { GmGnMapper } from "../apis/gmgn/gmgn-mapper";
 import { RawTokenDataCache } from "../raw-data/raw-data";
-import { RawDataInput } from "../raw-data/types";
+import { RawDataData } from "../raw-data/types";
 
 export class AutoTrackerTokenBuilder {
-    private rawData: RawTokenDataCache | null = null
     constructor(
         private readonly tokenAddress: string,
         private chainId?: ChainId,
+        private rawData?: RawTokenDataCache,
         private readonly birdeyeService: BirdEyeFetcherService = BirdEyeFetcherService.getInstance(),
         private db: Database = Database.getInstance(),
     ) {
@@ -79,15 +79,20 @@ export class AutoTrackerTokenBuilder {
         if (!gmgnToken && !birdeyeToken) {
             throw new Error('Could not fetch tokens')
         }
-        return AutoTrackerToken.mergeTokens([gmgnToken, birdeyeToken].filter(token => token !== null))
+        return AutoTrackerToken.mergeMany([gmgnToken, birdeyeToken].filter(token => token !== null))
     }
 
-    async initialiseRawData(rawDataInput?: RawDataInput): Promise<RawTokenDataCache> {
+    async initialiseRawData(rawDataData?: RawDataData): Promise<RawTokenDataCache> {
         if (!this.chainId) {
             throw new Error('Chain id is not set')
         }
+        
         if (!this.rawData) {
-            this.rawData = new RawTokenDataCache(this.tokenAddress, this.chainId, rawDataInput)
+            this.rawData = new RawTokenDataCache(this.tokenAddress, this.chainId)
+        }
+
+        if (rawDataData) {
+            this.rawData.updateData(rawDataData)
         }
         return this.rawData
     }
@@ -103,27 +108,45 @@ export class AutoTrackerTokenBuilder {
     async getOrCreate(): Promise<AutoTrackerToken> {
         const token = await this.getDbToken()
         if (token && !token.hasMissingRequiredFields()) {
+            console.log('Token is complete, returning from database')
             return token
         }
 
         if (!token?.chainId) {
+            console.log('Token is missing chain id, fetching initial data')
             const initialData = await this.getInitialData()
             this.setChainId(initialData.token.chainId)
             await this.initialiseRawData(initialData.rawData)
         }
 
         await this.collect()
-        const gmgnToken = await this.getGmgnAutoTrackerToken()
-        const birdeyeToken = await this.getBirdeyeAutoTrackerToken()
-        const mergedToken = AutoTrackerToken.mergeTokens([gmgnToken, birdeyeToken, token].filter(token => token !== null))
+        
+        const  [
+            gmgnToken,
+            birdeyeToken,
+        ] = await Promise.all([
+            this.getGmgnAutoTrackerToken(),
+            this.getBirdeyeAutoTrackerToken(),
+        ])
+
+        console.log({
+            gmgnToken,
+            birdeyeToken,
+            token,
+        })
+        
+        const mergedToken = AutoTrackerToken.mergeMany([gmgnToken, birdeyeToken, token].filter(token => token !== null))
         AutoTrackerToken.validate(mergedToken)
         await this.db.tokens.upsertTokenFromTokenData(mergedToken)
         return mergedToken
     }
 
-    async getInitialData(): Promise<TokenDataWithMarketCapAndRawData<RawDataInput>> {
+    async getInitialData(): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
         if (!this.chainId) {
             const data = await this.birdeyeService.fetchTokenDataWithMarketCapFromAddress(this.tokenAddress)
+            if (!data.token.chainId) {
+                throw new Error('Chain id not returned')
+            }
             this.setChainId(data.token.chainId)
             await this.initialiseRawData(data.rawData)
             return data
@@ -140,7 +163,7 @@ export class AutoTrackerTokenBuilder {
             throw new Error('Chain id is not set')
         }
         if (!this.rawData) {
-            return new RawTokenDataCache(this.tokenAddress, this.chainId)
+            throw new Error('Raw data is not set')
         }
         return this.rawData
     }

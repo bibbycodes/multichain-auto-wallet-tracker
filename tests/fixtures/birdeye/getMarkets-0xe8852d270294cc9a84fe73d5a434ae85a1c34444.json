@@ -1,0 +1,36 @@
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "address": "0xe8852d270294Cc9A84FE73D5a434Ae85a1c34444",
+        "base": {
+          "symbol": "RUGSURVIVE",
+          "decimals": 18,
+          "address": "0xe8852d270294Cc9A84FE73D5a434Ae85a1c34444"
+        },
+        "baseLiquidity": 1.6887420654629463e-11,
+        "createdAt": "2025-10-15T18:50:41.739Z",
+        "liquidity": 3.3775539286146843e-11,
+        "name": "RUGSURVIVE-WBNB",
+        "quote": {
+          "symbol": "WBNB",
+          "decimals": 18,
+          "address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+          "icon": "https://assets.coingecko.com/coins/images/12591/small/binance-coin-logo.png?1600947313"
+        },
+        "quoteLiquidity": 1.688811863151738e-11,
+        "source": "0xe8852d270294Cc9A84FE73D5a434Ae85a1c34444",
+        "liquidityChangePercentage24h": -99.99999999999098,
+        "price": 5.767453020212821e-9,
+        "volume24hChangePercentage24h": null,
+        "trade24h": 5,
+        "trade24hChangePercent": -86.11111111111111,
+        "uniqueWallet24h": 6,
+        "uniqueWallet24hChangePercent": -62.5,
+        "volume24h": 188.46941017827848
+      }
+    ],
+    "total": 1
+  }
+}

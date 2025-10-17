@@ -42,7 +42,7 @@ model Alert {
   token_id            String
   token_address       String
   token               Token                  @relation(fields: [token_address], references: [address])
-  social_platform      SocialPlatform
+  social_platform     SocialPlatform
   market_cap          Float
   price               Float
 }

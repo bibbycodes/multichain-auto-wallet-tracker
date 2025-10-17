@@ -1,6 +1,6 @@
 import { GetWalletNetWorthOperationResponseJSON } from "@moralisweb3/common-evm-utils";
 import { ChainId, ChainsMap, isEvmChainId, isSolanaChainId } from "../../../../shared/chains";
-import { TokenData } from "../../../models/token/types";
+import { AutoTrackerTokenData } from "../../../models/token/types";
 import { BaseTokenFetcherService } from "../../tokens/token-fetcher-types";
 import { MoralisClient } from "./moralis-client";
 import { MoralisMapper } from "./moralis-mapper";
@@ -145,7 +145,7 @@ export class MoralisService extends BaseTokenFetcherService {
     }
   }
 
-  async fetchTokenData(tokenAddress: string, chainId: ChainId): Promise<TokenData> {
+  async fetchTokenData(tokenAddress: string, chainId: ChainId): Promise<AutoTrackerTokenData> {
     const tokenWithMarketCap = await this.fetchTokenWithMarketCap(tokenAddress, chainId)
     return tokenWithMarketCap.token
   }

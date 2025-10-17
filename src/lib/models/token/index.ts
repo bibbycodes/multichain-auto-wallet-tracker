@@ -2,16 +2,18 @@ import { Prisma, Token, TokenDataSource } from "@prisma/client";
 import { GmGnMultiWindowTokenInfo, GmGnTokenSocials } from "python-proxy-scraper-client";
 import { ChainId } from "../../../shared/chains";
 import { deepMergeAll } from "../../../utils/data-aggregator";
+import { nullishToUndefined } from "../../../utils/object";
 import { BirdeyeMapper } from "../../services/apis/birdeye/birdeye-mapper";
 import { BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity, BirdTokenEyeOverview } from "../../services/apis/birdeye/client/types";
 import { GmGnMapper } from "../../services/apis/gmgn/gmgn-mapper";
 import { MoralisMapper } from "../../services/apis/moralis/moralis-mapper";
 import { MoralisEvmTokenMetaData, MoralisEvmTokenPrice } from "../../services/apis/moralis/types";
 import { SocialMedia } from "../socials/types";
-import { TokenData, TokenDataWithMarketCap } from "./types";
+import { AutoTrackerTokenData, TokenDataWithMarketCap } from "./types";
 
 export class AutoTrackerToken {
     public static readonly requiredFields = ['address', 'name', 'symbol', 'chainId', 'pairAddress', 'decimals', 'totalSupply']
+    public static readonly nonZeroFields = ['totalSupply', 'decimals']
     address: string;
     chainId: ChainId;
     name: string;
@@ -28,7 +30,7 @@ export class AutoTrackerToken {
     pairAddress: string;
     dataSource: TokenDataSource;
 
-    constructor(data: TokenData) {
+    constructor(data: AutoTrackerTokenData) {
         this.address = data.address;
         this.chainId = data.chainId;
         this.name = data.name;
@@ -79,22 +81,22 @@ export class AutoTrackerToken {
             symbol: token.symbol,
             decimals: token.decimals,
             socials: {
-                telegram: token.telegram_url ?? undefined,
-                twitter: token.twitter_url ?? undefined,
-                website: token.website_url ?? undefined,
+                telegram: nullishToUndefined(token.telegram_url),
+                twitter: nullishToUndefined(token.twitter_url),
+                website: nullishToUndefined(token.website_url),
             },
-            logoUrl: token.logo_url ?? undefined,
-            description: token.description ?? undefined,
-            createdBy: token.created_by ?? undefined,
+            logoUrl: nullishToUndefined(token.logo_url),
+            description: nullishToUndefined(token.description),
+            createdBy: nullishToUndefined(token.created_by),
             creationTime: token.creation_time ?? undefined,
-            pairAddress: token.pair_address ?? undefined,
+            pairAddress: nullishToUndefined(token.pair_address) as string,
             createdAt: token.created_at ?? undefined,
             updatedAt: token.updated_at ?? undefined,
             totalSupply: Number(token.total_supply),
             dataSource: token.data_source,
         })
     }
-    
+
     toJson() {
         return JSON.stringify(this.toObject())
     }
@@ -141,22 +143,28 @@ export class AutoTrackerToken {
         return BirdeyeMapper.mapBirdeyeTokenToAutoTrackerToken(tokenOverview, tokenSecurity, pairAddress, chainId)
     }
 
-    static mergeTokens(tokens: AutoTrackerToken[]): AutoTrackerToken {
-        const tokenDatas = tokens.map(token => token.toObject())
-        return new AutoTrackerToken(deepMergeAll(tokenDatas) as TokenData)
+    static mergeMany(tokens: AutoTrackerToken[]): AutoTrackerToken {
+        const tokenDatas = tokens.filter(token => !!(token)).map(token => token.toObject())
+        return new AutoTrackerToken(deepMergeAll(tokenDatas) as AutoTrackerTokenData)
     }
 
     static validate(token: AutoTrackerToken) {
         const missingFields = AutoTrackerToken.requiredFields.filter(field => token[field as keyof AutoTrackerToken] === undefined || token[field as keyof AutoTrackerToken] === null)
         if (missingFields.length > 0) {
-            console.log(token)
             throw new Error(
                 `Invalid AutoTrackerToken for ${token.address || 'unknown'}: missing or invalid fields: ${missingFields.join(', ')}`
             )
         }
+        AutoTrackerToken.nonZeroFields.forEach(field => {
+            if (token[field as keyof AutoTrackerToken] === 0) {
+                throw new Error(
+                    `Invalid AutoTrackerToken for ${token.address || 'unknown'}: ${field} cannot be 0`
+                )
+            }
+        })
     }
 
-    toObject(): TokenData {
+    toObject(): AutoTrackerTokenData {
         return {
             address: this.address,
             chainId: this.chainId,

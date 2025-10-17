@@ -2,7 +2,7 @@ import { ChainId } from "../../../shared/chains";
 import { SocialMedia } from "../socials/types";
 import { TokenDataSource } from "@prisma/client";
 
-export interface TokenData {
+export interface AutoTrackerTokenData {
     id?: string;
     address: string;
     name: string;
@@ -21,7 +21,7 @@ export interface TokenData {
     dataSource: TokenDataSource;
 }
 
-export type TokenDataWithMarketCap = TokenData & TokenPriceDetails
+export type TokenDataWithMarketCap = AutoTrackerTokenData & TokenPriceDetails
 
 export interface TokenDataWithMarketCapAndRawData<T> {
     token: TokenDataWithMarketCap

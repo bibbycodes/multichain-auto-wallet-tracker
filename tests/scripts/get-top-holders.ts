@@ -2,8 +2,6 @@ import { ChainBaseService } from "../../src/lib/services/apis/chain-base/chain-b
 import { GmGnService } from "../../src/lib/services/apis/gmgn/gmgn-service"
 import { ChainsMap } from "../../src/shared/chains"
 
-
-
 export const getTopHolders = async (tokenAddress: string) => {
     const chainBaseService = ChainBaseService.getInstance()
     const gmgnService = GmGnService.getInstance()

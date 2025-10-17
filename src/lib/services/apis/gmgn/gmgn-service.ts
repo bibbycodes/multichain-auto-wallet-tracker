@@ -1,7 +1,7 @@
 import { GmGnClient, GmGnEvmTokenSecurity, GmGnMultiWindowTokenInfo, GmGnSmartMoneyWalletData, GmGnSolanaTokenSecurity, GmGnTokenHolder, GmGnTokenSecurityAndLaunchpad, GmGnTokenSocials, GmGnTopHolder, GmGnTopTrader, GmGnTrendingTokenResponse, GmGnWalletHoldings } from "python-proxy-scraper-client"
 import { ChainId, isEvmChainId, isSolanaChainId } from "../../../../shared/chains"
 import { withRetryOrFail } from "../../../../utils/fetch"
-import { TokenData, TokenSecurity } from "../../../models/token/types"
+import { AutoTrackerTokenData, TokenSecurity } from "../../../models/token/types"
 import { GmGnMapper } from "./gmgn-mapper"
 import { BaseTokenFetcherService } from "../../tokens/token-fetcher-types"
 import { GmGnTokenDataWithMarketCap } from "./types"
@@ -148,7 +148,7 @@ export class GmGnService extends BaseTokenFetcherService {
     }
   }
 
-  async fetchTokenData(tokenAddress: string, chainId: ChainId): Promise<TokenData> {
+  async fetchTokenData(tokenAddress: string, chainId: ChainId): Promise<AutoTrackerTokenData> {
     const [gmGnToken, socials] = await Promise.all([
       this.getMultiWindowTokenInfo(tokenAddress, chainId),
       this.getTokenSocials(tokenAddress, chainId),

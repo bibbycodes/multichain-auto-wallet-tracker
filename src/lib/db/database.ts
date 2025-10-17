@@ -8,6 +8,7 @@ import { TrackedWalletsRepository } from './repositories/tracked-wallets';
 import { PortfolioSnapshotRepository } from './repositories/portfolio-snapshot';
 import { PerformanceRepository } from './repositories/performance';
 import { MentionsRepository } from './repositories/mentions';
+import { AlertsRepository } from './repositories/alerts';
 
 export class Database extends Singleton {
     constructor(
@@ -20,7 +21,8 @@ export class Database extends Singleton {
         public readonly chains: ChainsRepository = new ChainsRepository(prismaClient),
         public readonly portfolioSnapshots: PortfolioSnapshotRepository = new PortfolioSnapshotRepository(prismaClient),
         public readonly performance: PerformanceRepository = new PerformanceRepository(prismaClient),
-        public readonly mentions: MentionsRepository = new MentionsRepository(prismaClient)
+        public readonly mentions: MentionsRepository = new MentionsRepository(prismaClient),
+        public readonly alerts: AlertsRepository = new AlertsRepository(prismaClient)
     ) {
         super();
     }

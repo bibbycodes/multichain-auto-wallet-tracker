@@ -1,7 +1,7 @@
 import { TokenDataSource } from "@prisma/client";
 import { ChainId, getInternallySupportedChainIds } from "../../../../shared/chains";
 import { AutoTrackerToken } from "../../../models/token";
-import { TokenData, TokenDataWithMarketCap } from "../../../models/token/types";
+import { AutoTrackerTokenData, TokenDataWithMarketCap } from "../../../models/token/types";
 import { SocialMedia } from "../../../models/socials/types";
 import { BirdeyeChain } from "./client/index";
 import { BirdTokenEyeOverview, BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity } from "./client/types";
@@ -87,7 +87,7 @@ export class BirdeyeMapper {
         tokenOverview: BirdTokenEyeOverview,
         tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity,
         pairAddress: string
-    ): TokenData {
+    ): AutoTrackerTokenData {
         return {
             address,
             name: this.extractName(tokenOverview),
@@ -126,7 +126,7 @@ export class BirdeyeMapper {
         tokenOverview: BirdTokenEyeOverview,
         tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity,
         pairAddress: string
-    ): TokenData {
+    ): AutoTrackerTokenData {
         return this.buildTokenData(tokenAddress, chainId, tokenOverview, tokenSecurity, pairAddress);
     }
 

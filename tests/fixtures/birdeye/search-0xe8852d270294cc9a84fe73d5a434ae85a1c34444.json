@@ -1,0 +1,15 @@
+{
+  "data": {
+    "items": [
+      {
+        "type": "token",
+        "result": []
+      },
+      {
+        "type": "market",
+        "result": []
+      }
+    ]
+  },
+  "success": true
+}

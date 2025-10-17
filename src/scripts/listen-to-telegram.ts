@@ -1,4 +1,4 @@
-import { TelegramMessageProcessor } from "../lib/services/telegram-message-processor";
+import { TelegramMessageProcessor } from "../lib/data-sources/telegram-message-processor";
 
 // Start the processor if this file is run directly
 if (require.main === module) {

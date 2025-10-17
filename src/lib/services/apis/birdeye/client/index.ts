@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { sleep } from "telegram/Helpers";
 import { env } from "../../../util/env/env";
+import { intervalToMilliseconds } from "../utils/interval-utils";
 import {
   BirdEyeHistoricalPriceDataResponse,
   BirdEyeOverviewResponse,
@@ -155,7 +156,7 @@ export class BirdEyeClient {
       throw new Error('No all time high found')
     }
 
-    const intervalInMilliseconds = this.intervalToMilliseconds(interval);
+    const intervalInMilliseconds = intervalToMilliseconds(interval);
     const endOfAllTimeHigh = allTimeHigh.unixTime + intervalInMilliseconds;
     const startOfAllTimeHigh = allTimeHigh.unixTime - intervalInMilliseconds;
     const historyPriceData = await this.getHistoricalPriceData(tokenAddress, startOfAllTimeHigh, endOfAllTimeHigh, '1m', chain);
@@ -392,19 +393,4 @@ export class BirdEyeClient {
     const url = `${this.baseUrl}/defi/v3/search?keyword=${encodeURIComponent(query)}&offset=${offset}&limit=${limit}&search_by=${searchBy}`
     return await this.get<BirdeyeSearchResponse>(url, this.apiKey, chain)
   }
-
-  intervalToMilliseconds = (interval: BirdeyeTimeInterval): number => {
-    const intervalMap: { [key in BirdeyeTimeInterval]: number } = {
-      "1h": 60 * 60 * 1000,
-      "1m": 60 * 1000,
-      "2h": 2 * 60 * 60 * 1000,
-      "5m": 3 * 60 * 1000,
-      "30m": 30 * 60 * 1000,
-      "4h": 4 * 60 * 60 * 1000,
-      "8h": 8 * 60 * 60 * 1000,
-      "24h": 24 * 60 * 60 * 1000,
-    };
-
-    return intervalMap[interval];
-  };
 }

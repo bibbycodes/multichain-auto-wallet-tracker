@@ -2,7 +2,7 @@ import { ChainId } from "../../../shared/chains"
 import { Database } from "../../db/database"
 import { AutoTrackerToken } from "../../models/token"
 import { BirdEyeFetcherService } from "../apis/birdeye/birdeye-service"
-import { RawDataInput } from "../raw-data/types"
+import { RawDataData } from "../raw-data/types"
 import { Singleton } from "../util/singleton"
 
 export class TokenService extends Singleton {
@@ -24,7 +24,7 @@ export class TokenService extends Singleton {
         return {token: autoTrackerToken, rawData: tokenData.rawData}
     }
 
-    async getOrCreateTokenWithAddress(tokenAddress: string): Promise<{token: AutoTrackerToken, rawData: RawDataInput}> {
+    async getOrCreateTokenWithAddress(tokenAddress: string): Promise<{token: AutoTrackerToken, rawData: RawDataData}> {
         const token = await this.db.tokens.findOneByTokenAddress(tokenAddress)
         if (token) {
             return {token: this.db.tokens.toModel(token), rawData: {}}

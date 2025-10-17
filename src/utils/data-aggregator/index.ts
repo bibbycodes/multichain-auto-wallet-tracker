@@ -59,7 +59,16 @@ function isEmptyObject(obj: any): boolean {
 }
 
 /**
- * Deep merges two objects, preferring values from the source that aren't null/undefined/empty strings
+ * Checks if a value is considered "nullish" (null, undefined, or empty string)
+ */
+function isNullish(value: any): boolean {
+  return value === null || value === undefined || value === '';
+}
+
+/**
+ * Deep merges two objects, preferring non-nullish values
+ * When both target and source have values, source wins unless source is nullish
+ * When target has nullish value and source has non-nullish, source wins
  */
 export function deepMerge<T extends Record<string, any>>(target: Partial<T>, source: Partial<T>): Partial<T> {
   const result = { ...target };
@@ -68,24 +77,29 @@ export function deepMerge<T extends Record<string, any>>(target: Partial<T>, sou
     const sourceValue = source[key];
     const targetValue = target[key];
 
-    // Skip null, undefined, and empty strings
-    if (sourceValue === null || sourceValue === undefined || sourceValue === '') {
+    // Skip if source is nullish AND target has a non-nullish value
+    if (isNullish(sourceValue) && !isNullish(targetValue)) {
+      continue;
+    }
+
+    // If source is nullish and target is also nullish, skip
+    if (isNullish(sourceValue) && isNullish(targetValue)) {
       continue;
     }
 
     // Check if value is a plain object that should be recursively merged
-    const isPlainObject = sourceValue && 
-      typeof sourceValue === 'object' && 
+    const isPlainObject = sourceValue &&
+      typeof sourceValue === 'object' &&
       !Array.isArray(sourceValue) &&
       !((sourceValue as any) instanceof Date) &&
       !((sourceValue as any) instanceof RegExp);
-    
+
     if (isPlainObject) {
       const merged = deepMerge(
         (targetValue as Record<string, any>) || {},
         sourceValue as Record<string, any>
       );
-      
+
       // Only set the merged value if it's not an empty object
       if (!isEmptyObject(merged)) {
         result[key] = merged as any;

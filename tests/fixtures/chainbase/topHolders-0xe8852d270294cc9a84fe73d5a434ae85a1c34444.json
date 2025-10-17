@@ -1,0 +1,32 @@
+[
+  {
+    "amount": "999999999.999997456000000000",
+    "original_amount": "999999999999997456000000000",
+    "usd_value": "0.000000",
+    "wallet_address": "0x5c952063c7fc8610ffdb798152d69f0b9550762b"
+  },
+  {
+    "amount": "0.000000961000000000",
+    "original_amount": "961000000000",
+    "usd_value": "0.000000",
+    "wallet_address": "0xe2d31c71d498d0c569f16de9e74936acc6f8ed37"
+  },
+  {
+    "amount": "0.000000868000000000",
+    "original_amount": "868000000000",
+    "usd_value": "0.000000",
+    "wallet_address": "0x7bf8d4ffdf88a35564e307f58733ae0c373452cc"
+  },
+  {
+    "amount": "0.000000375000000000",
+    "original_amount": "375000000000",
+    "usd_value": "0.000000",
+    "wallet_address": "0x7aeac445ff2ea9a9fbaf8bae16f499f1ea42c8aa"
+  },
+  {
+    "amount": "0.000000340000000000",
+    "original_amount": "340000000000",
+    "usd_value": "0.000000",
+    "wallet_address": "0x717e48886938615b4c13552d6014ca94efccce55"
+  }
+]

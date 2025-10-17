@@ -1,10 +1,13 @@
 import { SendMessageToChannelData } from '../../../queues/telegram-message/types';
 import { TelegramBroadcastClient } from '../telegram-bot/telegram-broadcast-client';
 import { AutoTrackerToken } from '../../models/token';
+import { AlertsService } from '../alerts';
+import { SocialPlatform } from '@prisma/client';
 
 export class TelegramMessageWorkerService {
     constructor(
-        private readonly telegramClient: TelegramBroadcastClient = TelegramBroadcastClient.getInstance()
+        private readonly telegramClient: TelegramBroadcastClient = TelegramBroadcastClient.getInstance(),
+        private readonly alertsService: AlertsService = new AlertsService()
     ) {}
 
     async sendMessageToChannel(data: SendMessageToChannelData): Promise<any> {
@@ -23,6 +26,9 @@ export class TelegramMessageWorkerService {
             photoUrl: token.logoUrl,
             disableWebPagePreview: true,
         });
+
+        // Create alert record after successful message send
+        await this.alertsService.createAlertForTokenWithMarketData(token, SocialPlatform.TELEGRAM);
 
         return { 
             sent: true, 

@@ -1,7 +1,7 @@
 import { TokenDataSource } from "@prisma/client";
 import { ChainId, ChainsMap, getInternallySupportedChainIds } from "../../../../shared/chains";
 import { AutoTrackerToken } from "../../../models/token";
-import { TokenData, TokenDataWithMarketCap } from "../../../models/token/types";
+import { AutoTrackerTokenData, TokenDataWithMarketCap } from "../../../models/token/types";
 import { SocialMedia } from "../../../models/socials/types";
 import { MoralisEvmTokenMetaData, MoralisEvmTokenPrice, MoralisSolanaTokenMetadata, MoralisSolanaTokenPairResponseData, MoralisSolanaTokenPrice } from "./types";
 import { CHAIN_ID_TO_MORALIS_CHAIN, MORALIS_CHAIN_TO_CHAIN_ID, MoralisChain } from "./moralis-chain-map";
@@ -76,7 +76,7 @@ export class MoralisMapper {
         tokenMetadata: MoralisEvmTokenMetaData,
         tokenPrice: MoralisEvmTokenPrice,
         chainId: ChainId
-    ): TokenData {
+    ): AutoTrackerTokenData {
         return {
             address: tokenMetadata.address,
             chainId,
@@ -96,7 +96,7 @@ export class MoralisMapper {
     private static buildSolanaTokenData(
         tokenMetadata: MoralisSolanaTokenMetadata,
         pair: MoralisSolanaTokenPairResponseData
-    ): TokenData {
+    ): AutoTrackerTokenData {
         return {
             address: tokenMetadata.mint,
             chainId: ChainsMap.solana,

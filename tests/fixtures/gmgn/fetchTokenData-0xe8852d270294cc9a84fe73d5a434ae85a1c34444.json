@@ -1,0 +1,21 @@
+{
+  "address": "0xe8852d270294cc9a84fe73d5a434ae85a1c34444",
+  "chainId": "56",
+  "name": "Russell rug Survivor",
+  "symbol": "RUGSURVIVE",
+  "decimals": 18,
+  "totalSupply": 1000000000,
+  "socials": {
+    "twitter": "https://x.com/RusselSurvivor?t=K8zn3TI7QbPDhysVweHs-A&s=09",
+    "telegram": "https://t.me/RUSSELLTHERUGSURVIVOR"
+  },
+  "pairAddress": "0xe8852d270294cc9a84fe73d5a434ae85a1c34444",
+  "description": "",
+  "logoUrl": "https://gmgn.ai/external-res/1ea7d2f007fc5e896835bce451c9ab16_v2.webp",
+  "creationTime": "2025-10-15T18:50:40.000Z",
+  "createdBy": "0x7aeac445ff2ea9a9fbaf8bae16f499f1ea42c8aa",
+  "dataSource": "GMGN",
+  "price": 0.0000065628764,
+  "marketCap": 6562.8764,
+  "liquidity": 3.352788064e-11
+}

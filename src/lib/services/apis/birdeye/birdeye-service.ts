@@ -1,6 +1,6 @@
 import { ChainId } from "../../../../shared/chains"
-import { TokenData, TokenDataWithMarketCapAndRawData } from "../../../models/token/types"
-import { RawDataInput } from "../../raw-data/types"
+import { AutoTrackerTokenData, TokenDataWithMarketCapAndRawData } from "../../../models/token/types"
+import { RawDataData } from "../../raw-data/types"
 import { BaseTokenFetcherService } from "../../tokens/token-fetcher-types"
 import { BirdeyeMapper } from "./birdeye-mapper"
 import { BirdEyeClient } from "./client/index"
@@ -11,10 +11,10 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
     super()
   }
 
-  async fetchTokenDataWithMarketCapFromAddress(tokenAddress: string): Promise<TokenDataWithMarketCapAndRawData<RawDataInput>> {
+  async fetchTokenDataWithMarketCapFromAddress(tokenAddress: string): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
     const supportedChains = BirdeyeMapper.getSupportedChains()
     const tokenDataWithMarketCaps = await Promise.allSettled(supportedChains.map(chainId => this.fetchTokenWithMarketCap(tokenAddress, chainId)))
-    const successfulResult = tokenDataWithMarketCaps.find((r): r is PromiseFulfilledResult<TokenDataWithMarketCapAndRawData<RawDataInput>> => 
+    const successfulResult = tokenDataWithMarketCaps.find((r): r is PromiseFulfilledResult<TokenDataWithMarketCapAndRawData<RawDataData>> => 
       r.status === 'fulfilled'
     )
     if (!successfulResult) {
@@ -34,7 +34,7 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
     return marketsResponse.data
   }
 
-  async fetchTokenWithMarketCap(tokenAddress: string, chainId: ChainId): Promise<TokenDataWithMarketCapAndRawData<RawDataInput>> {
+  async fetchTokenWithMarketCap(tokenAddress: string, chainId: ChainId): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
     const chain = BirdeyeMapper.chainIdToChain(chainId)
     const  [
       tokenOverview,
@@ -77,7 +77,7 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
     return tokenSecurity.data
   }
 
-  async fetchTokenData(tokenAddress: string, chainId: ChainId): Promise<TokenData> {
+  async fetchTokenData(tokenAddress: string, chainId: ChainId): Promise<AutoTrackerTokenData> {
     const chain = BirdeyeMapper.chainIdToChain(chainId)
     const [tokenOverview, tokenSecurity] = await Promise.all([
       this.client.getTokenOverview(tokenAddress, ['1h'], chain),

@@ -4,7 +4,7 @@ import { ChainId, ChainsMap, getInternallySupportedChainIds } from "../../../../
 import { getTwitterUrlFromUsername } from "../../../../utils/links";
 import { SocialMedia } from "../../../models/socials/types";
 import { AutoTrackerToken } from "../../../models/token";
-import { TokenData, TokenDataWithMarketCap } from "../../../models/token/types";
+import { AutoTrackerTokenData, TokenDataWithMarketCap } from "../../../models/token/types";
 import { CHAIN_ID_TO_GMGN_CHAIN, GMGN_CHAIN_TO_CHAIN_ID, GmGnChain } from "./gmgn-chain-map";
 
 export class GmGnMapper {
@@ -89,7 +89,7 @@ export class GmGnMapper {
         gmGnToken: GmGnMultiWindowTokenInfo,
         gmGnSocials: GmGnTokenSocials,
         chainId: ChainId
-    ): TokenData {
+    ): AutoTrackerTokenData {
         return {
             address: gmGnToken.address,
             chainId,

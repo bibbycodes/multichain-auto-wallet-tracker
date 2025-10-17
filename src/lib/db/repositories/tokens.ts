@@ -5,7 +5,7 @@ import { AutoTrackerToken } from "../../models/token";
 export class TokensRepository {
     constructor(private readonly prisma: PrismaClient) { }
 
-    async createToken(token: Prisma.TokenCreateInput) {
+    async createToken(token: Prisma.TokenCreateInput): Promise<Token> {
         return this.prisma.token.create({
             data: token
         });
@@ -62,6 +62,14 @@ export class TokensRepository {
             where: {
                 address: { in: addresses },
                 chain_id: chainId
+            }
+        });
+    }
+
+    async deleteToken(address: string, chainId: string) {
+        return this.prisma.token.delete({
+            where: {
+                address_chain_id: { address, chain_id: chainId }
             }
         });
     }

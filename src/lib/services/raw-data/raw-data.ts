@@ -6,7 +6,7 @@ import { GmGnTokenDataRawData } from "../apis/gmgn/types";
 import { BirdeyeRawTokenData } from "./birdeye-raw-data";
 import { ChainBaseRawData } from "./chain-base-raw-data";
 import { GmgnRawDataSource } from "./gmgn-raw-data";
-import { RawDataInput } from "./types";
+import { RawDataData } from "./types";
 
 export class RawTokenDataCache {
     public readonly birdeye: BirdeyeRawTokenData;
@@ -18,7 +18,7 @@ export class RawTokenDataCache {
     constructor(
         tokenAddress: string,
         chainId: ChainId,
-        data?: RawDataInput,
+        data?: RawDataData,
     ) {
         this.birdeye = new BirdeyeRawTokenData(tokenAddress, chainId, data?.birdeye);
         this.gmgn = new GmgnRawDataSource(tokenAddress, chainId, data?.gmgn);
@@ -61,6 +61,18 @@ export class RawTokenDataCache {
         }
         
         return null;
+    }
+
+    public updateData(data: Partial<RawDataData>): void {
+        if (data.birdeye) {
+            this.birdeye.updateData(data.birdeye);
+        }
+        if (data.gmgn) {
+            this.gmgn.updateData(data.gmgn);
+        }
+        if (data.chainBase) {
+            this.chainBase.updateData(data.chainBase);
+        }
     }
 
     async getTokenPrice(): Promise<number> {
@@ -151,7 +163,7 @@ export class RawTokenDataCache {
         return JSON.stringify(this.toObject());
     }
 
-    public toObject(): RawDataInput {
+    public toObject(): RawDataData {
         return {
             birdeye: this.birdeye.toObject(),
             gmgn: this.gmgn.toObject(),
