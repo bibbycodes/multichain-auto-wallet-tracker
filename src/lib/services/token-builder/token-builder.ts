@@ -108,12 +108,10 @@ export class AutoTrackerTokenBuilder {
     async getOrCreate(): Promise<AutoTrackerToken> {
         const token = await this.getDbToken()
         if (token && !token.hasMissingRequiredFields()) {
-            console.log('Token is complete, returning from database')
             return token
         }
 
         if (!token?.chainId) {
-            console.log('Token is missing chain id, fetching initial data')
             const initialData = await this.getInitialData()
             this.setChainId(initialData.token.chainId)
             await this.initialiseRawData(initialData.rawData)
@@ -128,12 +126,6 @@ export class AutoTrackerTokenBuilder {
             this.getGmgnAutoTrackerToken(),
             this.getBirdeyeAutoTrackerToken(),
         ])
-
-        console.log({
-            gmgnToken,
-            birdeyeToken,
-            token,
-        })
         
         const mergedToken = AutoTrackerToken.mergeMany([gmgnToken, birdeyeToken, token].filter(token => token !== null))
         AutoTrackerToken.validate(mergedToken)

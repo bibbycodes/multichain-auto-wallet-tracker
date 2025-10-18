@@ -5,7 +5,6 @@ import { BirdEyeFetcherService } from '../../apis/birdeye/birdeye-service';
 import { RawTokenDataCache } from '../../raw-data/raw-data';
 import { AutoTrackerTokenBuilder } from '../token-builder';
 
-// Import existing mocks
 import { TokenDataSource } from '@prisma/client';
 import { BirdEyeFetcherServiceMock } from '../../../../../tests/mocks/birdeye/birdeye-service.mock';
 import { MockDatabase, createMockDatabase } from '../../../../../tests/mocks/db/database.mock';
@@ -13,7 +12,6 @@ import { RawTokenDataCacheMock } from '../../../../../tests/mocks/raw-data/raw-d
 import { rawDataDataMock } from '../../../../../tests/mocks/raw-data/raw-data-input';
 import { TestDbHelper, TestSeed } from '../../../../../tests/utils';
 
-// Mock all external dependencies
 jest.mock('../../apis/birdeye/birdeye-service');
 jest.mock('../../../db/database');
 jest.mock('../../raw-data/raw-data');
@@ -24,10 +22,40 @@ describe('AutoTrackerTokenBuilder', () => {
   let mockBirdeyeService: BirdEyeFetcherServiceMock;
   let mockDatabase: MockDatabase;
   let mockRawDataCache: RawTokenDataCacheMock;
-  let tokenAddress: string;
-  let chainId: ChainId;
   let dbHelper: TestDbHelper;
   let testSeed: TestSeed;
+
+  const tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
+  const chainId = ChainsMap.bsc;
+
+  const TEST_TOKEN_DATA = {
+    name: 'Test Token',
+    symbol: 'TEST',
+    decimals: 18,
+    totalSupply: 1000000,
+    pairAddress: '0xpair123',
+    socials: {
+      telegram: 'https://t.me/test',
+      twitter: 'https://twitter.com/test',
+    },
+  };
+
+  const completeToken = new AutoTrackerToken({
+    address: tokenAddress,
+    chainId,
+    ...TEST_TOKEN_DATA,
+    dataSource: TokenDataSource.BIRDEYE,
+  });
+
+  const createBuilderWithRealDb = (realDb: Database): AutoTrackerTokenBuilder => {
+    return new AutoTrackerTokenBuilder(
+      tokenAddress,
+      chainId,
+      undefined,
+      mockBirdeyeService as any,
+      realDb
+    );
+  };
 
   beforeAll(async () => {
     dbHelper = TestDbHelper.getInstance();
@@ -35,26 +63,18 @@ describe('AutoTrackerTokenBuilder', () => {
   });
 
   beforeEach(async () => {
-    // Reset all mocks before each test
     jest.clearAllMocks();
 
-    // Reset database and create fresh test seed
     await dbHelper.reset();
     testSeed = new TestSeed();
 
-    tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
-    chainId = '56' as ChainId;
-
-    // Setup mock instances using existing mocks
     mockBirdeyeService = new BirdEyeFetcherServiceMock();
     mockRawDataCache = new RawTokenDataCacheMock(tokenAddress, chainId);
     mockDatabase = createMockDatabase();
 
-    // Mock getInstance methods
     (BirdEyeFetcherService.getInstance as jest.Mock).mockReturnValue(mockBirdeyeService);
     (Database.getInstance as jest.Mock).mockReturnValue(mockDatabase);
 
-    // Mock RawTokenDataCache constructor
     (RawTokenDataCache as jest.MockedClass<typeof RawTokenDataCache>).mockImplementation(
       (address: string, chain: ChainId, data?: any) => {
         return new RawTokenDataCacheMock(address, chain, data) as any;
@@ -68,23 +88,18 @@ describe('AutoTrackerTokenBuilder', () => {
 
   describe('Constructor', () => {
     it('should initialize with token address only, chain ID optional', () => {
-      const tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
       const builder = new AutoTrackerTokenBuilder(tokenAddress);
       expect(builder).toBeDefined();
       expect(builder).toBeInstanceOf(AutoTrackerTokenBuilder);
     });
 
     it('should initialize with token address and chain ID', () => {
-      const tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
-      const chainId = ChainsMap.bsc;
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       expect(builder).toBeDefined();
       expect(builder).toBeInstanceOf(AutoTrackerTokenBuilder);
     });
 
     it('should accept custom service instances', () => {
-      const tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
-      const chainId = ChainsMap.bsc;
       const customBirdeyeService = new BirdEyeFetcherServiceMock();
       const customDatabase = createMockDatabase();
 
@@ -103,8 +118,6 @@ describe('AutoTrackerTokenBuilder', () => {
 
   describe('setChainId()', () => {
     it('should set the chain ID on the builder', () => {
-      const tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
-      const chainId = ChainsMap.bsc;
       const builder = new AutoTrackerTokenBuilder(tokenAddress);
       expect((builder as any).chainId).toBeUndefined();
       builder.setChainId(chainId);
@@ -112,7 +125,6 @@ describe('AutoTrackerTokenBuilder', () => {
     });
 
     it('should allow updating the chain ID', () => {
-      const tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
       const initialChainId = ChainsMap.bsc;
       const newChainId = ChainsMap.ethereum;
       const builder = new AutoTrackerTokenBuilder(tokenAddress, initialChainId);
@@ -124,7 +136,6 @@ describe('AutoTrackerTokenBuilder', () => {
 
   describe('initialiseRawData()', () => {
     it('should throw error when chain ID is not set', async () => {
-      const tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
       const builder = new AutoTrackerTokenBuilder(tokenAddress);
       expect((builder as any).chainId).toBeUndefined();
 
@@ -134,7 +145,6 @@ describe('AutoTrackerTokenBuilder', () => {
     it('should create and return new RawTokenDataCache instance when chain ID is set on initialisation', async () => {
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       const result = await builder.initialiseRawData();
-      // Verify RawTokenDataCache was called with correct parameters
       expect(RawTokenDataCache).toHaveBeenCalledWith(tokenAddress, chainId);
       expect(mockRawDataCache.updateData).not.toHaveBeenCalled();
       expect(result).toBeDefined();
@@ -169,12 +179,6 @@ describe('AutoTrackerTokenBuilder', () => {
       expect(result.toObject()).toEqual(new RawTokenDataCache(tokenAddress, chainId).toObject());
     });
 
-    it('should throw error when chain ID is not set', async () => {
-      const builder = new AutoTrackerTokenBuilder(tokenAddress);
-      expect((builder as any).chainId).toBeUndefined();
-      await expect(builder.initialiseRawData()).rejects.toThrow('Chain id is not set');
-    });
-
     it('should update the rawData if it is already set', async () => {
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId, mockRawDataCache as unknown as RawTokenDataCache);
       await builder.initialiseRawData(rawDataDataMock);
@@ -186,7 +190,6 @@ describe('AutoTrackerTokenBuilder', () => {
 
   describe('getRawData()', () => {
     it('should throw error when chain ID is not set', () => {
-      const tokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
       const builder = new AutoTrackerTokenBuilder(tokenAddress);
       expect(() => builder.getRawData()).toThrow('Chain id is not set');
     });
@@ -515,49 +518,20 @@ describe('AutoTrackerTokenBuilder', () => {
       expect(mockDatabase.tokens.toModel).not.toHaveBeenCalled();
     });
 
-    describe('returns AutoTrackerToken when found in database', () => {
+    describe('with real database', () => {
       let realDb: Database;
-      let autoTrackerToken: AutoTrackerToken;
-
-      beforeAll(async () => {
-        const { Database: RealDatabase } = jest.requireActual<typeof import('../../../db/database')>('../../../db/database');
-        realDb = new (RealDatabase as any)(dbHelper.getPrisma());
-        await dbHelper.insertChains();
-      });
 
       beforeEach(async () => {
-        autoTrackerToken = new AutoTrackerToken({
-          address: tokenAddress,
-          chainId,
-          name: 'Real Test Token',
-          symbol: 'RTT',
-          decimals: 18,
-          totalSupply: 1000000,
-          pairAddress: '0xpair123',
-          socials: {
-            telegram: 'https://t.me/test',
-            twitter: 'https://twitter.com/test',
-          },
-          dataSource: TokenDataSource.BIRDEYE,
-        });
+        await dbHelper.reset();
+        await dbHelper.insertChains();
+        const { Database: RealDatabase } = jest.requireActual<typeof import('../../../db/database')>('../../../db/database');
+        realDb = new (RealDatabase as any)(dbHelper.getPrisma());
 
-        await realDb.tokens.createToken(autoTrackerToken.toDb());
+        await realDb.tokens.createToken(completeToken.toDb());
       });
 
-      // afterEach(async () => {
-      //   await realDb.tokens.deleteToken(tokenAddress, chainId);
-      // });
-
       it('should return mapped AutoTrackerToken from database', async () => {
-        // Create builder with real database (not mocked)
-        // Constructor: (tokenAddress, chainId?, rawData?, birdeyeService?, db?)
-        const builder = new AutoTrackerTokenBuilder(
-          tokenAddress,
-          chainId,
-          undefined, // rawData
-          mockBirdeyeService as any, // birdeyeService
-          realDb // Pass the real database instance
-        );
+        const builder = createBuilderWithRealDb(realDb);
 
         // Call getDbToken - should retrieve the real token
         const result = await builder.getDbToken();
@@ -567,11 +541,11 @@ describe('AutoTrackerTokenBuilder', () => {
         // Verify the data matches what we inserted
         expect(result?.address).toBe(tokenAddress);
         expect(result?.chainId).toBe(chainId);
-        expect(result?.name).toBe('Real Test Token');
-        expect(result?.symbol).toBe('RTT');
-        expect(result?.decimals).toBe(18);
-        expect(result?.totalSupply).toBe(1000000);
-        expect(result?.pairAddress).toBe('0xpair123');
+        expect(result?.name).toBe(TEST_TOKEN_DATA.name);
+        expect(result?.symbol).toBe(TEST_TOKEN_DATA.symbol);
+        expect(result?.decimals).toBe(TEST_TOKEN_DATA.decimals);
+        expect(result?.totalSupply).toBe(TEST_TOKEN_DATA.totalSupply);
+        expect(result?.pairAddress).toBe(TEST_TOKEN_DATA.pairAddress);
         expect(result?.dataSource).toBe('BIRDEYE');
 
         // Clean up
@@ -624,42 +598,19 @@ describe('AutoTrackerTokenBuilder', () => {
     describe('Database Scenarios', () => {
       let realDb: Database;
 
-      beforeAll(async () => {
+      beforeEach(async () => {
+        await dbHelper.reset();
+        await dbHelper.insertChains();
         const { Database: RealDatabase } = jest.requireActual<typeof import('../../../db/database')>('../../../db/database');
         realDb = new (RealDatabase as any)(dbHelper.getPrisma());
-        await dbHelper.insertChains();
       });
 
       it('should return DB token immediately if it exists and has all required fields', async () => {
-
-        // Create a complete token with all required fields
-        const testAddress = '0xcomplete123456789012345678901234';
-        const autoTrackerToken = new AutoTrackerToken({
-          address: testAddress,
-          chainId,
-          name: 'Complete Token',
-          symbol: 'COMP',
-          decimals: 18,
-          totalSupply: 1000000,
-          pairAddress: '0xpair456',
-          socials: {
-            telegram: 'https://t.me/complete',
-            twitter: 'https://twitter.com/complete',
-          },
-          dataSource: TokenDataSource.BIRDEYE,
-        });
-
         // Insert the complete token into database
-        await realDb.tokens.upsertTokenFromTokenData(autoTrackerToken);
+        await realDb.tokens.upsertTokenFromTokenData(completeToken);
 
         // Create builder with real database
-        const builder = new AutoTrackerTokenBuilder(
-          testAddress,
-          chainId,
-          undefined,
-          mockBirdeyeService as any,
-          realDb
-        );
+        const builder = createBuilderWithRealDb(realDb);
 
         // Spy on getInitialData to verify it's NOT called
         const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
@@ -670,46 +621,24 @@ describe('AutoTrackerTokenBuilder', () => {
 
         // Verify the token was returned
         expect(result).toBeDefined();
-        expect(result.address).toBe(testAddress);
-        expect(result.name).toBe('Complete Token');
-        expect(result.symbol).toBe('COMP');
+        expect(result.address).toBe(tokenAddress);
+        expect(result.name).toBe(TEST_TOKEN_DATA.name);
+        expect(result.symbol).toBe(TEST_TOKEN_DATA.symbol);
 
         // Verify NO API calls were made (short-circuit)
         expect(getInitialDataSpy).not.toHaveBeenCalled();
         expect(collectSpy).not.toHaveBeenCalled();
 
         // Clean up
-        await testSeed.deleteToken(testAddress, chainId);
+        await testSeed.deleteToken(tokenAddress, chainId);
       });
 
       it('should short-circuit and skip API calls when DB token is complete', async () => {
-        // Create a complete token
-        const testAddress = '0xshortcircuit12345678901234567890';
-        const autoTrackerToken = new AutoTrackerToken({
-          address: testAddress,
-          chainId,
-          name: 'ShortCircuit Token',
-          symbol: 'SHORT',
-          decimals: 9,
-          totalSupply: 5000000,
-          pairAddress: '0xpairshort',
-          socials: {
-            telegram: 'https://t.me/short',
-          },
-          dataSource: TokenDataSource.GMGN,
-        });
-
         // Insert the complete token
-        await realDb.tokens.upsertTokenFromTokenData(autoTrackerToken);
+        await realDb.tokens.upsertTokenFromTokenData(completeToken);
 
         // Create builder
-        const builder = new AutoTrackerTokenBuilder(
-          testAddress,
-          chainId,
-          undefined,
-          mockBirdeyeService as any,
-          realDb
-        );
+        const builder = createBuilderWithRealDb(realDb);
 
         // Spy on API-related methods
         const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
@@ -722,8 +651,8 @@ describe('AutoTrackerTokenBuilder', () => {
 
         // Verify token was returned
         expect(result).toBeDefined();
-        expect(result.address).toBe(testAddress);
-        expect(result.symbol).toBe('SHORT');
+        expect(result.address).toBe(tokenAddress);
+        expect(result.symbol).toBe(TEST_TOKEN_DATA.symbol);
 
         // Verify NO API methods were called
         expect(getGmgnTokenSpy).not.toHaveBeenCalled();
@@ -736,7 +665,7 @@ describe('AutoTrackerTokenBuilder', () => {
         expect(mockBirdeyeService.fetchTokenWithMarketCap).not.toHaveBeenCalled();
 
         // Clean up
-        await testSeed.deleteToken(testAddress, chainId);
+        await testSeed.deleteToken(tokenAddress, chainId);
       });
 
       it('should fetch and create token when not in database', async () => {
@@ -748,13 +677,7 @@ describe('AutoTrackerTokenBuilder', () => {
         expect(existingToken).toBeNull();
 
         // Create builder
-        const builder = new AutoTrackerTokenBuilder(
-          testAddress,
-          chainId,
-          undefined,
-          mockBirdeyeService as any,
-          realDb
-        );
+        const builder = createBuilderWithRealDb(realDb);
 
         // Mock rawData to return valid data for collection
         const mockRawData = new RawTokenDataCacheMock(testAddress, chainId);
@@ -832,7 +755,7 @@ describe('AutoTrackerTokenBuilder', () => {
         const prisma = dbHelper.getPrisma();
         await prisma.token.create({
           data: {
-            address: testAddress,
+            address: tokenAddress,
             chain: { connect: { chain_id: chainId } },
             name: 'Incomplete Token',
             symbol: 'INC',
@@ -845,13 +768,7 @@ describe('AutoTrackerTokenBuilder', () => {
         });
 
         // Create builder
-        const builder = new AutoTrackerTokenBuilder(
-          testAddress,
-          chainId,
-          undefined,
-          mockBirdeyeService as any,
-          realDb
-        );
+        const builder = createBuilderWithRealDb(realDb);
 
         // Spy on methods to verify they ARE called (should fetch to complete the token)
         const collectSpy = jest.spyOn(builder as any, 'collect');
@@ -911,68 +828,14 @@ describe('AutoTrackerTokenBuilder', () => {
           pairAddress: '0xcompletedpair',
         }));
 
-        // Clean up
-        await testSeed.deleteToken(testAddress, chainId);
       });
 
-      describe('checks required fields correctly', () => {
-        beforeEach(async () => {
-          // Clear the database before each test in this block
-          await dbHelper.reset();
-          await dbHelper.insertChains();
-
-          // Recreate realDb with the current Prisma instance after reset
-          const { Database: RealDatabase } = jest.requireActual<typeof import('../../../db/database')>('../../../db/database');
-          realDb = new (RealDatabase as any)(dbHelper.getPrisma());
-        });
-
-        it('should use hasMissingRequiredFields to determine if token is complete', async () => {
-          const testAddress = '0xfieldscheck1234567890123456789012';
-
-          // Create a complete token with all required fields
-          const autoTrackerToken = new AutoTrackerToken({
-            address: testAddress,
-            chainId,
-            name: 'Complete Token',
-            symbol: 'COMP',
-            decimals: 18,
-            totalSupply: 1000000,
-            pairAddress: '0xpair456',
-            socials: {
-              telegram: 'https://t.me/complete',
-              twitter: 'https://twitter.com/complete',
-            },
-            dataSource: TokenDataSource.BIRDEYE,
-          });
-
+      it('should use hasMissingRequiredFields to determine if token is complete', async () => {
           // Insert the complete token into database
-          try {
-            await realDb.tokens.upsertTokenFromTokenData(autoTrackerToken);
-          } catch (error) {
-            console.error('Error upserting token:', error);
-            throw error;
-          }
-
-          // Verify the token was actually inserted
-          const verifyToken = await realDb.tokens.findOneByTokenAddress(testAddress);
-          if (!verifyToken) {
-            console.error('Token not found after upsert. Address:', testAddress);
-            console.error('ChainId:', chainId);
-            // Try querying all tokens to see what's in the database
-            const allTokens = await dbHelper.getPrisma().token.findMany();
-            console.error('All tokens in database:', allTokens.length);
-          }
-          expect(verifyToken).not.toBeNull();
-          expect(verifyToken?.address).toBe(testAddress);
+          await realDb.tokens.upsertTokenFromTokenData(completeToken);
 
           // Create builder
-          const builder = new AutoTrackerTokenBuilder(
-            testAddress,
-            chainId,
-            undefined,
-            mockBirdeyeService as any,
-            realDb
-          );
+          const builder = createBuilderWithRealDb(realDb);
 
           // Spy on methods - these should NOT be called since token is complete
           const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
@@ -1004,25 +867,16 @@ describe('AutoTrackerTokenBuilder', () => {
 
           // Verify result is the complete token
           expect(result).toBeDefined();
-          expect(result.address).toBe(testAddress);
-          expect(result.name).toBe('Complete Token');
-          expect(result.pairAddress).toBe('0xpair456');
+          expect(result.address).toBe(tokenAddress);
+          expect(result.name).toBe(TEST_TOKEN_DATA.name);
+          expect(result.pairAddress).toBe(TEST_TOKEN_DATA.pairAddress);
 
           // Clean up
-          await testSeed.deleteToken(testAddress, chainId);
+          await testSeed.deleteToken(tokenAddress, chainId);
         });
 
         it('should merge tokens with available data even when some sources fail', async () => {
-          const testAddress = '0xmergetest12345678901234567890123';
-
-          // Create builder
-          const builder = new AutoTrackerTokenBuilder(
-            testAddress,
-            chainId,
-            undefined,
-            mockBirdeyeService as any,
-            realDb
-          );
+          const builder = createBuilderWithRealDb(realDb);
 
           // Mock getDbToken to return null (no token in DB)
           const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
@@ -1036,7 +890,7 @@ describe('AutoTrackerTokenBuilder', () => {
           });
 
           // Mock collect
-          const mockRawData = new RawTokenDataCacheMock(testAddress, chainId);
+          const mockRawData = new RawTokenDataCacheMock(tokenAddress, chainId);
           const collectSpy = jest.spyOn(builder as any, 'collect');
           collectSpy.mockResolvedValue({
             birdeyeTokenOverview: mockRawData.birdeye.getTokenOverview(),
@@ -1052,7 +906,7 @@ describe('AutoTrackerTokenBuilder', () => {
 
           // Mock Birdeye to succeed
           const mockBirdeyeToken = new AutoTrackerToken({
-            address: testAddress,
+            address: tokenAddress,
             chainId,
             name: 'Test Token',
             symbol: 'TEST',
@@ -1079,7 +933,7 @@ describe('AutoTrackerTokenBuilder', () => {
 
           // Verify result is the merged token (should only have Birdeye data since GMGN failed)
           expect(result).toBeDefined();
-          expect(result.address).toBe(testAddress);
+          expect(result.address).toBe(tokenAddress);
           expect(result.name).toBe('Test Token');
           expect(result.symbol).toBe('TEST');
           expect(result.pairAddress).toBe('0xpair');
@@ -1088,118 +942,83 @@ describe('AutoTrackerTokenBuilder', () => {
           // Verify token was saved
           expect(upsertSpy).toHaveBeenCalled();
           expect(upsertSpy).toHaveBeenCalledWith(expect.objectContaining({
-            address: testAddress,
+            address: tokenAddress,
             name: 'Test Token',
           }));
         });
-      });
     });
 
     describe('Chain ID Resolution Flow', () => {
-      describe('DB token without chain ID triggers resolution', () => {
-        it('should fetch initial data to resolve chain ID when DB token lacks it', () => {
-          // TODO: Implement
-        });
+      it('should fetch initial data to resolve chain ID when DB token lacks it', () => {
+        // TODO: Implement
       });
 
-      describe('builder chain ID takes precedence', () => {
-        it('should use chain ID from builder constructor even if DB token lacks it', () => {
-          // TODO: Implement
-        });
+      it('should use chain ID from builder constructor even if DB token lacks it', () => {
+        // TODO: Implement
       });
 
-      describe('DB token with chain ID skips resolution', () => {
-        it('should not resolve chain ID if DB token already has it', () => {
-          // TODO: Implement
-        });
+      it('should not resolve chain ID if DB token already has it', () => {
+        // TODO: Implement
       });
 
-      describe('no chain ID anywhere triggers resolution', () => {
-        it('should resolve chain ID when builder and DB token both lack it', () => {
-          // TODO: Implement
-        });
+      it('should resolve chain ID when builder and DB token both lack it', () => {
+        // TODO: Implement
       });
 
-      describe('initializes rawData with getInitialData response', () => {
-        it('should pass rawData from getInitialData to initialiseRawData', () => {
-          // TODO: Implement
-        });
+      it('should pass rawData from getInitialData to initialiseRawData', () => {
+        // TODO: Implement
       });
     });
 
     describe('Data Merging Scenarios', () => {
-      describe('merges DB token with API data', () => {
-        it('should merge existing DB token with fresh API data from both sources', () => {
-          // TODO: Implement
-        });
+      it('should merge existing DB token with fresh API data from both sources', () => {
+        // TODO: Implement
       });
 
-      describe('merges three sources in correct order', () => {
-        it('should pass tokens in correct order to mergeMany', () => {
-          // TODO: Implement
-        });
+      it('should pass tokens in correct order to mergeMany', () => {
+        // TODO: Implement
       });
 
-      describe('handles only GMGN returning data', () => {
-        it('should create token when only GMGN source succeeds, Birdeye fails', () => {
-          // TODO: Implement
-        });
+      it('should create token when only GMGN source succeeds, Birdeye fails', () => {
+        // TODO: Implement
       });
 
-      describe('handles only Birdeye returning data', () => {
-        it('should create token when only Birdeye source succeeds, GMGN fails', () => {
-          // TODO: Implement
-        });
+      it('should create token when only Birdeye source succeeds, GMGN fails', () => {
+        // TODO: Implement
       });
 
-      describe('merges partial data from multiple sources', () => {
-        it('should combine partial data from each source to meet requirements', () => {
-          // TODO: Implement
-        });
+      it('should combine partial data from each source to meet requirements', () => {
+        // TODO: Implement
       });
 
-      describe('handles all sources returning null except DB', () => {
-        it('should try to work with just DB token if APIs fail', () => {
-          // TODO: Implement
-        });
+      it('should try to work with just DB token if APIs fail', () => {
+        // TODO: Implement
       });
     });
 
     describe('Validation and Persistence', () => {
-      describe('validates merged token before saving', () => {
-        it('should call AutoTrackerToken.validate on merged token', () => {
-          // TODO: Implement
-        });
+      it('should call AutoTrackerToken.validate on merged token', () => {
+        // TODO: Implement
       });
 
-      describe('throws validation error for incomplete token', () => {
-        it('should throw validation error if merged token still missing required fields', () => {
-          // TODO: Implement
-        });
+      it('should throw validation error if merged token still missing required fields', () => {
+        // TODO: Implement
       });
 
-      describe('validation checks required fields list', () => {
-        it('should validate against AutoTrackerToken.requiredFields', () => {
-          // TODO: Implement
-        });
+      it('should validate against AutoTrackerToken.requiredFields', () => {
+        // TODO: Implement
       });
 
-      describe('upserts token to database after validation', () => {
-        it('should save merged token to database after successful validation', () => {
-          // TODO: Implement
-        });
+      it('should save merged token to database after successful validation', () => {
+        // TODO: Implement
       });
 
-      describe('returns merged and validated token', () => {
-        it('should return the final merged token after validation and save', () => {
-          // TODO: Implement
-        });
+      it('should return the final merged token after validation and save', () => {
+        // TODO: Implement
       });
 
-      describe('upsert happens after validation passes', () => {
-        it('should ensure validation precedes database upsert', () => {
-          // TODO: Implement
-        });
+      it('should ensure validation precedes database upsert', () => {
+        // TODO: Implement
       });
     });
 
