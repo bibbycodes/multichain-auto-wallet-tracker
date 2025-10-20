@@ -4,7 +4,7 @@ import { writeFileSync } from "fs";
 import { join } from "path";
 
 // Use the same token address and chain as existing fixtures
-const TOKEN_ADDRESS = "0xe8852d270294cc9a84fe73d5a434ae85a1c34444";
+const TOKEN_ADDRESS = "0xe6df05ce8c8301223373cf5b969afcb1498c5528";
 const CHAIN_ID: ChainId = "56"; // BSC chain for this token
 const WALLET_ADDRESS = "0x5c952063c7fc8610ffdb798152d69f0b9550762b"; // From existing fixtures
 const OUTPUT_DIR = join(__dirname, "../fixtures/gmgn");
@@ -17,7 +17,7 @@ async function fetchGmgnFixtures() {
   try {
     // Methods that take tokenAddress and chainId
     const tokenMethods = [
-      { name: "getTokenSecurity", fn: () => service.getTokenSecurity(TOKEN_ADDRESS, CHAIN_ID) },
+      { name: "getTokenSecurityAndLaunchpad", fn: () => service.getTokenSecurityAndLaunchpad(TOKEN_ADDRESS, CHAIN_ID) },
       { name: "getPartialSecurityValues", fn: () => service.getPartialSecurityValues(TOKEN_ADDRESS, CHAIN_ID) },
       { name: "getTopTraders", fn: () => service.getTopTraders(TOKEN_ADDRESS, CHAIN_ID) },
       { name: "getHolders", fn: () => service.getHolders(TOKEN_ADDRESS, CHAIN_ID) },

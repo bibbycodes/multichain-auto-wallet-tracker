@@ -1,10 +1,13 @@
 import { TokenDataSource } from "@prisma/client";
-import { GmGnMultiWindowTokenInfo, GmGnTokenSocials } from "python-proxy-scraper-client";
-import { ChainId, ChainsMap, getInternallySupportedChainIds } from "../../../../shared/chains";
+import { GmGnEvmTokenSecurity, GmGnMultiWindowTokenInfo, GmGnSolanaTokenSecurity, GmGnTokenSocials } from "python-proxy-scraper-client";
+import { ChainId, getInternallySupportedChainIds } from "../../../../shared/chains";
+import { MIN_BURN_RATIO } from "../../../../shared/constants";
 import { getTwitterUrlFromUsername } from "../../../../utils/links";
+import { isNullOrUndefined } from "../../../../utils/object";
 import { SocialMedia } from "../../../models/socials/types";
 import { AutoTrackerToken } from "../../../models/token";
-import { AutoTrackerTokenData, TokenDataWithMarketCap } from "../../../models/token/types";
+import { AutoTrackerTokenData, TokenDataWithMarketCap, TokenSecurity } from "../../../models/token/types";
+import { isSolanaAddress } from "../../util/common";
 import { CHAIN_ID_TO_GMGN_CHAIN, GMGN_CHAIN_TO_CHAIN_ID, GmGnChain } from "./gmgn-chain-map";
 
 export class GmGnMapper {
@@ -128,5 +131,97 @@ export class GmGnMapper {
     ): AutoTrackerToken {
         const tokenData = this.buildTokenData(gmGnToken, gmGnSocials, chainId);
         return new AutoTrackerToken(tokenData);
+    }
+
+    public static isHoneyPot(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
+        return security.is_honeypot || 
+               Number(security.honeypot) === 1 || 
+               Number(security.can_not_sell) === 1 || 
+               false;
+    }
+
+    public static isMintable(security: GmGnEvmTokenSecurity): boolean {
+        return !security.is_renounced || security.renounced === 1;
+    }
+
+    public static isFreezable(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
+        return !security.is_renounced ;
+    }
+
+    public static isSolanaFreezable(security: GmGnSolanaTokenSecurity): boolean {
+        return !security.renounced_freeze_account || isNullOrUndefined(security.renounced_freeze_account) || Boolean(security.is_renounced);
+    }
+
+    public static isBurned(security: GmGnEvmTokenSecurity): boolean {
+        const isLocked = security.lock_summary?.lock_detail?.reduce((acc: number, detail: any) => acc + Number(detail.percent), 0) > 0.9;
+        const burnRatio = Number(security.burn_ratio);
+        return burnRatio > MIN_BURN_RATIO || isLocked;
+    }
+
+    public static isSolanaBurned(security: GmGnSolanaTokenSecurity): boolean {
+        return Number(security.burn_ratio) > MIN_BURN_RATIO || security.burn_status === "burned";
+    }
+
+    public static isPausable(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
+        return !security.is_renounced || security.renounced === 1;
+    }
+
+    public static isRenounced(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
+        return security.is_renounced || security.renounced === 1;
+    }
+
+    public static extractBlacklistStatus(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
+        return security.is_blacklist ?? Number(security.blacklist) === 1;
+    }
+
+    public static extractBuyTax(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): number {
+        return Number(security.buy_tax);
+    }
+
+    public static extractSellTax(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): number {
+        return Number(security.sell_tax);
+    }
+
+    public static extractTokenSecurityFromEvm(security: GmGnEvmTokenSecurity): TokenSecurity {
+        return {
+            isHoneypot: this.isHoneyPot(security),
+            isMintable: this.isMintable(security),
+            isLpTokenBurned: this.isBurned(security),
+            isPausable: this.isPausable(security),
+            isFreezable: this.isFreezable(security),
+            isRenounced: this.isRenounced(security),
+            buyTax: this.extractBuyTax(security),
+            sellTax: this.extractSellTax(security),
+            isBlacklist: this.extractBlacklistStatus(security),
+        };
+    }
+
+    /**
+     * Extract TokenSecurity from GmGn Solana token security data
+     */
+    public static extractTokenSecurityFromSolana(security: GmGnSolanaTokenSecurity): TokenSecurity {
+        return {
+            isHoneypot: this.isHoneyPot(security),
+            isMintable: !security.renounced_mint, // If mint is not renounced, it's mintable
+            isLpTokenBurned: this.isSolanaBurned(security),
+            isPausable: this.isPausable(security),
+            isFreezable: this.isFreezable(security),
+            isRenounced: this.isRenounced(security),
+            buyTax: this.extractBuyTax(security),
+            sellTax: this.extractSellTax(security),
+            isBlacklist: this.extractBlacklistStatus(security),
+        };
+    }
+
+    /**
+     * Extract TokenSecurity from GmGn token security data (handles both EVM and Solana)
+     */
+    public static extractTokenSecurity(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): TokenSecurity {
+        // Check if it's Solana security data by checking for Solana-specific fields
+        if (isSolanaAddress(security.address)) {
+            return this.extractTokenSecurityFromSolana(security as GmGnSolanaTokenSecurity);
+        } else {
+            return this.extractTokenSecurityFromEvm(security as GmGnEvmTokenSecurity);
+        }
     }
 }

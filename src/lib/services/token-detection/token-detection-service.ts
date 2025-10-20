@@ -50,6 +50,7 @@ export class TokenDetectionWorkerService {
                 channelId: env.telegram.wbbBscChannelId,
                 caption: new TelegramMessageFormatter(baseContextData).getAlertMessage(),
                 token: token,
+                priceDetails: baseContextData.priceDetails,
             }
         });
 

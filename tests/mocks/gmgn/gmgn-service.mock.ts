@@ -7,9 +7,9 @@ import { GmGnTokenDataWithMarketCap } from "../../../src/lib/services/apis/gmgn/
 // Import fixture data
 import getMultiWindowTokenInfoFixture from "../../fixtures/gmgn/getMultiWindowTokenInfo-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
 import getTokenSocialsFixture from "../../fixtures/gmgn/getTokenSocials-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
-import getHoldersFixture from "../../fixtures/gmgn/getHolders-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
+import getHoldersFixture from "../../fixtures/gmgn/getHolders-0xe6df05ce8c8301223373cf5b969afcb1498c5528.json";
 import getTrendingTokensFixture from "../../fixtures/gmgn/getTrendingTokens-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
-import getTokenSecurityFixture from "../../fixtures/gmgn/getTokenSecurity-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
+import getTokenSecurityAndLaunchpadFixture from "../../fixtures/gmgn/getTokenSecurityAndLaunchpad-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
 import getPartialSecurityValuesFixture from "../../fixtures/gmgn/getPartialSecurityValues-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
 import getWalletDataFixture from "../../fixtures/gmgn/getWalletData-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
 import getWalletHoldingsFixture from "../../fixtures/gmgn/getWalletHoldings-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
@@ -27,7 +27,9 @@ export class GmGnServiceMock extends BaseTokenFetcherService {
   // Jest mock functions for methods with fixtures
   getTrendingTokens = jest.fn().mockResolvedValue(getTrendingTokensFixture as unknown as GmGnTrendingTokenResponse);
 
-  getTokenSecurity = jest.fn().mockResolvedValue(getTokenSecurityFixture as unknown as GmGnTokenSecurityAndLaunchpad);
+  getTokenSecurity = jest.fn().mockResolvedValue(getTokenSecurityAndLaunchpadFixture as unknown as GmGnTokenSecurityAndLaunchpad);
+
+  getTokenSecurityAndLaunchpad = jest.fn().mockResolvedValue(getTokenSecurityAndLaunchpadFixture as unknown as GmGnTokenSecurityAndLaunchpad);
 
   getPartialSecurityValues = jest.fn().mockResolvedValue(getPartialSecurityValuesFixture as unknown as Partial<TokenSecurity>);
 

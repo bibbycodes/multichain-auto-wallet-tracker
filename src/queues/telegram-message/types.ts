@@ -1,4 +1,5 @@
 import { BaseQueueJobData, BaseQueueJobResult } from "../types";
+import { TokenPriceDetails } from "../../lib/models/token/types";
 
 export enum TelegramMessageJobTypes {
     SEND_ALERT = 'SEND_ALERT',
@@ -13,5 +14,6 @@ export interface SendMessageToChannelData {
     caption: string;
     photo?: string;
     token: any; // Serialized AutoTrackerToken
+    priceDetails: TokenPriceDetails; // Market data (price, marketCap, liquidity)
 }
 

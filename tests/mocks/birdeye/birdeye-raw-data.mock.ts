@@ -7,6 +7,7 @@ import { BaseDataSource } from "../../../src/lib/services/raw-data/base-data-sou
 import getTokenOverviewFixture from "../../fixtures/birdeye/getTokenOverview-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
 import getTokenSecurityFixture from "../../fixtures/birdeye/getTokenSecurity-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
 import getMarketsFixture from "../../fixtures/birdeye/getMarkets-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
+import { TokenDataSource } from "@prisma/client";
 
 export class BirdeyeRawTokenDataMock extends BaseDataSource<BirdEyeTokenDataRawData> {
   constructor(
@@ -15,6 +16,10 @@ export class BirdeyeRawTokenDataMock extends BaseDataSource<BirdEyeTokenDataRawD
     initialData?: Partial<BirdEyeTokenDataRawData>,
   ) {
     super(tokenAddress, chainId, initialData);
+  }
+
+  protected getDataSourceName(): string {
+    return TokenDataSource.GO_PLUS.toLowerCase();
   }
 
   // Jest mock functions for all methods

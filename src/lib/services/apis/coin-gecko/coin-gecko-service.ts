@@ -1,5 +1,6 @@
 import axios from 'axios'
 import {Chain} from "../../../../shared/chains";
+import { GeckoTerminalApiClient, GeckoTerminalTokenDetails } from 'python-proxy-scraper-client';
 
 const GECKO_TERMINAL_API_BASE = 'https://api.geckoterminal.com/api/v2'
 

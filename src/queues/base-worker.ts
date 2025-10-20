@@ -82,7 +82,28 @@ export abstract class BaseWorker<TJobData extends BaseJobData, TJobResult extend
             return;
         }
 
-        this.worker = new Worker<TJobData, TJobResult>(this.queueName, jobProcessor, {
+        // Wrap the job processor with enhanced error handling
+        const wrappedJobProcessor = async (job: Job<TJobData, TJobResult>) => {
+            try {
+                console.log(`Processing job ${job.id} of type ${job.name} in queue ${this.queueName}`);
+                return await jobProcessor(job);
+            } catch (error) {
+                const err = error as Error;
+                console.error(`Error in job ${job.id} (${job.name}):`, {
+                    message: err.message,
+                    stack: err.stack,
+                    name: err.name,
+                    jobId: job.id,
+                    jobName: job.name,
+                    jobData: job.data
+                });
+                
+                // Re-throw the error so BullMQ can handle it properly
+                throw error;
+            }
+        };
+
+        this.worker = new Worker<TJobData, TJobResult>(this.queueName, wrappedJobProcessor, {
             connection: this.connection,
             autorun: false,
             removeOnComplete: { count: 300 },
@@ -113,6 +134,19 @@ export abstract class BaseWorker<TJobData extends BaseJobData, TJobResult extend
         this.worker.on('failed', (job, err) => {
             if (job) {
                 console.error(`Worker ${this.queueName} failed job ${job.id}: ${err.message}`);
+                
+                // Log the full error with stack trace
+                console.error('Worker error details:', {
+                    message: err.message,
+                    stack: err.stack,
+                    name: err.name,
+                    jobId: job.id,
+                    jobData: job.data
+                });
+                
+                // Also log the raw error for full stack trace visibility
+                console.error('Full error stack trace:');
+                console.error(err);
             }
         });
         

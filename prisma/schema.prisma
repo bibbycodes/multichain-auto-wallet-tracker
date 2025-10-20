@@ -278,6 +278,9 @@ enum TokenDataSource {
   BIRDEYE
   GMGN
   MORALIS
+  CHAIN_BASE
+  GO_PLUS
+  GECKO_TERMINAL
 }
 
 enum ChainType {

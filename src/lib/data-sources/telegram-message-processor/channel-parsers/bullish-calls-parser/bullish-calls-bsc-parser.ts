@@ -1,7 +1,6 @@
 import { Api } from "telegram";
 import { AutoTrackerTokenData } from "../../../../models/token/types";
 import { BaseTelegramChannelParser } from "../base-telegram-message-parser/base-telegram-message-parser";
-import { DexscreenerParser } from "../../../../../utils/parsers/dexscreener/dexscreener-parser";
 
 export class BullishBscCallsParser extends BaseTelegramChannelParser {
     readonly channelId: string = '2421215845'

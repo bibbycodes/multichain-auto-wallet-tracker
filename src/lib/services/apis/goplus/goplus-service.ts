@@ -1,24 +1,29 @@
-import { TokenSecurity } from "lib/services/token-analyser"
-import { ChainId, isEvmChainId, isSolanaChainId } from "shared/chains"
-import { GoPlusClient } from "./goplus-client"
-import { SolanaTokenSecurityInfo, TokenSecurityInfo } from "./types"
-export class GoPlusService {
+import { GoPlusClient, GoPlusSolanaTokenSecurity, GoPlusSolanaTokenSecurityResponse, GoPlusTokenSecurity, TokenSecurityResponse, GoPlusRugpullDetection } from "python-proxy-scraper-client"
+import { ChainId, isEvmChainId, isSolanaChainId } from "../../../../shared/chains"
+import { TokenSecurity } from "../../../models/token/types"
+import { Singleton } from "../../util/singleton"
+
+export class GoPlusService extends Singleton {
     constructor(
+
         private readonly goplusClient: GoPlusClient
     ) {
+        super()
     }
 
-    async getTokenSecurity(tokenAddress: string, chainId: ChainId): Promise<TokenSecurityInfo | SolanaTokenSecurityInfo> {
+    async getTokenSecurity(tokenAddress: string, chainId: ChainId): Promise<GoPlusTokenSecurity | GoPlusSolanaTokenSecurity> {
         let tokenSecurity
         if (isEvmChainId(chainId)) {
-            tokenSecurity = await this.goplusClient.getEvmTokenSecurity(chainId, tokenAddress)
+            const response = await this.goplusClient.getTokenSecurity(tokenAddress, Number(chainId))
+            tokenSecurity = response.result[tokenAddress]
         } else {
-            tokenSecurity = await this.goplusClient.getSolanaTokenSecurity(tokenAddress)
+            const response = await this.goplusClient.getSolanaTokenSecurity(tokenAddress)
+            tokenSecurity = response.result[tokenAddress]
         }
         return tokenSecurity
     }
 
-    async getPartialSecurityValues(tokenAddress: string, chainId: ChainId, tokenSecurity?: TokenSecurityInfo | SolanaTokenSecurityInfo): Promise<Partial<TokenSecurity>> {
+    async getPartialSecurityValues(tokenAddress: string, chainId: ChainId, tokenSecurity?: GoPlusTokenSecurity | GoPlusSolanaTokenSecurity): Promise<Partial<TokenSecurity>> {
         const gplusTokenSecurity = tokenSecurity ?? await this.getTokenSecurity(tokenAddress, chainId)
         let isFreezable = false
         let isHoneypot = false
@@ -29,14 +34,14 @@ export class GoPlusService {
         let isBlacklist = false
 
         if (isEvmChainId(chainId)) {
-            const goPlusEvmTokenSecurity = gplusTokenSecurity as TokenSecurityInfo
+            const goPlusEvmTokenSecurity = gplusTokenSecurity as GoPlusTokenSecurity
             sellTax = Number(goPlusEvmTokenSecurity.sell_tax)
             isPausable = Boolean(goPlusEvmTokenSecurity.transfer_pausable)
             isLpTokenBurned = Number(goPlusEvmTokenSecurity.lp_total_supply) === 0
         }
 
         if (isSolanaChainId(chainId)) {
-            const goPlusSolanaTokenSecurity = gplusTokenSecurity as SolanaTokenSecurityInfo
+            const goPlusSolanaTokenSecurity = gplusTokenSecurity as GoPlusSolanaTokenSecurity
             isPausable = Boolean(goPlusSolanaTokenSecurity.closable.authority.some(authority => Boolean(authority.address)))
             isFreezable = Boolean(goPlusSolanaTokenSecurity.freezable.authority.some(authority => Boolean(authority.address)))
             isMintable = Boolean(goPlusSolanaTokenSecurity.mintable.authority.some(authority => Boolean(authority.address)))
@@ -52,5 +57,9 @@ export class GoPlusService {
             sellTax,
             isBlacklist
         }
+    }
+
+    async getRugpullDetection(tokenAddress: string, chainId: ChainId): Promise<GoPlusRugpullDetection> {
+        return this.goplusClient.getRugpullDetection(Number(chainId), tokenAddress);
     }
 }

@@ -17,7 +17,7 @@ export class GmGnService extends BaseTokenFetcherService {
     return withRetryOrFail(() => this.gmgnClient.getTrendingTokens(chain, timeframe))
   }
 
-  async getTokenSecurity(tokenAddress: string, chainId: ChainId): Promise<GmGnTokenSecurityAndLaunchpad> {
+  async getTokenSecurityAndLaunchpad(tokenAddress: string, chainId: ChainId): Promise<GmGnTokenSecurityAndLaunchpad> {
     const chain = GmGnMapper.chainIdToChain(chainId)
     return withRetryOrFail(() => this.gmgnClient.getTokenSecurityAndLaunchpad(tokenAddress, chain))
   }
@@ -30,7 +30,7 @@ export class GmGnService extends BaseTokenFetcherService {
     let buyTax = 0
     let sellTax = 0
     let isBlacklist = false
-    const gmTokenSecurity = tokenSecurity ?? await this.getTokenSecurity(tokenAddress, chainId)
+    const gmTokenSecurity = tokenSecurity ?? await this.getTokenSecurityAndLaunchpad(tokenAddress, chainId)
     
     if (isEvmChainId(chainId)) {
       const gmgnEvmTokenSecurity = gmTokenSecurity.security as GmGnEvmTokenSecurity
@@ -73,6 +73,7 @@ export class GmGnService extends BaseTokenFetcherService {
   async getHolders(tokenAddress: string, chainId: ChainId): Promise<GmGnTokenHolder[]> {
     const chain = GmGnMapper.chainIdToChain(chainId)
     const res = await withRetryOrFail(() => this.gmgnClient.getTokenHolders(tokenAddress, chain))
+    console.log({ res })
     return res.list
   }
 
@@ -143,7 +144,6 @@ export class GmGnService extends BaseTokenFetcherService {
       rawData: {
         tokenInfo: gmGnToken,
         socials,
-        holders: []
       }
     }
   }

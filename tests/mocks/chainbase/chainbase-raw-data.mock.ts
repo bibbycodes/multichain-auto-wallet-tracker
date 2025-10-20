@@ -1,7 +1,6 @@
-import { ChainId } from "../../../src/shared/chains";
-import { SocialMedia } from "../../../src/lib/models/socials/types";
 import { ChainBaseTokenDataRawData, ChainBaseTopHolder } from "../../../src/lib/services/apis/chain-base/types";
 import { BaseDataSource } from "../../../src/lib/services/raw-data/base-data-source";
+import { ChainId } from "../../../src/shared/chains";
 
 // Import fixture data
 import topHoldersFixture from "../../fixtures/chainbase/topHolders-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
@@ -13,6 +12,10 @@ export class ChainBaseRawDataMock extends BaseDataSource<ChainBaseTokenDataRawDa
     initialData?: Partial<ChainBaseTokenDataRawData>,
   ) {
     super(tokenAddress, chainId, initialData);
+  }
+
+  protected getDataSourceName(): string {
+    return 'chainbase';
   }
 
   // Jest mock functions for all methods

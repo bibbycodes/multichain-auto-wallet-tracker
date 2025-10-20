@@ -1,6 +1,7 @@
 import { Database } from '../../db/database';
 import { SocialPlatform } from '@prisma/client';
 import { AutoTrackerToken } from '../../models/token';
+import { RawTokenDataCache } from '../raw-data/raw-data';
 
 export class AlertsService {
     constructor(
@@ -28,7 +29,6 @@ export class AlertsService {
                     market_cap: marketCap,
                     price: price
                 });
-                console.log(`Alert record created for token ${token.address} on ${socialPlatform}`);
             } else {
                 console.warn(`Token not found in database, skipping alert creation: ${token.address}`);
             }
@@ -36,15 +36,6 @@ export class AlertsService {
             console.error('Failed to create alert record:', error);
             // Don't throw error here as the message was already sent successfully
         }
-    }
-
-    async createAlertForTokenWithMarketData(
-        token: AutoTrackerToken,
-        socialPlatform: SocialPlatform = SocialPlatform.TELEGRAM
-    ): Promise<void> {
-        const marketCap = (token as any).marketCap;
-        const price = (token as any).price;
-        await this.createAlertForToken(token, marketCap, price, socialPlatform);
     }
 
     async hasTokenAlerted(tokenAddress: string): Promise<boolean> {

@@ -1,0 +1,9 @@
+{
+  "isFreezable": true,
+  "isHoneypot": false,
+  "isMintable": true,
+  "isLpTokenBurned": false,
+  "buyTax": 0,
+  "sellTax": 0,
+  "isBlacklist": false
+}

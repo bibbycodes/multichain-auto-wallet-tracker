@@ -43,7 +43,7 @@
     "moralis": "^2.27.2",
     "node-cron": "^3.0.3",
     "pg": "^8.13.0",
-    "python-proxy-scraper-client": "^1.1.8 ",
+    "python-proxy-scraper-client": "^1.1.9",
     "rxjs": "^7.8.2",
     "telegraf": "^4.16.3",
     "telegram": "^2.26.22",

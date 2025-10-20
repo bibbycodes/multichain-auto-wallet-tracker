@@ -7,13 +7,21 @@ import { BirdeyeRawTokenData } from "./birdeye-raw-data";
 import { ChainBaseRawData } from "./chain-base-raw-data";
 import { GmgnRawDataSource } from "./gmgn-raw-data";
 import { RawDataData } from "./types";
+import { GoPlusRawData } from "./go-plus-raw-data";
+import { GoPlusTokenDataRawData } from "../apis/goplus/types";
+import { GeckoTerminalRawData } from "./gecko-terminal-raw-data";
+import { GeckoTerminaTokenDataRawData } from "../apis/gecko-terminal/types";
+import { BaseDataSource } from "./base-data-source";
 
 export class RawTokenDataCache {
     public readonly birdeye: BirdeyeRawTokenData;
     public readonly gmgn: GmgnRawDataSource;
     public readonly chainBase: ChainBaseRawData;
+    public readonly goPlus: GoPlusRawData;
+    public readonly geckoTerminal: GeckoTerminalRawData;
     public readonly chainId: ChainId;
     public readonly tokenAddress: string;
+    private readonly dataSources: BaseDataSource<BirdEyeTokenDataRawData | GmGnTokenDataRawData | ChainBaseTokenDataRawData | GoPlusTokenDataRawData | GeckoTerminaTokenDataRawData>[];
 
     constructor(
         tokenAddress: string,
@@ -23,37 +31,42 @@ export class RawTokenDataCache {
         this.birdeye = new BirdeyeRawTokenData(tokenAddress, chainId, data?.birdeye);
         this.gmgn = new GmgnRawDataSource(tokenAddress, chainId, data?.gmgn);
         this.chainBase = new ChainBaseRawData(tokenAddress, chainId, data?.chainBase);
+        this.goPlus = new GoPlusRawData(tokenAddress, chainId, data?.goPlus);
+        this.geckoTerminal = new GeckoTerminalRawData(tokenAddress, chainId, data?.geckoTerminal);
         this.chainId = chainId;
         this.tokenAddress = tokenAddress;
+        this.dataSources = [
+            this.birdeye,
+            this.gmgn,
+            this.chainBase,
+            this.goPlus,
+            this.geckoTerminal
+        ];
     }
 
     async collect(): Promise<void> {
-        await Promise.allSettled([
-            this.birdeye.collect(),
-            this.gmgn.collect(),
-            this.chainBase.collect()
-        ]);
+        await Promise.allSettled(this.dataSources.map(dataSource => dataSource.collect()));
     }
 
     /**
      * Helper method to fetch from multiple sources with fallback
-     * @param birdeyeFetcher - Function to fetch from Birdeye
-     * @param gmgnFetcher - Function to fetch from GMGN
+     * @param fetchers - Array of functions to fetch data from different sources
      * @param errorMessage - Optional error message. If provided, throws on failure. If not, returns null.
      */
     private async getFromSources<T>(
-        birdeyeFetcher: () => Promise<T | null>,
-        gmgnFetcher: () => Promise<T | null>,
+        fetchers: Array<() => Promise<T | null>>,
         errorMessage?: string
     ): Promise<T | null> {
-        const birdeyeResult = await birdeyeFetcher();
-        if (birdeyeResult !== null) {
-            return birdeyeResult;
-        }
-        
-        const gmgnResult = await gmgnFetcher();
-        if (gmgnResult !== null) {
-            return gmgnResult;
+        for (const fetcher of fetchers) {
+            try {
+                const result = await fetcher();
+                if (result !== null) {
+                    return result;
+                }
+            } catch (error) {
+                // Continue to next fetcher if one fails
+                console.warn('Data source failed:', error);
+            }
         }
 
         if (errorMessage) {
@@ -73,89 +86,84 @@ export class RawTokenDataCache {
         if (data.chainBase) {
             this.chainBase.updateData(data.chainBase);
         }
+        if (data.goPlus) {
+            this.goPlus.updateData(data.goPlus);
+        }
+        if (data.geckoTerminal) {
+            this.geckoTerminal.updateData(data.geckoTerminal);
+        }
     }
 
     async getTokenPrice(): Promise<number> {
         return this.getFromSources(
-            () => this.birdeye.getPrice(),
-            () => this.gmgn.getPrice(),
+            this.dataSources.map(dataSource => () => dataSource.getPrice()),
             'Price is not available'
         ) as Promise<number>;
     }
 
     async getTokenMarketCap(): Promise<number> {
         return this.getFromSources(
-            () => this.birdeye.getMarketCap(),
-            () => this.gmgn.getMarketCap(),
+            this.dataSources.map(dataSource => () => dataSource.getMarketCap()),
             'Market cap is not available'
         ) as Promise<number>;
     }
 
     async getTokenLiquidity(): Promise<number> {
         return this.getFromSources(
-            () => this.birdeye.getLiquidity(),
-            () => this.gmgn.getLiquidity(),
+            this.dataSources.map(dataSource => () => dataSource.getLiquidity()),
             'Liquidity is not available'
         ) as Promise<number>;
     }
 
     async getTokenSupply(): Promise<number | null> {    
         return this.getFromSources(
-            () => this.birdeye.getSupply(),
-            () => this.gmgn.getSupply(),
+            this.dataSources.map(dataSource => () => dataSource.getSupply()),
             'Supply is not available'
         ) as Promise<number>;
     }
 
     async getTokenDecimals(): Promise<number | null> {
         return this.getFromSources(
-            () => this.birdeye.getDecimals(),
-            () => this.gmgn.getDecimals(),
+            this.dataSources.map(dataSource => () => dataSource.getDecimals()),
             'Decimals is not available'
         ) as Promise<number>;
     }
 
     async getTokenName(): Promise<string | null> {
         return this.getFromSources(
-            () => this.birdeye.getName(),
-            () => this.gmgn.getName(),
+            this.dataSources.map(dataSource => () => dataSource.getName()),
             'Name is not available'
         ) as Promise<string>;
     }
 
     async getTokenSymbol(): Promise<string | null> {
         return this.getFromSources(
-            () => this.birdeye.getSymbol(),
-            () => this.gmgn.getSymbol(),
+            this.dataSources.map(dataSource => () => dataSource.getSymbol()),
             'Symbol is not available'
         ) as Promise<string>;
     }
 
     async getTokenLogoUrl(): Promise<string | null> {
         return this.getFromSources(
-            () => this.birdeye.getLogoUrl(),
-            () => this.gmgn.getLogoUrl()
+            this.dataSources.map(dataSource => () => dataSource.getLogoUrl()),
         );
     }
 
     async getTokenDescription(): Promise<string | null> {
         return this.getFromSources(
-            () => this.birdeye.getDescription(),
-            () => this.gmgn.getDescription()
+            this.dataSources.map(dataSource => () => dataSource.getDescription()),
         );
     }
 
     async getTokenSocials(): Promise<SocialMedia | null> {
         return this.getFromSources(
-            () => this.birdeye.getSocials(),
-            () => this.gmgn.getSocials()
+            this.dataSources.map(dataSource => () => dataSource.getSocials()),
         );
     }
 
     async getTokenCreatedBy(): Promise<string | null> {
         return this.getFromSources(
-            () => this.birdeye.getCreatedBy(),
-            () => this.gmgn.getCreatedBy()
+            this.dataSources.map(dataSource => () => dataSource.getCreatedBy()),
         );
     }
 
@@ -181,5 +189,13 @@ export class RawTokenDataCache {
 
     public updateChainBaseData(data: Partial<ChainBaseTokenDataRawData>): void {
         this.chainBase.updateData(data);
+    }
+
+    public updateGoPlusData(data: Partial<GoPlusTokenDataRawData>): void {
+        this.goPlus.updateData(data);
+    }
+
+    public updateGeckoTerminalData(data: Partial<GeckoTerminaTokenDataRawData>): void {
+        this.geckoTerminal.updateData(data);
     }
 }

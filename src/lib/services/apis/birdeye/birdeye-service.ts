@@ -1,4 +1,4 @@
-import { ChainId } from "../../../../shared/chains"
+import { ChainId, ChainsMap } from "../../../../shared/chains"
 import { AutoTrackerTokenData, TokenDataWithMarketCapAndRawData } from "../../../models/token/types"
 import { RawDataData } from "../../raw-data/types"
 import { BaseTokenFetcherService } from "../../tokens/token-fetcher-types"
@@ -95,5 +95,20 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
     }
   ): Promise<BirdeyeSearchResponse> {
     return this.client.search(query, { ...options, chain: chainId ? BirdeyeMapper.chainIdToChain(chainId) : undefined })
+  }
+
+  async getTrendingTokens(
+    limit: number = 50, 
+    offset: number = 0, 
+    sortBy: 'liquidity' | 'rank' = 'liquidity', 
+    chainId: ChainId = ChainsMap.bsc
+  ) {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    return this.client.getTrendingTokens(limit, offset, sortBy, chain)
+  }
+
+  async getTop100TrendingTokensByMarketCap(chainId: ChainId = ChainsMap.bsc) {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    return this.client.getTop100TrendingTokensByMarketCap(chain)
   }
 }

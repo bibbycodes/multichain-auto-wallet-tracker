@@ -1,3 +1,4 @@
+import { TokenDataSource } from "@prisma/client";
 import { ChainId } from "../../../shared/chains";
 import { SocialMedia } from "../../models/socials/types";
 import { ChainBaseService } from "../apis/chain-base/chain-base-service";
@@ -12,6 +13,10 @@ export class ChainBaseRawData extends BaseDataSource<ChainBaseTokenDataRawData> 
         private chainBaseService: ChainBaseService = ChainBaseService.getInstance(),
     ) {
         super(tokenAddress, chainId, initialData);
+    }
+
+    protected getDataSourceName(): string {
+        return TokenDataSource.CHAIN_BASE.toLowerCase();
     }
 
     async collect(): Promise<void> {

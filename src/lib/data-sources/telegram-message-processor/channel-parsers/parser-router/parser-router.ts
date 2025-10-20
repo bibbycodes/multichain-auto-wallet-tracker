@@ -4,12 +4,14 @@ import { TelegramChannelParser } from "../base-telegram-message-parser/base-tele
 import { OnChainAlphaTrenchParser } from "../on-chain-alpha-trench/on-chain-alpha-trench-parser";
 import { KolScopeParser } from "../kol-scope/kol-scope-parser";
 import { BullishBscCallsParser } from "../bullish-calls-parser/bullish-calls-bsc-parser";
+import { FourMemeParser } from "../four-meme-parser/four-meme-parser";
 
 export class TelegramParserRouter {
     private static parsers: Map<string, TelegramChannelParser> = new Map([
         ['2097131181', new OnChainAlphaTrenchParser()],
         ['2397610468', new KolScopeParser()],
         ['2421215845', new BullishBscCallsParser()],
+        ['2649439684', new FourMemeParser()],
     ]);
 
     static parseMessage(message: Api.Message): Partial<AutoTrackerTokenData> | null {
@@ -20,7 +22,6 @@ export class TelegramParserRouter {
 
         const parser = this.parsers.get(channelId);
         if (!parser) {
-            console.warn(`No parser found for channel ID: ${channelId}`);
             return null;
         }
 

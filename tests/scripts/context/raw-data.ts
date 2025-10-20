@@ -4,7 +4,7 @@ import { TokenService } from "../../../src/lib/services/token-service/token-serv
 export const testGetRawData = async (tokenAddress: string) => {
     const tokenService = TokenService.getInstance()
     const token = await tokenService.getOrCreateTokenWithAddress(tokenAddress)
-    const rawData = new RawTokenDataCache(token.token, token.rawData)
+    const rawData = new RawTokenDataCache(token.token.address, token.token.chainId, token.rawData)
     await rawData.collect()
     return rawData
 }

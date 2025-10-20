@@ -9,9 +9,9 @@ import {
 } from 'python-proxy-scraper-client';
 
 // Import fixtures
-import tokenInfoFixture from '../../../../../tests/fixtures/gmgn/tokenInfo-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
-import socialsFixture from '../../../../../tests/fixtures/gmgn/socials-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
-import holdersFixture from '../../../../../tests/fixtures/gmgn/holders-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
+import tokenInfoFixture from '../../../../../tests/fixtures/gmgn/getMultiWindowTokenInfo-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
+import socialsFixture from '../../../../../tests/fixtures/gmgn/getTokenSocials-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
+import holdersFixture from '../../../../../tests/fixtures/gmgn/getHolders-0xe6df05ce8c8301223373cf5b969afcb1498c5528.json';
 
 describe('GmgnRawDataSource', () => {
     let gmgnService: GmGnServiceMock;

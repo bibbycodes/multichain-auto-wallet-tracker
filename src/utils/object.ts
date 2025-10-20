@@ -26,3 +26,8 @@ export function nullishToUndefined<T>(value: T | null | undefined | ''): T | und
 export function emptyStringToNull<T>(value: T | ''): T | null {
     return value === '' ? null : value;
 }
+
+
+export const isNullOrUndefined = (value: any): boolean => {
+    return value === null || value === undefined;
+}

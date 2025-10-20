@@ -2,12 +2,13 @@ import { ChainId } from "../../../src/shared/chains";
 import { SocialMedia } from "../../../src/lib/models/socials/types";
 import { GmGnTokenDataRawData } from "../../../src/lib/services/apis/gmgn/types";
 import { BaseDataSource } from "../../../src/lib/services/raw-data/base-data-source";
-import { GmGnMultiWindowTokenInfo, GmGnTokenHolder, GmGnTokenSocials } from "python-proxy-scraper-client";
+import { GmGnMultiWindowTokenInfo, GmGnTokenHolder, GmGnTokenSocials, GmGnTokenSecurityAndLaunchpad } from "python-proxy-scraper-client";
 
 // Import fixture data
 import getMultiWindowTokenInfoFixture from "../../fixtures/gmgn/getMultiWindowTokenInfo-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
 import getTokenSocialsFixture from "../../fixtures/gmgn/getTokenSocials-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
-import getHoldersFixture from "../../fixtures/gmgn/getHolders-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
+import getHoldersFixture from "../../fixtures/gmgn/getHolders-0xe6df05ce8c8301223373cf5b969afcb1498c5528.json";
+import getTokenSecurityAndLaunchpadFixture from "../../fixtures/gmgn/getTokenSecurityAndLaunchpad-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json";
 
 export class GmgnRawDataSourceMock extends BaseDataSource<GmGnTokenDataRawData> {
   constructor(
@@ -16,6 +17,10 @@ export class GmgnRawDataSourceMock extends BaseDataSource<GmGnTokenDataRawData> 
     initialData?: Partial<GmGnTokenDataRawData>,
   ) {
     super(tokenAddress, chainId, initialData);
+  }
+
+  protected getDataSourceName(): string {
+    return 'gmgn';
   }
 
   // Jest mock functions for all methods
@@ -56,9 +61,12 @@ export class GmgnRawDataSourceMock extends BaseDataSource<GmGnTokenDataRawData> 
 
   getHolders = jest.fn().mockResolvedValue(getHoldersFixture as unknown as GmGnTokenHolder[]);
 
+  getTokenSecurityAndLaunchpad = jest.fn().mockResolvedValue(getTokenSecurityAndLaunchpadFixture as unknown as GmGnTokenSecurityAndLaunchpad);
+
   getRawData = jest.fn().mockReturnValue({
     tokenInfo: getMultiWindowTokenInfoFixture,
     socials: getTokenSocialsFixture,
     holders: getHoldersFixture,
+    tokenSecurityAndLaunchpad: getTokenSecurityAndLaunchpadFixture,
   } as unknown as GmGnTokenDataRawData);
 }

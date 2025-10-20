@@ -4,14 +4,24 @@ import { BirdEyeFetcherService } from '../../apis/birdeye/birdeye-service';
 import { GmGnService } from '../../apis/gmgn/gmgn-service';
 import { MoralisService } from '../../apis/moralis/moralis-service';
 import { ChainBaseService } from '../../apis/chain-base/chain-base-service';
+import { GoPlusService } from '../../apis/goplus/goplus-service';
+import { GeckoTerminalService } from '../../apis/gecko-terminal/gecko-terminal-service';
 import { BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity } from '../../apis/birdeye/client/types';
 import { ChainBaseTopHolder } from '../../apis/chain-base/types';
+import { GoPlusTokenSecurity, TokenSecurityResponse } from 'python-proxy-scraper-client';
+import { GeckoTerminalTokenDetails } from 'python-proxy-scraper-client';
+
+// Import fixture data
+import goPlusTokenSecurityFixture from '../../../../../tests/fixtures/goplus/tokenSecurity-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
+import geckoTerminalTokenDetailsFixture from '../../../../../tests/fixtures/gecko-terminal/tokenDetails-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
 
 // Mock all service classes
 jest.mock('../../apis/birdeye/birdeye-service');
 jest.mock('../../apis/gmgn/gmgn-service');
 jest.mock('../../apis/moralis/moralis-service');
 jest.mock('../../apis/chain-base/chain-base-service');
+jest.mock('../../apis/goplus/goplus-service');
+jest.mock('../../apis/gecko-terminal/gecko-terminal-service');
 
 describe('RawData', () => {
     let mockToken: AutoTrackerToken;
@@ -19,6 +29,8 @@ describe('RawData', () => {
     let mockGmgnService: jest.Mocked<GmGnService>;
     let mockMoralisService: jest.Mocked<MoralisService>;
     let mockChainBaseService: jest.Mocked<ChainBaseService>;
+    let mockGoPlusService: jest.Mocked<GoPlusService>;
+    let mockGeckoTerminalService: jest.Mocked<GeckoTerminalService>;
 
     beforeEach(() => {
         // Setup mock token
@@ -40,11 +52,23 @@ describe('RawData', () => {
             fetchTopHoldersForToken: jest.fn(),
         } as any;
 
+        mockGoPlusService = {
+            getTokenSecurity: jest.fn(),
+            getRugpullDetection: jest.fn(),
+        } as any;
+
+        mockGeckoTerminalService = {
+            getTokenDetails: jest.fn(),
+            getTokenPools: jest.fn(),
+        } as any;
+
         // Mock getInstance methods
         (BirdEyeFetcherService.getInstance as jest.Mock).mockReturnValue(mockBirdeyeService);
         (GmGnService.getInstance as jest.Mock).mockReturnValue(mockGmgnService);
         (MoralisService.getInstance as jest.Mock).mockReturnValue(mockMoralisService);
         (ChainBaseService.getInstance as jest.Mock).mockReturnValue(mockChainBaseService);
+        (GoPlusService.getInstance as jest.Mock).mockReturnValue(mockGoPlusService);
+        (GeckoTerminalService.getInstance as jest.Mock).mockReturnValue(mockGeckoTerminalService);
     });
 
     afterEach(() => {
@@ -225,6 +249,74 @@ describe('RawData', () => {
 
             expect(initialData.chainBase).toHaveProperty('topHolders', mockTopHolders);
             expect(initialData.chainBase).toHaveProperty('otherField', 'value');
+        });
+    });
+
+    describe('getGoPlusTokenSecurity', () => {
+        it('should return existing GoPlus token security data if already cached', async () => {
+            const rawData = new RawTokenDataCache(
+                mockToken.address,
+                mockToken.chainId,
+                { goPlus: { tokenSecurity: goPlusTokenSecurityFixture as unknown as GoPlusTokenSecurity } }
+            );
+
+            const result = await rawData.goPlus.getTokenSecurity();
+
+            expect(result).toBe(goPlusTokenSecurityFixture);
+            expect(mockGoPlusService.getTokenSecurity).not.toHaveBeenCalled();
+        });
+
+        it('should fetch and cache GoPlus token security if not already present', async () => {
+            mockGoPlusService.getTokenSecurity.mockResolvedValue(goPlusTokenSecurityFixture as unknown as GoPlusTokenSecurity);
+
+            const rawData = new RawTokenDataCache(
+                mockToken.address,
+                mockToken.chainId,
+                {}
+            );
+
+            const result = await rawData.goPlus.getTokenSecurity();
+
+            expect(result).toBe(goPlusTokenSecurityFixture);
+            expect(mockGoPlusService.getTokenSecurity).toHaveBeenCalledWith(
+                mockToken.address,
+                mockToken.chainId
+            );
+            expect(mockGoPlusService.getTokenSecurity).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('getGeckoTerminalTokenDetails', () => {
+        it('should return existing GeckoTerminal token details if already cached', async () => {
+            const rawData = new RawTokenDataCache(
+                mockToken.address,
+                mockToken.chainId,
+                { geckoTerminal: { tokenDetails: geckoTerminalTokenDetailsFixture as unknown as GeckoTerminalTokenDetails } }
+            );
+
+            const result = await rawData.geckoTerminal.getTokenDetails();
+
+            expect(result).toBe(geckoTerminalTokenDetailsFixture);
+            expect(mockGeckoTerminalService.getTokenDetails).not.toHaveBeenCalled();
+        });
+
+        it('should fetch and cache GeckoTerminal token details if not already present', async () => {
+            mockGeckoTerminalService.getTokenDetails.mockResolvedValue(geckoTerminalTokenDetailsFixture as unknown as GeckoTerminalTokenDetails);
+
+            const rawData = new RawTokenDataCache(
+                mockToken.address,
+                mockToken.chainId,
+                {}
+            );
+
+            const result = await rawData.geckoTerminal.getTokenDetails();
+
+            expect(result).toBe(geckoTerminalTokenDetailsFixture);
+            expect(mockGeckoTerminalService.getTokenDetails).toHaveBeenCalledWith(
+                mockToken.address,
+                mockToken.chainId
+            );
+            expect(mockGeckoTerminalService.getTokenDetails).toHaveBeenCalledTimes(1);
         });
     });
 });

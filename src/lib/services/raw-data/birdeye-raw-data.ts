@@ -5,6 +5,7 @@ import { BirdeyeMapper } from "../apis/birdeye/birdeye-mapper";
 import { BirdeyeEvmTokenSecurity, BirdeyeSolanaTokenSecurity, BirdTokenEyeOverview, MarketsData } from "../apis/birdeye/client/types";
 import { BirdEyeTokenDataRawData } from "../apis/birdeye/types";
 import { BaseDataSource } from "./base-data-source";
+import { TokenDataSource } from "@prisma/client";
 
 export class BirdeyeRawTokenData extends BaseDataSource<BirdEyeTokenDataRawData> {
     constructor(
@@ -15,6 +16,10 @@ export class BirdeyeRawTokenData extends BaseDataSource<BirdEyeTokenDataRawData>
     ) {
         super(tokenAddress, chainId, initialData);  
     }
+
+    protected getDataSourceName(): string {
+        return TokenDataSource.BIRDEYE.toLowerCase();
+    }   
 
     async collect(): Promise<void> {
         await Promise.allSettled([
