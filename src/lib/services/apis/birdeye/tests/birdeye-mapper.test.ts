@@ -377,7 +377,7 @@ describe('BirdeyeMapper', () => {
             expect(security).toEqual({
                 isHoneypot: false,
                 isMintable: false,
-                isLpTokenBurned: false,
+                isLpTokenBurned: undefined, // is undefined when lpHolders data is not available
                 isPausable: false,
                 isFreezable: false,
                 isRenounced: true, // ownerAddress is 0x0000... (zero address = renounced)
@@ -746,24 +746,24 @@ describe('BirdeyeMapper', () => {
             expect(result).toBe(false);
         });
 
-        it('should handle empty lpHolders array', () => {
+        it('should return undefined for empty lpHolders array', () => {
             const emptySecurity = {
                 ...evmSecurity,
                 lpHolders: [],
             } as BirdeyeEvmTokenSecurity;
 
             const result = BirdeyeMapper.isLpBurned(emptySecurity);
-            expect(result).toBe(false);
+            expect(result).toBeUndefined();
         });
 
-        it('should handle undefined lpHolders', () => {
+        it('should return undefined for undefined lpHolders', () => {
             const undefinedSecurity = {
                 ...evmSecurity,
                 lpHolders: undefined as any,
             } as BirdeyeEvmTokenSecurity;
 
             const result = BirdeyeMapper.isLpBurned(undefinedSecurity);
-            expect(result).toBe(false);
+            expect(result).toBeUndefined();
         });
 
         it('should handle multiple locked holders', () => {

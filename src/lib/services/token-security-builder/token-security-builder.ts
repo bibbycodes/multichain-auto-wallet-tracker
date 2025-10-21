@@ -1,26 +1,27 @@
 import { GoPlusSolanaTokenSecurity, GoPlusTokenSecurity } from "python-proxy-scraper-client";
 import { ChainId, isEvmChainId } from "../../../shared/chains";
-import { deepMergeAll } from "../../../utils/data-aggregator";
-import { TokenSecurity } from "../../models/token/types";
+import { TokenSecurity, REQUIRED_TOKEN_SECURITY_FIELDS, RequiredTokenSecurityFields } from "../../models/token/types";
 import { BirdeyeMapper } from "../apis/birdeye/birdeye-mapper";
 import { GmGnMapper } from "../apis/gmgn/gmgn-mapper";
 import { GoPlusMapper } from "../apis/goplus/goplus-mapper";
 import { RawTokenDataCache } from "../raw-data/raw-data";
 
 export class TokenSecurityBuilder {
+    public rawData: RawTokenDataCache;
+
     constructor(
         private readonly tokenAddress: string,
         private chainId: ChainId,
-        private rawData: RawTokenDataCache,
-    ) {}
+        rawData?: RawTokenDataCache,
+    ) {
+        this.rawData = rawData || new RawTokenDataCache(tokenAddress, chainId);
+    }
 
     async collect(): Promise<{
-        birdeyeTokenSecurity: TokenSecurity | null;
-        gmgnTokenSecurity: TokenSecurity | null;
-        goPlusTokenSecurity: TokenSecurity | null;
+        birdeyeTokenSecurity: Partial<TokenSecurity>;
+        gmgnTokenSecurity: Partial<TokenSecurity>;
+        goPlusTokenSecurity: Partial<TokenSecurity>;
     }> {
-        await this.rawData.collect();
-
         const [birdeyeTokenSecurity, gmgnTokenSecurity, goPlusTokenSecurity] = await Promise.all([
             this.getBirdeyeTokenSecurity(),
             this.getGmgnTokenSecurity(),
@@ -34,29 +35,30 @@ export class TokenSecurityBuilder {
         };
     }
 
-    async getBirdeyeTokenSecurity(): Promise<TokenSecurity | null> {
+    async getBirdeyeTokenSecurity(): Promise<Partial<TokenSecurity>> {
         const birdeyeSecurityData = await this.rawData.birdeye.getTokenSecurity();
         if (!birdeyeSecurityData) {
-            return null;
+            return {};
         }
 
         return BirdeyeMapper.extractTokenSecurity(birdeyeSecurityData);
     }
 
-    async getGmgnTokenSecurity(): Promise<TokenSecurity | null> {
+    async getGmgnTokenSecurity(): Promise<Partial<TokenSecurity>> {
         const gmgnSecurityData = await this.rawData.gmgn.getTokenSecurityAndLaunchpad();
         if (!gmgnSecurityData) {
-            return null;
+            return {};
         }
 
         return GmGnMapper.extractTokenSecurity(gmgnSecurityData.security);
     }
 
-    async getGoPlusTokenSecurity(): Promise<TokenSecurity | null> {
+    async getGoPlusTokenSecurity(): Promise<Partial<TokenSecurity>> {
         const goPlusSecurityData = await this.rawData.goPlus.getTokenSecurity();
         if (!goPlusSecurityData) {
-            return null;
+            return {};
         }
+
 
         if (isEvmChainId(this.chainId)) {
             return GoPlusMapper.extractTokenSecurityFromEvm(goPlusSecurityData as GoPlusTokenSecurity);
@@ -64,7 +66,6 @@ export class TokenSecurityBuilder {
             return GoPlusMapper.extractTokenSecurityFromSolana(goPlusSecurityData as GoPlusSolanaTokenSecurity);
         }
     }
-
 
     async getTokenSecurity(): Promise<TokenSecurity> {
         const { birdeyeTokenSecurity, gmgnTokenSecurity, goPlusTokenSecurity } =
@@ -74,67 +75,100 @@ export class TokenSecurityBuilder {
             goPlusTokenSecurity,
             birdeyeTokenSecurity,
             gmgnTokenSecurity,
-        ].filter((s): s is TokenSecurity => s !== null);
+        ];
 
-        return this.mergeTokenSecurity(securitySources);
+        const mergedSecurity = this.mergeTokenSecurity(securitySources);
+        const validatedSecurity = this.validate(mergedSecurity);
+        return validatedSecurity;
+    }
+
+    /**
+     * Validate that required fields are present in TokenSecurity
+     * @param security - The TokenSecurity object to validate
+     * @param requiredFields - Array of field names that must be defined
+     * @throws Error if any required field is undefined
+     */
+    validate(
+        security: Partial<TokenSecurity>,
+        requiredFields: (keyof TokenSecurity)[] = ['isMintable', 'isRenounced', 'isLpTokenBurned', 'isHoneypot', 'isPausable']
+    ): TokenSecurity {
+        const missingFields: string[] = [];
+
+        for (const field of requiredFields) {
+            if (security[field] === undefined) {
+                missingFields.push(field);
+            }
+        }
+
+        if (missingFields.length > 0) {
+            throw new Error(
+                `TokenSecurity validation failed: Missing required fields: ${missingFields.join(', ')}`
+            );
+        }
+
+        return security as TokenSecurity;
     }
 
 
-    private mergeTokenSecurity(securities: TokenSecurity[]): TokenSecurity {
-        if (securities.length === 0) {
-            // Return default TokenSecurity when no data available
-            return {
-                isHoneypot: false,
-                isMintable: false,
-                isLpTokenBurned: false,
-                isPausable: false,
-                isFreezable: false,
-                isRenounced: false,
-            };
+
+
+    /**
+     * Merge partial token security data from multiple sources
+     * Uses pessimistic approach for risks (OR) and optimistic for protections (OR)
+     * Returns defaults for fields where no source provided data
+     */
+    private mergeTokenSecurity(securities: Partial<TokenSecurity>[]): Partial<TokenSecurity> {
+        // Collect all defined values for boolean fields
+        const isHoneypotValues = securities.map(s => s.isHoneypot).filter(v => v !== undefined) as boolean[];
+        const isMintableValues = securities.map(s => s.isMintable).filter(v => v !== undefined) as boolean[];
+        const isPausableValues = securities.map(s => s.isPausable).filter(v => v !== undefined) as boolean[];
+        const isFreezableValues = securities.map(s => s.isFreezable).filter(v => v !== undefined) as boolean[];
+        const isLpBurnedValues = securities.map(s => s.isLpTokenBurned).filter(v => v !== undefined) as boolean[];
+        const isRenouncedValues = securities.map(s => s.isRenounced).filter(v => v !== undefined) as boolean[];
+        const isBlacklistValues = securities.map(s => s.isBlacklist).filter(v => v !== undefined) as boolean[];
+
+        // Collect all defined tax values
+        const buyTaxValues = securities.map(s => s.buyTax).filter(v => v !== undefined) as number[];
+        const sellTaxValues = securities.map(s => s.sellTax).filter(v => v !== undefined) as number[];
+        const transferTaxValues = securities.map(s => s.transferTax).filter(v => v !== undefined) as number[];
+        const transferFeeValues = securities.map(s => s.transferFee).filter(v => v !== undefined) as number[];
+        const transferFeeUpgradeableValues = securities.map(s => s.transferFeeUpgradeable).filter(v => v !== undefined) as boolean[];
+
+        // Merge boolean fields - pessimistic for risks, optimistic for protections
+        const result: Partial<TokenSecurity> = {
+            // Pessimistic: if ANY source says true, it's risky
+            isHoneypot: isHoneypotValues.length > 0 ? isHoneypotValues.some(v => v) : undefined,
+            isMintable: isMintableValues.length > 0 ? isMintableValues.some(v => v) : undefined,
+            isPausable: isPausableValues.length > 0 ? isPausableValues.some(v => v) : undefined,
+            isFreezable: isFreezableValues.length > 0 ? isFreezableValues.some(v => v) : undefined,
+            
+            // Optimistic: if ANY source says true, we have protection
+            isLpTokenBurned: isLpBurnedValues.length > 0 ? isLpBurnedValues.some(v => v) : undefined,
+            isRenounced: isRenouncedValues.length > 0 ? isRenouncedValues.some(v => v) : undefined,
+        };
+
+        // Optional boolean fields
+        if (isBlacklistValues.length > 0) {
+            result.isBlacklist = isBlacklistValues.some(v => v);
+        }
+        if (transferFeeUpgradeableValues.length > 0) {
+            result.transferFeeUpgradeable = transferFeeUpgradeableValues.some(v => v);
         }
 
-        if (securities.length === 1) {
-            return securities[0];
+        // Tax fields: use maximum (worst case)
+        if (buyTaxValues.length > 0) {
+            result.buyTax = Math.max(...buyTaxValues);
+        }
+        if (sellTaxValues.length > 0) {
+            result.sellTax = Math.max(...sellTaxValues);
+        }
+        if (transferTaxValues.length > 0) {
+            result.transferTax = Math.max(...transferTaxValues);
+        }
+        if (transferFeeValues.length > 0) {
+            result.transferFee = Math.max(...transferFeeValues);
         }
 
-        // Start with the first security as base
-        const merged: TokenSecurity = { ...securities[0] };
-
-        // Merge remaining securities
-        for (let i = 1; i < securities.length; i++) {
-            const security = securities[i];
-
-            // Boolean fields: use OR logic (if any source says true, it's true)
-            merged.isHoneypot = merged.isHoneypot || security.isHoneypot;
-            merged.isMintable = merged.isMintable || security.isMintable;
-            merged.isPausable = merged.isPausable || security.isPausable;
-            merged.isFreezable = merged.isFreezable || security.isFreezable;
-            merged.isLpTokenBurned = merged.isLpTokenBurned || security.isLpTokenBurned;
-            merged.isRenounced = merged.isRenounced || security.isRenounced;
-
-            // Optional boolean fields: use OR logic
-            if (security.isBlacklist !== undefined) {
-                merged.isBlacklist = (merged.isBlacklist || false) || security.isBlacklist;
-            }
-            if (security.transferFeeUpgradeable !== undefined) {
-                merged.transferFeeUpgradeable = (merged.transferFeeUpgradeable || false) || security.transferFeeUpgradeable;
-            }
-
-            // Tax fields: use maximum value (worst case)
-            if (security.buyTax !== undefined) {
-                merged.buyTax = Math.max(merged.buyTax || 0, security.buyTax);
-            }
-            if (security.sellTax !== undefined) {
-                merged.sellTax = Math.max(merged.sellTax || 0, security.sellTax);
-            }
-            if (security.transferTax !== undefined) {
-                merged.transferTax = Math.max(merged.transferTax || 0, security.transferTax);
-            }
-            if (security.transferFee !== undefined) {
-                merged.transferFee = Math.max(merged.transferFee || 0, security.transferFee);
-            }
-        }
-
-        return merged;
+        return result;
     }
 }

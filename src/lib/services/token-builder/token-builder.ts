@@ -11,7 +11,7 @@ import { RawDataData } from "../raw-data/types";
 export class AutoTrackerTokenBuilder {
     constructor(
         private readonly tokenAddress: string,
-        private chainId?: ChainId,
+        public chainId?: ChainId,
         private rawData?: RawTokenDataCache,
         private readonly birdeyeService: BirdEyeFetcherService = BirdEyeFetcherService.getInstance(),
         private db: Database = Database.getInstance(),
@@ -88,10 +88,12 @@ export class AutoTrackerTokenBuilder {
         }
         
         if (!this.rawData) {
+            console.log('initialiseRawData: Raw data not set, creating new RawTokenDataCache')
             this.rawData = new RawTokenDataCache(this.tokenAddress, this.chainId)
         }
 
         if (rawDataData) {
+            console.log('initialiseRawData: Updating raw data')
             this.rawData.updateData(rawDataData)
         }
         return this.rawData
@@ -108,10 +110,12 @@ export class AutoTrackerTokenBuilder {
     async getOrCreate(): Promise<AutoTrackerToken> {
         const token = await this.getDbToken()
         if (token && !token.hasMissingRequiredFields()) {
+            console.log('Token already exists and does not have missing required fields')
             return token
         }
 
         if (!token?.chainId) {
+            console.log('Token does not have chain id, fetching initial data')
             const initialData = await this.getInitialData()
             this.setChainId(initialData.token.chainId)
             await this.initialiseRawData(initialData.rawData)
@@ -135,6 +139,7 @@ export class AutoTrackerTokenBuilder {
 
     async getInitialData(): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
         if (!this.chainId) {
+            console.log('getInitialData: Chain id not set, fetching initial data')
             const data = await this.birdeyeService.fetchTokenDataWithMarketCapFromAddress(this.tokenAddress)
             if (!data.token.chainId) {
                 throw new Error('Chain id not returned')

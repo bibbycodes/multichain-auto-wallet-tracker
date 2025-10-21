@@ -3,7 +3,7 @@ import { GmGnEvmTokenSecurity, GmGnMultiWindowTokenInfo, GmGnSolanaTokenSecurity
 import { ChainId, getInternallySupportedChainIds } from "../../../../shared/chains";
 import { MIN_BURN_RATIO } from "../../../../shared/constants";
 import { getTwitterUrlFromUsername } from "../../../../utils/links";
-import { isNullOrUndefined } from "../../../../utils/object";
+import { isNullOrUndefined, safeParseBoolean, safeParseNumber } from "../../../../utils/object";
 import { SocialMedia } from "../../../models/socials/types";
 import { AutoTrackerToken } from "../../../models/token";
 import { AutoTrackerTokenData, TokenDataWithMarketCap, TokenSecurity } from "../../../models/token/types";
@@ -133,57 +133,155 @@ export class GmGnMapper {
         return new AutoTrackerToken(tokenData);
     }
 
-    public static isHoneyPot(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
-        return security.is_honeypot || 
-               Number(security.honeypot) === 1 || 
-               Number(security.can_not_sell) === 1 || 
-               false;
+    public static isHoneyPot(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean | undefined {
+        try {
+            const isHoneypot = safeParseBoolean(security.is_honeypot);
+            const honeypot = safeParseNumber(security.honeypot);
+            const canNotSell = safeParseNumber(security.can_not_sell);
+            
+            if (isHoneypot !== undefined || honeypot !== undefined || canNotSell !== undefined) {
+                return Boolean(isHoneypot || honeypot === 1 || canNotSell === 1);
+            }
+            return undefined;
+        } catch {
+            return undefined;
+        }
     }
 
-    public static isMintable(security: GmGnEvmTokenSecurity): boolean {
-        return !security.is_renounced || security.renounced === 1;
+    public static isMintable(security: GmGnEvmTokenSecurity): boolean | undefined {
+        const isRenounced = this.isRenounced(security);
+        return isRenounced !== undefined ? !isRenounced : undefined;
     }
 
-    public static isFreezable(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
-        return !security.is_renounced ;
+    public static isFreezable(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean | undefined {
+        const isRenounced = this.isRenounced(security);
+        return isRenounced !== undefined ? !isRenounced : undefined;
     }
 
-    public static isSolanaFreezable(security: GmGnSolanaTokenSecurity): boolean {
-        return !security.renounced_freeze_account || isNullOrUndefined(security.renounced_freeze_account) || Boolean(security.is_renounced);
+    public static isSolanaFreezable(security: GmGnSolanaTokenSecurity): boolean | undefined {
+        try {
+            if (security.renounced_freeze_account !== undefined) {
+                return !security.renounced_freeze_account;
+            }
+            return safeParseBoolean(security.is_renounced);
+        } catch {
+            return undefined;
+        }
     }
 
-    public static isBurned(security: GmGnEvmTokenSecurity): boolean {
-        const isLocked = security.lock_summary?.lock_detail?.reduce((acc: number, detail: any) => acc + Number(detail.percent), 0) > 0.9;
-        const burnRatio = Number(security.burn_ratio);
-        return burnRatio > MIN_BURN_RATIO || isLocked;
+    public static isBurned(security: GmGnEvmTokenSecurity): boolean | undefined {
+        try {
+            let isLocked = false;
+            if (security.lock_summary?.lock_detail && Array.isArray(security.lock_summary.lock_detail)) {
+                const lockedRatio = security.lock_summary.lock_detail.reduce((acc: number, detail: any) => {
+                    const percent = safeParseNumber(detail.percent);
+                    return acc + (percent || 0);
+                }, 0);
+                isLocked = lockedRatio > 0.9;
+            }
+            
+            const burnRatio = safeParseNumber(security.burn_ratio);
+            if (burnRatio !== undefined || isLocked) {
+                return (burnRatio || 0) > MIN_BURN_RATIO || isLocked;
+            }
+            return undefined;
+        } catch {
+            return undefined;
+        }
     }
 
-    public static isSolanaBurned(security: GmGnSolanaTokenSecurity): boolean {
-        return Number(security.burn_ratio) > MIN_BURN_RATIO || security.burn_status === "burned";
+    public static isSolanaBurned(security: GmGnSolanaTokenSecurity): boolean | undefined {
+        try {
+            const burnRatio = safeParseNumber(security.burn_ratio);
+            if (burnRatio !== undefined) {
+                return burnRatio > MIN_BURN_RATIO || security.burn_status === "burned";
+            }
+            if (security.burn_status !== undefined) {
+                return security.burn_status === "burned";
+            }
+            return undefined;
+        } catch {
+            return undefined;
+        }
     }
 
-    public static isPausable(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
-        return !security.is_renounced || security.renounced === 1;
+    public static isPausable(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean | undefined {
+        const isRenounced = this.isRenounced(security);
+        return isRenounced !== undefined ? !isRenounced : undefined;
     }
 
-    public static isRenounced(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
-        return security.is_renounced || security.renounced === 1;
+    public static isRenounced(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean | undefined {
+        try {
+            const isRenounced = safeParseBoolean(security.is_renounced);
+            const renounced = safeParseNumber(security.renounced);
+            
+            if (isRenounced !== undefined) return isRenounced;
+            if (renounced !== undefined) return renounced === 1;
+            return undefined;
+        } catch {
+            return undefined;
+        }
     }
 
-    public static extractBlacklistStatus(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean {
-        return security.is_blacklist ?? Number(security.blacklist) === 1;
+    public static isBlackList(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): boolean | undefined {
+        try {
+            if (security.is_blacklist !== undefined && security.is_blacklist !== null) {
+                return safeParseBoolean(security.is_blacklist);
+            }
+            const blacklist = safeParseNumber(security.blacklist);
+            if (blacklist !== undefined) {
+                return blacklist === 1;
+            }
+            return undefined;
+        } catch {
+            return undefined;
+        }
     }
 
-    public static extractBuyTax(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): number {
-        return Number(security.buy_tax);
+    public static extractBuyTax(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): number | undefined {
+        return safeParseNumber(security.buy_tax);
     }
 
-    public static extractSellTax(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): number {
-        return Number(security.sell_tax);
+    public static extractSellTax(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): number | undefined {
+        return safeParseNumber(security.sell_tax);
     }
 
-    public static extractTokenSecurityFromEvm(security: GmGnEvmTokenSecurity): TokenSecurity {
-        return {
+    /**
+     * Helper to build partial TokenSecurity result from extracted values
+     * Only includes fields that are not undefined
+     */
+    private static buildPartialTokenSecurity(fields: {
+        isHoneypot?: boolean;
+        isMintable?: boolean;
+        isLpTokenBurned?: boolean;
+        isPausable?: boolean;
+        isFreezable?: boolean;
+        isRenounced?: boolean;
+        buyTax?: number;
+        sellTax?: number;
+        isBlacklist?: boolean;
+    }): Partial<TokenSecurity> {
+        const result: Partial<TokenSecurity> = {};
+        
+        if (fields.isHoneypot !== undefined) result.isHoneypot = fields.isHoneypot;
+        if (fields.isMintable !== undefined) result.isMintable = fields.isMintable;
+        if (fields.isLpTokenBurned !== undefined) result.isLpTokenBurned = fields.isLpTokenBurned;
+        if (fields.isPausable !== undefined) result.isPausable = fields.isPausable;
+        if (fields.isFreezable !== undefined) result.isFreezable = fields.isFreezable;
+        if (fields.isRenounced !== undefined) result.isRenounced = fields.isRenounced;
+        if (fields.buyTax !== undefined) result.buyTax = fields.buyTax;
+        if (fields.sellTax !== undefined) result.sellTax = fields.sellTax;
+        if (fields.isBlacklist !== undefined) result.isBlacklist = fields.isBlacklist;
+        
+        return result;
+    }
+
+    /**
+     * Extract TokenSecurity from GmGn EVM token security data
+     * Returns partial data - only fields that can be determined are included
+     */
+    public static extractTokenSecurityFromEvm(security: GmGnEvmTokenSecurity): Partial<TokenSecurity> {
+        return this.buildPartialTokenSecurity({
             isHoneypot: this.isHoneyPot(security),
             isMintable: this.isMintable(security),
             isLpTokenBurned: this.isBurned(security),
@@ -192,31 +290,33 @@ export class GmGnMapper {
             isRenounced: this.isRenounced(security),
             buyTax: this.extractBuyTax(security),
             sellTax: this.extractSellTax(security),
-            isBlacklist: this.extractBlacklistStatus(security),
-        };
+            isBlacklist: this.isBlackList(security),
+        });
     }
 
     /**
      * Extract TokenSecurity from GmGn Solana token security data
+     * Returns partial data - only fields that can be determined are included
      */
-    public static extractTokenSecurityFromSolana(security: GmGnSolanaTokenSecurity): TokenSecurity {
-        return {
+    public static extractTokenSecurityFromSolana(security: GmGnSolanaTokenSecurity): Partial<TokenSecurity> {
+        return this.buildPartialTokenSecurity({
             isHoneypot: this.isHoneyPot(security),
-            isMintable: !security.renounced_mint, // If mint is not renounced, it's mintable
+            isMintable: security.renounced_mint !== undefined ? !security.renounced_mint : undefined,
             isLpTokenBurned: this.isSolanaBurned(security),
             isPausable: this.isPausable(security),
             isFreezable: this.isFreezable(security),
             isRenounced: this.isRenounced(security),
             buyTax: this.extractBuyTax(security),
             sellTax: this.extractSellTax(security),
-            isBlacklist: this.extractBlacklistStatus(security),
-        };
+            isBlacklist: this.isBlackList(security),
+        });
     }
 
     /**
      * Extract TokenSecurity from GmGn token security data (handles both EVM and Solana)
+     * Returns partial data - only fields that can be determined are included
      */
-    public static extractTokenSecurity(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): TokenSecurity {
+    public static extractTokenSecurity(security: GmGnEvmTokenSecurity | GmGnSolanaTokenSecurity): Partial<TokenSecurity> {
         // Check if it's Solana security data by checking for Solana-specific fields
         if (isSolanaAddress(security.address)) {
             return this.extractTokenSecurityFromSolana(security as GmGnSolanaTokenSecurity);

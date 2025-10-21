@@ -66,8 +66,8 @@ export interface TokenSecurity {
     isMintable: boolean; // Can the token be minted
     isLpTokenBurned: boolean; // Is the LP token burned
     isPausable: boolean; // Can the token be paused
-    isFreezable: boolean; // Can the token be freezed
     isRenounced: boolean; // is token ownership renounced
+    isFreezable?: boolean; // Can the token be freezed
     buyTax?: number;
     sellTax?: number;
     transferTax?: number;
@@ -75,6 +75,26 @@ export interface TokenSecurity {
     transferFeeUpgradeable?: boolean;
     isBlacklist?: boolean;
 }
+
+/**
+ * Extract required (non-optional) keys from TokenSecurity
+ * This automatically derives from the TokenSecurity interface
+ */
+export type RequiredTokenSecurityFields = {
+    [K in keyof TokenSecurity]-?: TokenSecurity[K] extends Required<TokenSecurity>[K] ? K : never
+}[keyof TokenSecurity];
+
+/**
+ * Array of required TokenSecurity field names
+ * Derived from the type - ensures it stays in sync with TokenSecurity interface
+ */
+export const REQUIRED_TOKEN_SECURITY_FIELDS: readonly RequiredTokenSecurityFields[] = [
+    'isHoneypot',
+    'isMintable',
+    'isLpTokenBurned',
+    'isPausable',
+    'isRenounced'
+] as const;
 
 export interface Bundle {
     sourceWallet: string

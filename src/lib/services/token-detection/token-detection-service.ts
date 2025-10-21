@@ -7,6 +7,7 @@ import { AutoTrackerTokenBuilder } from '../token-builder/token-builder';
 import { BaseContext } from '../token-context/base-context';
 import { AlertsService } from '../alerts/alerts-service';
 import { env } from '../util/env/env';
+import { TokenSecurityBuilder } from '../token-security-builder/token-security-builder';
 
 export class TokenDetectionWorkerService {
     constructor(
@@ -41,8 +42,17 @@ export class TokenDetectionWorkerService {
         const token = await tokenBuilder.getOrCreate()
         const rawData = tokenBuilder.getRawData()
         await rawData.collect()
+
+        if (!tokenBuilder.chainId) {
+            throw new Error('Chain id is not set')
+        }
+
+        const tokenSecurityBuilder = new TokenSecurityBuilder(data.tokenData.address, tokenBuilder.chainId, rawData)
+        const tokenSecurity = await tokenSecurityBuilder.getTokenSecurity()
+        console.log({tokenSecurity})
         const baseContext = new BaseContext(token, rawData)
         const baseContextData = await baseContext.toObject()
+        console.log({baseContextData})
 
         await this.telegramMessageQueue.addJob<TelegramMessageJobData>({
             type: TelegramMessageJobTypes.SEND_ALERT,

@@ -5,7 +5,7 @@ import { Singleton } from "../../util/singleton";
 
 export class GeckoTerminalService extends Singleton {
     constructor(
-        private readonly geckoTerminalApiClient: GeckoTerminalApiClient
+        private readonly geckoTerminalApiClient: GeckoTerminalApiClient = new GeckoTerminalApiClient()
     ) {
         super()
     }

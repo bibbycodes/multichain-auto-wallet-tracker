@@ -5,33 +5,25 @@ import { GoPlusMapper } from '../goplus-mapper';
 import tokenSecurityFixture from '../../../../../../tests/fixtures/goplus/tokenSecurity-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
 
 describe('GoPlusMapper', () => {
-    const testTokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
-
     describe('extractTokenSecurityFromEvm', () => {
         it('should extract token security from EVM security response', () => {
-            const mockResponse: TokenSecurityResponse = {
-                code: 1,
-                message: 'OK',
-                result: {
-                    [testTokenAddress]: tokenSecurityFixture as unknown as GoPlusTokenSecurity
-                }
-            };
-
             const result = GoPlusMapper.extractTokenSecurityFromEvm(tokenSecurityFixture as unknown as GoPlusTokenSecurity);
 
             expect(result).toBeDefined();
+            // Only check defined properties
             expect(result).toMatchObject({
                 isHoneypot: false,
                 isMintable: false,
-                isLpTokenBurned: false,
                 isPausable: false,
                 isFreezable: false,
                 isRenounced: true,
                 buyTax: 0,
                 sellTax: 0,
-                transferTax: undefined,
                 isBlacklist: false,
             });
+            // Explicitly check that undefined properties are not present
+            expect(result.isLpTokenBurned).toBeUndefined();
+            expect(result.transferTax).toBeUndefined();
         });
 
         it('should handle empty security object', () => {
@@ -40,8 +32,8 @@ describe('GoPlusMapper', () => {
             const result = GoPlusMapper.extractTokenSecurityFromEvm(emptySecurity);
 
             expect(result).toBeDefined();
-            expect(result.isHoneypot).toBe(false);
-            expect(result.isMintable).toBe(false);
+            expect(result.isHoneypot).toBe(undefined);
+            expect(result.isMintable).toBe(undefined);
         });
 
         it('should handle honeypot detection correctly', () => {
@@ -209,7 +201,7 @@ describe('GoPlusMapper', () => {
 
             const result = GoPlusMapper.extractTokenSecurityFromEvm(undefinedSecurity as unknown as GoPlusTokenSecurity);
 
-            expect(result?.isHoneypot).toBe(false);
+            expect(result?.isHoneypot).toBeUndefined();
             expect(result?.buyTax).toBeUndefined();
             expect(result?.sellTax).toBeUndefined();
             expect(result?.transferTax).toBeUndefined();
@@ -275,15 +267,12 @@ describe('GoPlusMapper', () => {
             expect(result).toBeDefined();
             expect(result).toMatchObject({
                 isHoneypot: false,
+                isBlacklist: false,
                 isMintable: true,
                 isLpTokenBurned: false,
                 isPausable: false,
                 isFreezable: true,
                 isRenounced: false,
-                buyTax: undefined,
-                sellTax: undefined,
-                transferTax: undefined,
-                isBlacklist: false,
             });
         });
 
@@ -294,7 +283,7 @@ describe('GoPlusMapper', () => {
 
             expect(result).toBeDefined();
             expect(result.isHoneypot).toBe(false);
-            expect(result.isMintable).toBe(false);
+            expect(result.isMintable).toBe(undefined);
         });
 
         it('should handle disabled mint authority as renounced', () => {
@@ -484,7 +473,7 @@ describe('GoPlusMapper', () => {
 
             const result = GoPlusMapper.extractTokenSecurityFromEvm(emptyLpHoldersSecurity as unknown as GoPlusTokenSecurity);
 
-            expect(result?.isLpTokenBurned).toBe(false);
+            expect(result?.isLpTokenBurned).toBe(undefined);
         });
 
         it('should handle malformed tax values', () => {

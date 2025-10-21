@@ -1,5 +1,6 @@
 import { TokenDataSource } from "@prisma/client";
 import { ChainId, getInternallySupportedChainIds } from "../../../../shared/chains";
+import { safeParseBoolean, safeParseNumber } from "../../../../utils/object";
 import { AutoTrackerToken } from "../../../models/token";
 import { AutoTrackerTokenData, TokenDataWithMarketCap, TokenSecurity } from "../../../models/token/types";
 import { SocialMedia } from "../../../models/socials/types";
@@ -147,57 +148,132 @@ export class BirdeyeMapper {
         return new AutoTrackerToken(tokenData);
     }
 
-    public static isHoneypot(tokenSecurity: BirdeyeEvmTokenSecurity): boolean {
-        return Boolean(parseInt(tokenSecurity.isHoneypot)) ||
-               Boolean(parseInt(tokenSecurity.cannotSellAll)) ||
-               Boolean(parseInt(tokenSecurity.honeypotWithSameCreator));
-    }
-
-    public static isMintable(tokenSecurity: BirdeyeEvmTokenSecurity): boolean {
-        return Boolean(parseInt(tokenSecurity.isMintable));
-    }
-
-    public static isLpBurned(tokenSecurity: BirdeyeEvmTokenSecurity): boolean {
-        const lpHolders = tokenSecurity.lpHolders || [];
-        const lockedLpHolders = lpHolders.filter(lpHolder => Boolean(lpHolder.is_locked));
-        const lockedRatio = lockedLpHolders.reduce((acc: number, lpHolder: any) => acc + Number(lpHolder.percent), 0);
-        return lockedRatio > 0.9;
-    }
-
-    public static isPausable(tokenSecurity: BirdeyeEvmTokenSecurity): boolean {
-        return Boolean(parseInt(tokenSecurity.transferPausable));
-    }
-
-    public static isFreezable(tokenSecurity: BirdeyeEvmTokenSecurity): boolean {
-        return Boolean(parseInt(tokenSecurity.transferPausable));
-    }
-
-    public static isRenounced(tokenSecurity: BirdeyeEvmTokenSecurity): boolean {
-        return tokenSecurity.ownerAddress === null ||
-               tokenSecurity.ownerAddress === '0x0000000000000000000000000000000000000000';
-    }
-
-    public static extractBuyTax(tokenSecurity: BirdeyeEvmTokenSecurity): number {
-        return Number(tokenSecurity.buyTax);
-    }
-
-    public static extractSellTax(tokenSecurity: BirdeyeEvmTokenSecurity): number {
-        return Number(tokenSecurity.sellTax);
-    }
-
-    public static isBlacklisted(tokenSecurity: BirdeyeEvmTokenSecurity): boolean {
-        if (typeof tokenSecurity.isBlacklisted === 'boolean') {
-            return tokenSecurity.isBlacklisted;
+    public static isHoneypot(tokenSecurity: BirdeyeEvmTokenSecurity): boolean | undefined {
+        try {
+            const isHoneypot = safeParseBoolean(tokenSecurity.isHoneypot);
+            const cannotSellAll = safeParseBoolean(tokenSecurity.cannotSellAll);
+            const honeypotWithSameCreator = safeParseBoolean(tokenSecurity.honeypotWithSameCreator);
+            
+            // If we have at least one value, return the OR of all
+            if (isHoneypot !== undefined || cannotSellAll !== undefined || honeypotWithSameCreator !== undefined) {
+                return Boolean(isHoneypot || cannotSellAll || honeypotWithSameCreator);
+            }
+            return undefined;
+        } catch {
+            return undefined;
         }
-        return Boolean(parseInt(tokenSecurity.isBlacklisted));
+    }
+
+    public static isMintable(tokenSecurity: BirdeyeEvmTokenSecurity): boolean | undefined {
+        try {
+            return safeParseBoolean(tokenSecurity.isMintable);
+        } catch {
+            return undefined;
+        }
+    }
+
+    public static isLpBurned(tokenSecurity: BirdeyeEvmTokenSecurity): boolean | undefined {
+        try {
+            const lpHolders = tokenSecurity.lpHolders;
+            if (!lpHolders || !Array.isArray(lpHolders) || lpHolders.length === 0) {
+                return undefined;
+            }
+            
+            const lockedLpHolders = lpHolders.filter(lpHolder => 
+                lpHolder && safeParseBoolean(lpHolder.is_locked)
+            );
+            
+            const lockedRatio = lockedLpHolders.reduce((acc: number, lpHolder: any) => {
+                const percent = safeParseNumber(lpHolder.percent);
+                return acc + (percent || 0);
+            }, 0);
+            
+            return lockedRatio > 0.9;
+        } catch {
+            return undefined;
+        }
+    }
+
+    public static isPausable(tokenSecurity: BirdeyeEvmTokenSecurity): boolean | undefined {
+        try {
+            return safeParseBoolean(tokenSecurity.transferPausable);
+        } catch {
+            return undefined;
+        }
+    }
+
+    public static isFreezable(tokenSecurity: BirdeyeEvmTokenSecurity): boolean | undefined {
+        try {
+            return safeParseBoolean(tokenSecurity.transferPausable);
+        } catch {
+            return undefined;
+        }
+    }
+
+    public static isRenounced(tokenSecurity: BirdeyeEvmTokenSecurity): boolean | undefined {
+        try {
+            if (tokenSecurity.ownerAddress === null || 
+                tokenSecurity.ownerAddress === '0x0000000000000000000000000000000000000000') {
+                return true;
+            }
+            if (tokenSecurity.ownerAddress === undefined) {
+                return undefined;
+            }
+            return false;
+        } catch {
+            return undefined;
+        }
+    }
+
+    public static extractBuyTax(tokenSecurity: BirdeyeEvmTokenSecurity): number | undefined {
+        return safeParseNumber(tokenSecurity.buyTax);
+    }
+
+    public static extractSellTax(tokenSecurity: BirdeyeEvmTokenSecurity): number | undefined {
+        return safeParseNumber(tokenSecurity.sellTax);
+    }
+
+    public static isBlacklisted(tokenSecurity: BirdeyeEvmTokenSecurity): boolean | undefined {
+        try {
+            if (typeof tokenSecurity.isBlacklisted === 'boolean') {
+                return tokenSecurity.isBlacklisted;
+            }
+            return safeParseBoolean(tokenSecurity.isBlacklisted);
+        } catch {
+            return undefined;
+        }
+    }
+
+    /**
+     * Helper to build partial TokenSecurity result from extracted values
+     * Only includes fields that are not undefined
+     */
+    private static buildPartialTokenSecurity(fields: Partial<TokenSecurity>): Partial<TokenSecurity> {
+        const result: Partial<TokenSecurity> = {};
+        
+        if (fields.isHoneypot !== undefined) result.isHoneypot = fields.isHoneypot;
+        if (fields.isMintable !== undefined) result.isMintable = fields.isMintable;
+        if (fields.isLpTokenBurned !== undefined) result.isLpTokenBurned = fields.isLpTokenBurned;
+        if (fields.isPausable !== undefined) result.isPausable = fields.isPausable;
+        if (fields.isFreezable !== undefined) result.isFreezable = fields.isFreezable;
+        if (fields.isRenounced !== undefined) result.isRenounced = fields.isRenounced;
+        if (fields.buyTax !== undefined) result.buyTax = fields.buyTax;
+        if (fields.sellTax !== undefined) result.sellTax = fields.sellTax;
+        if (fields.isBlacklist !== undefined) result.isBlacklist = fields.isBlacklist;
+        if (fields.transferFee !== undefined) result.transferFee = fields.transferFee;
+        if (fields.transferTax !== undefined) result.transferTax = fields.transferTax;
+        if (fields.transferFeeUpgradeable !== undefined) result.transferFeeUpgradeable = fields.transferFeeUpgradeable;
+        
+        return result;
     }
 
     /**
      * Extract TokenSecurity from Birdeye EVM token security data
+     * Returns partial data - only fields that can be determined are included
      */
     // TODO, use chain specific burn addresses
-    public static extractTokenSecurityFromEvm(tokenSecurity: BirdeyeEvmTokenSecurity): TokenSecurity {
-        return {
+    public static extractTokenSecurityFromEvm(tokenSecurity: BirdeyeEvmTokenSecurity): Partial<TokenSecurity> {
+        return this.buildPartialTokenSecurity({
             isHoneypot: this.isHoneypot(tokenSecurity),
             isMintable: this.isMintable(tokenSecurity),
             isLpTokenBurned: this.isLpBurned(tokenSecurity),
@@ -207,39 +283,67 @@ export class BirdeyeMapper {
             buyTax: this.extractBuyTax(tokenSecurity),
             sellTax: this.extractSellTax(tokenSecurity),
             isBlacklist: this.isBlacklisted(tokenSecurity),
-        };
+        });
     }
 
     /**
      * Extract TokenSecurity from Birdeye Solana token security data
+     * Returns partial data - only fields that can be determined are included
      */
-    public static extractTokenSecurityFromSolana(tokenSecurity: BirdeyeSolanaTokenSecurity): TokenSecurity {
-        // For Solana, check if freeze authority exists
-        const isFreezable = tokenSecurity.freezeAuthority !== null;
-        const isRenounced = tokenSecurity.ownerAddress === null;
+    public static extractTokenSecurityFromSolana(tokenSecurity: BirdeyeSolanaTokenSecurity): Partial<TokenSecurity> {
+        try {
+            const isToken2022 = tokenSecurity.isToken2022
+            const transferFeeEnable = tokenSecurity.transferFeeEnable
+            let isTransferFeeUpgradeable = undefined
 
-        // Check for transfer fees (Token 2022 feature)
-        const hasTransferFee = tokenSecurity.transferFeeEnable || false;
+            if (!isToken2022) {
+                isTransferFeeUpgradeable = false
+            }
 
-        return {
-            isHoneypot: tokenSecurity.fakeToken !== null || tokenSecurity.isTrueToken === false,
-            isMintable: false, // Birdeye Solana data doesn't expose mint authority directly
-            isLpTokenBurned: false, // Solana LP data needs different calculation
-            isPausable: false, // Not directly available for Solana
-            isFreezable: isFreezable || tokenSecurity.freezeable || false,
-            isRenounced,
-            buyTax: undefined,
-            sellTax: undefined,
-            transferFee: hasTransferFee ? undefined : undefined, // Would need to parse transferFeeData
-            transferFeeUpgradeable: tokenSecurity.isToken2022 && hasTransferFee,
-            isBlacklist: false,
-        };
+            if (isToken2022 && transferFeeEnable) {
+                isTransferFeeUpgradeable = true
+            }
+
+            return this.buildPartialTokenSecurity({
+                // Check for fake token or not true token
+                isHoneypot: (tokenSecurity.fakeToken !== undefined || tokenSecurity.isTrueToken !== undefined)
+                    ? Boolean(tokenSecurity.fakeToken) || tokenSecurity.isTrueToken === false
+                    : undefined,
+                
+                // Birdeye Solana doesn't expose mint authority directly
+                isMintable: false,
+                
+                // Solana LP data needs different calculation - not available
+                isLpTokenBurned: false,
+                
+                // Not directly available for Solana
+                isPausable: false,
+                
+                // Check freeze authority
+                isFreezable: (tokenSecurity.freezeAuthority !== undefined || tokenSecurity.freezeable !== undefined)
+                    ? (tokenSecurity.freezeAuthority !== null) || Boolean(tokenSecurity.freezeable)
+                    : undefined,
+                
+                // Check if owner is renounced
+                isRenounced: tokenSecurity.ownerAddress !== undefined 
+                    ? tokenSecurity.ownerAddress === null
+                    : undefined,
+                
+                // Token 2022 transfer fee
+                transferFeeUpgradeable: isTransferFeeUpgradeable,
+                isBlacklist: false,
+            });
+        } catch (error) {
+            console.warn('Error extracting Solana token security:', error);
+            return {};
+        }
     }
 
     /**
      * Extract TokenSecurity from Birdeye token security data (handles both EVM and Solana)
+     * Returns partial data - only fields that can be determined are included
      */
-    public static extractTokenSecurity(tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity): TokenSecurity {
+    public static extractTokenSecurity(tokenSecurity: BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity): Partial<TokenSecurity> {
         // Check if it's EVM security data by checking for EVM-specific fields
         if ('isHoneypot' in tokenSecurity) {
             return this.extractTokenSecurityFromEvm(tokenSecurity as BirdeyeEvmTokenSecurity);

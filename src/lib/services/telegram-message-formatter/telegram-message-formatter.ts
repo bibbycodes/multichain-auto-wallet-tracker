@@ -33,7 +33,6 @@ export class TelegramMessageFormatter {
     getBasicChecksString(): string {
         return getBasicChecksString(
             this.baseContext.tokenSecurity.isRenounced, 
-            this.baseContext.tokenSecurity.isFreezable, 
             this.baseContext.tokenSecurity.isLpTokenBurned
         )
     }

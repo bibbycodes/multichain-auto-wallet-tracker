@@ -1,4 +1,4 @@
-import { GoPlusClient, GoPlusSolanaTokenSecurity, GoPlusSolanaTokenSecurityResponse, GoPlusTokenSecurity, TokenSecurityResponse, GoPlusRugpullDetection } from "python-proxy-scraper-client"
+import { GoPlusClient, GoPlusRugpullDetection, GoPlusSolanaTokenSecurity, GoPlusTokenSecurity } from "python-proxy-scraper-client"
 import { ChainId, isEvmChainId, isSolanaChainId } from "../../../../shared/chains"
 import { TokenSecurity } from "../../../models/token/types"
 import { Singleton } from "../../util/singleton"
@@ -6,7 +6,7 @@ import { Singleton } from "../../util/singleton"
 export class GoPlusService extends Singleton {
     constructor(
 
-        private readonly goplusClient: GoPlusClient
+        private readonly goplusClient: GoPlusClient = new GoPlusClient()
     ) {
         super()
     }
@@ -15,10 +15,13 @@ export class GoPlusService extends Singleton {
         let tokenSecurity
         if (isEvmChainId(chainId)) {
             const response = await this.goplusClient.getTokenSecurity(tokenAddress, Number(chainId))
-            tokenSecurity = response.result[tokenAddress]
+            console.log({
+                response,
+            })
+            tokenSecurity = response as unknown as GoPlusTokenSecurity
         } else {
             const response = await this.goplusClient.getSolanaTokenSecurity(tokenAddress)
-            tokenSecurity = response.result[tokenAddress]
+            tokenSecurity = response as unknown as GoPlusSolanaTokenSecurity
         }
         return tokenSecurity
     }

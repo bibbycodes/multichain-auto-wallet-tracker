@@ -55,10 +55,9 @@ export const formatTreeList = (header: string, values: string[]): string => {
     return `${header}\n${lines.join('\n')}`
 }
 
-export const getBasicChecksString = (isMintRenounced: boolean, isFreezeRenounced: boolean, isBurned: boolean) => {
+export const getBasicChecksString = (isMintRenounced: boolean,  isBurned: boolean) => {
     return formatTreeList('🔒 Basic Checks:', [
-        `${isMintRenounced ? '✅' : '❌'} Mint Renounced`,
-        `${isFreezeRenounced ? '✅' : '❌'} Freeze Renounced`,
+        `${isMintRenounced ? '✅' : '❌'} Renounced`,
         `${isBurned ? '✅' : '❌'} LP Burned`
     ])
 }

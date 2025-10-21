@@ -355,7 +355,7 @@ describe('GmGnMapper', () => {
             expect(result).toBe(false);
         });
 
-        it('should return false when all indicators are undefined/null', () => {
+        it('should return undefined when all indicators are undefined/null', () => {
             const undefinedSecurity = {
                 ...evmSecurity,
                 is_honeypot: undefined,
@@ -364,7 +364,7 @@ describe('GmGnMapper', () => {
             } as unknown as GmGnEvmTokenSecurity;
 
             const result = GmGnMapper.isHoneyPot(undefinedSecurity);
-            expect(result).toBe(false);
+            expect(result).toBeUndefined();
         });
 
         it('should handle string values for honeypot flag', () => {
@@ -432,6 +432,7 @@ describe('GmGnMapper', () => {
         it('should return true when token is not renounced', () => {
             const freezableSecurity = {
                 ...evmSecurity,
+                renounced: 0,
                 is_renounced: false
             } as GmGnEvmTokenSecurity;
 
@@ -514,7 +515,7 @@ describe('GmGnMapper', () => {
                 blacklist: 0
             } as GmGnEvmTokenSecurity;
 
-            const result = GmGnMapper.extractBlacklistStatus(blacklistedSecurity);
+            const result = GmGnMapper.isBlackList(blacklistedSecurity);
             expect(result).toBe(true);
         });
 
@@ -525,7 +526,7 @@ describe('GmGnMapper', () => {
                 blacklist: 1
             } as GmGnEvmTokenSecurity;
 
-            const result = GmGnMapper.extractBlacklistStatus(notBlacklistedSecurity);
+            const result = GmGnMapper.isBlackList(notBlacklistedSecurity);
             expect(result).toBe(false);
         });
 
@@ -536,7 +537,7 @@ describe('GmGnMapper', () => {
             } as GmGnEvmTokenSecurity;
             delete (fallbackSecurity as any).is_blacklist;
 
-            const result = GmGnMapper.extractBlacklistStatus(fallbackSecurity);
+            const result = GmGnMapper.isBlackList(fallbackSecurity);
             expect(result).toBe(true);
         });
 
@@ -547,7 +548,7 @@ describe('GmGnMapper', () => {
                 blacklist: '1' as any
             } as unknown as GmGnEvmTokenSecurity;
 
-            const result = GmGnMapper.extractBlacklistStatus(stringBlacklistSecurity);
+            const result = GmGnMapper.isBlackList(stringBlacklistSecurity);
             expect(result).toBe(true);
         });
     });
@@ -582,9 +583,9 @@ describe('GmGnMapper', () => {
 
             expect(security).toEqual({
                 isHoneypot: false,
-                isMintable: true, // renounced === 1 makes it mintable
+                isMintable: false, // renounced === 1 makes it non mintable
                 isLpTokenBurned: true, // lock_summary has 95% locked
-                isPausable: true, // renounced === 1 makes it pausable
+                isPausable: false, // renounced === 1 makes it non pausable
                 isFreezable: false, // is_renounced is true
                 isRenounced: true,
                 buyTax: 0,
@@ -753,22 +754,10 @@ describe('GmGnMapper', () => {
             expect(result).toBe(true);
         });
 
-        it('should return true when renounced_freeze_account is null/undefined', () => {
+        it('should return undefined when renounced_freeze_account is null/undefined', () => {
             const freezableSecurity = {
                 ...mockSolanaSecurity,
                 renounced_freeze_account: undefined as any,
-                is_renounced: false
-            } as GmGnSolanaTokenSecurity;
-
-            const result = GmGnMapper.isSolanaFreezable(freezableSecurity);
-            expect(result).toBe(true);
-        });
-
-        it('should return true when is_renounced is true', () => {
-            const freezableSecurity = {
-                ...mockSolanaSecurity,
-                renounced_freeze_account: true,
-                is_renounced: true
             } as GmGnSolanaTokenSecurity;
 
             const result = GmGnMapper.isSolanaFreezable(freezableSecurity);
@@ -916,9 +905,12 @@ describe('GmGnMapper', () => {
             } as GmGnSolanaTokenSecurity;
 
             const security = GmGnMapper.extractTokenSecurityFromSolana(minimalSecurity);
-            expect(security.isHoneypot).toBe(false);
-            expect(security.isRenounced).toBe(false);
-            expect(security.isBlacklist).toBe(false);
+            // isHoneypot should be undefined when no honeypot data is provided
+            expect(security.isHoneypot).toBeUndefined();
+            // isRenounced should be undefined when is_renounced and renounced fields are missing
+            expect(security.isRenounced).toBeUndefined();
+            // isBlacklist should be undefined when blacklist data is not provided
+            expect(security.isBlacklist).toBeUndefined();
         });
 
         it('should parse tax values correctly', () => {
@@ -940,9 +932,9 @@ describe('GmGnMapper', () => {
 
             expect(security).toEqual({
                 isHoneypot: false,
-                isMintable: true, // renounced === 1 makes it mintable
+                isMintable: false, // renounced === 1 makes it non mintable
                 isLpTokenBurned: true, // lock_summary has 95% locked
-                isPausable: true, // renounced === 1 makes it pausable
+                isPausable: false, // renounced === 1 makes it pausable
                 isFreezable: false, // is_renounced is true
                 isRenounced: true,
                 buyTax: 0,
