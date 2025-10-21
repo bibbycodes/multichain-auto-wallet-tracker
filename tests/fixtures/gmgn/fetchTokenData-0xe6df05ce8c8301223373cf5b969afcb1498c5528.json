@@ -1,0 +1,21 @@
+{
+  "address": "0xe6df05ce8c8301223373cf5b969afcb1498c5528",
+  "chainId": "56",
+  "name": "BNB48 Club Token",
+  "symbol": "KOGE",
+  "decimals": 18,
+  "totalSupply": 3379999,
+  "socials": {
+    "twitter": "https://x.com/48club_official",
+    "website": "https://info-48.com"
+  },
+  "pairAddress": "0xcf59b8c8baa2dea520e3d549f97d4e49ade17057",
+  "description": "",
+  "logoUrl": "https://gmgn.ai/external-res/5f2a9da8c5585e56314f11e1a6e72704.webp",
+  "creationTime": "2024-12-29T06:58:10.000Z",
+  "createdBy": "0xa044d502c7e23840dcd5997fb3ba85a6de5763e4",
+  "dataSource": "GMGN",
+  "price": 47.99767898,
+  "marketCap": 162232106.95472103,
+  "liquidity": 36149777.51346271
+}

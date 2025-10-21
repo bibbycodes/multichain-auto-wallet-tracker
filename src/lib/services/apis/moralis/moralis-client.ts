@@ -1,15 +1,15 @@
+import axios, { AxiosResponse } from "axios";
 import Moralis from "moralis";
-import {env} from "../../util/env/env";
-import {CreateStreamParams} from "./types";
-import {ChainId, ChainsMap} from "../../../../shared/chains";
-import {toHex} from "./moralis-utils";
-import axios, {AxiosResponse} from "axios";
+import { ChainId, ChainsMap, isEvmChainId, isSolanaChainId } from "../../../../shared/chains";
+import { env } from "../../util/env/env";
+import { toHex } from "./moralis-utils";
+import { CreateStreamParams, MoralisEvmTokenMetaData, MoralisSolanaTokenMetadata, MoralisSolanaTokenPrice, MoralisEvmTokenPrice, MoralisSolanaTokenPairResponseData } from "./types";
 
 export class MoralisClient {
   private isInitialized = false;
-  private BaseUrl: string = 'https://deep-index.moralis.io/api/v2.2/';
-
-  constructor(private apiKey: string = env.moralis.apikey) {
+  private evmBaseUrl: string = 'https://deep-index.moralis.io/api/v2.2/';
+  private solanaBaseUrl: string = 'https://solana-gateway.moralis.io';
+  constructor(private apiKey: string = env.moralis.apiKey) {
   }
 
   isStarted() {
@@ -28,15 +28,24 @@ export class MoralisClient {
     this.isInitialized = true;
   }
 
-  private async get<T>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
+  private async get<T>(url: string, params: Record<string, any> = {}): Promise<T> {
+    const response: AxiosResponse<T> = await axios.get(url, { ...this.getApiOptions(), params });
+    return response.data;
+  }
+
+  private async makeEvmRequest<T>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
     try {
-      const url = `${this.BaseUrl}${endpoint}`;
-      const response: AxiosResponse<T> = await axios.get(url, { ...this.getApiOptions(), params });
-      return response.data;  // Return the data from the response
+      const url = `${this.evmBaseUrl}${endpoint}`;
+      return this.get<T>(url, params);
     } catch (err) {
       console.error('Error making GET request:', err);
       throw err;
     }
+  }
+
+  private async makeSolanaRequest<T>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
+    const url = `${this.solanaBaseUrl}${endpoint}`;
+    return this.get<T>(url, params);
   }
   
   async createStream({
@@ -126,7 +135,7 @@ export class MoralisClient {
     await this.init();
     return Moralis.EvmApi.token.getTopProfitableWalletPerToken({
       address: address,
-      chain: this.getChainId(chainId),
+      chain: this.getEvmChainId(chainId),
       days: 'all'
     });
   }
@@ -140,19 +149,70 @@ export class MoralisClient {
   }) {
     const endpoint = `erc20/${address}/owners`;
     const params = {
-      chain: this.getChainId(chainId),
+      chain: this.getEvmChainId(chainId),
       order: 'DESC',
       page_size: 100,
     };
-    return this.get(endpoint, params);  // 
+    return this.makeEvmRequest(endpoint, params);  // 
   }
 
   async getWalletPnlSummary({address, chainId}: { address: string, chainId: ChainId }) {
     await this.init()
     return Moralis.EvmApi.wallets.getWalletProfitabilitySummary({
-      chain: this.getChainId(chainId),
+      chain: this.getEvmChainId(chainId),
       address
     });
+  }
+
+  async getSolanaTokenPrice(tokenAddress: string): Promise<MoralisSolanaTokenPrice> {
+    await this.init();
+
+    const response = Moralis.SolApi.token.getTokenPrice({
+      "network": "mainnet",
+      "address": tokenAddress
+    });
+    return (await response).toJSON() as MoralisSolanaTokenPrice;
+  }
+
+  async getEvmTokenPrice(tokenAddress: string, chainId: ChainId): Promise<MoralisEvmTokenPrice> {
+    await this.init();
+    const response = Moralis.EvmApi.token.getTokenPrice({
+      chain: this.getEvmChainId(chainId),
+      address: tokenAddress
+    });
+    return (await response).toJSON() as unknown as MoralisEvmTokenPrice;
+  } 
+  
+
+  async getTokenMetadata({address, chainId}: { address: string, chainId: ChainId }) : Promise<MoralisEvmTokenMetaData | MoralisSolanaTokenMetadata> {
+    if (isEvmChainId(chainId)) {
+      const data = await this.getEvmTokenMetadata({address, chainId})
+      return (data as any).toJSON()[0]
+    } else if (isSolanaChainId(chainId)) {
+      const data = await this.getSolanaTokenMetadata({address})
+      return data
+    } else {
+      throw new Error(`Unsupported chainId: ${chainId}`)
+    }
+  }
+
+  async getEvmTokenMetadata({address, chainId}: { address: string, chainId: ChainId }) {
+    await this.init()
+    return Moralis.EvmApi.token.getTokenMetadata({
+      addresses: [address],
+      chain: this.getEvmChainId(chainId)
+    });
+  }
+
+  async getSolanaTokenMetadata({address}: { address: string }): Promise<MoralisEvmTokenMetaData> {
+    await this.init()
+    return this.makeSolanaRequest<MoralisEvmTokenMetaData>(`/token/mainnet/${address}/metadata`);
+  }
+
+  async getSolanaPairsForToken({address}: { address: string }): Promise<MoralisSolanaTokenPairResponseData[]> {
+    await this.init()
+    const res = await this.makeSolanaRequest<any>(`/token/mainnet/${address}/pairs?sort=liquidity`);
+    return res.pairs as MoralisSolanaTokenPairResponseData[]
   }
 
   async getWalletNetWorth({address}: { address: string }) {
@@ -167,7 +227,7 @@ export class MoralisClient {
   async getWalletTokenBalances({address, chainId}: { address: string, chainId: ChainId }) {
     await this.init()
     return Moralis.EvmApi.wallets.getWalletTokenBalancesPrice({
-      chain: this.getChainId(chainId),
+      chain: this.getEvmChainId(chainId),
       address
     });
   }
@@ -175,14 +235,14 @@ export class MoralisClient {
   async getSnipersForToken({ address, chainId, blocksAfterCreation = 3 }: { address: string, chainId: ChainId, blocksAfterCreation: number }) {
     const endpoint = `pairs/${address}/snipers`;
     const params = {
-      chain: this.getChainId(chainId),
+      chain: this.getEvmChainId(chainId),
       blocksAfterCreation,
     };
-    return this.get(endpoint, params);  // Use the generic get method for this specific endpoint
+    return this.makeEvmRequest(endpoint, params);  // Use the generic get method for this specific endpoint
   }
 
-  getChainId(chain: ChainId) {
-    return toHex(chain);
+  getEvmChainId(chain: ChainId) {
+    return toHex(Number(chain));
   }
   
   getApiOptions() {
@@ -194,6 +254,3 @@ export class MoralisClient {
     };
   }
 }
-
-const moralis = new MoralisClient();
-moralis.getTopHoldersForToken({address: '0x98d0baa52b2D063E780DE12F615f963Fe8537553', chainId: ChainsMap.base}).then((r) => console.log(JSON.stringify(r))).catch(console.error);

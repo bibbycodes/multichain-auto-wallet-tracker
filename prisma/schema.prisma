@@ -9,131 +9,281 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Chain {
-  id                    String    @id @unique @default(uuid())
+  id                    String              @id @unique @default(uuid())
   name                  String
-  chain_type            String
+  chain_type            ChainType
   created_at            DateTime
   updated_at            DateTime
-  chain_id              String
+  chain_id              String              @unique
   native_token_address  String
   wrapped_token_address String?
-  Token                 Token[]
-  Wallets               Wallets[]
+  usdt_address          String?
+  usdc_address          String?
+  dai_address           String?
+  tokens                Token[]
+  wallets               Wallet[]
+  trending_tokens       TrendingToken[]
+  tracked_wallets       TrackedWallet[]
+  wallet_performances   WalletPerformance[]
+  mentions              Mentions[]
+
+  @@index([chain_id])
+}
+
+model Alert {
+  id                  String                 @id @unique @default(uuid())
+  created_at          DateTime               @default(now())
+  updated_at          DateTime               @updatedAt
+  token_id            String
+  token_address       String
+  token               Token                  @relation(fields: [token_address], references: [address])
+  social_platform     SocialPlatform
+  market_cap          Float
+  price               Float
 }
 
 model Token {
-  id         String    @id @unique @default(uuid())
-  address    String
-  chain_id   String
-  name       String
-  symbol     String
-  created_at DateTime?
-  decimals   Int
-
-  chain Chain @relation(fields: [chain_id], references: [id])
-
+  id                  String                 @id @unique @default(uuid())
+  address             String                 @unique
+  chain_id            String
+  name                String
+  symbol              String
+  created_by          String?
+  creation_time       DateTime?
+  created_at          DateTime               @default(now())
+  updated_at          DateTime               @updatedAt
+  decimals            Int
+  logo_url            String?
+  website_url         String?
+  telegram_url        String?
+  twitter_url         String?
+  discord_url         String?
+  reddit_url          String?
+  github_url          String?
+  description         String?
+  total_supply        String
+  pair_address        String
+  chain               Chain                  @relation(fields: [chain_id], references: [chain_id])
+  data_source         TokenDataSource        @default(BIRDEYE)
+  trending_tokens     TrendingToken[]
+  wallet_swaps        WalletSwaps[]
+  wallet_transactions WalletTransactions[]
+  mentions            Mentions[]
+  alerts              Alert[]
   @@unique([address, chain_id])
-  @@index(address)
 }
 
-model Wallets {
-  id             String           @id @default(uuid())
-  address        String
-  chain_id       String
-  chain          Chain            @relation(fields: [chain_id], references: [id])
+model Wallet {
+  id                  String                 @id @default(uuid())
+  address             String
+  chain_id            String
+  chain               Chain                  @relation(fields: [chain_id], references: [chain_id])
+  created_at          DateTime
+  updated_at          DateTime
+  tracked_wallets     TrackedWallet[]
+  wallet_performance  WalletPerformance[]
+  social_channels     SocialChannel[]
+  wallet_swaps        WalletSwaps[]
+  wallet_transactions WalletTransactions[]
+  portfolio_snapshots PortfolioSnapshot[]
+
+  @@unique([address, chain_id])
+}
+
+model WalletSwaps {
+  id             String   @id @default(uuid())
   created_at     DateTime
   updated_at     DateTime
-  TrackedWallets TrackedWallets[]
+  token_id       String
+  wallet_id      String
+  wallet_address String
+  amount_in      Float
+  amount_out     Float
+  amount_usd     Float
+  price          Float
+  market_cap     Float
+  hash           String
+  timestamp      DateTime
 
-  @@unique([address, chain_id])
-  @@index([address])
-  @@index([address, chain_id])
+  token  Token  @relation(fields: [token_id], references: [id])
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
 }
 
-model TrackedWallets {
-  id         String   @id @default(uuid())
+model Mentions {
+  id                String        @id @default(uuid())
+  created_at        DateTime
+  updated_at        DateTime
+  token_address     String
+  chain_id          String
+  social_channel_id String
+  social_channel    SocialChannel @relation(fields: [social_channel_id], references: [id])
+  chain             Chain         @relation(fields: [chain_id], references: [chain_id])
+  token             Token         @relation(fields: [token_address], references: [address])
+  market_cap        Float
+  price             Float
+}
+
+model WalletTransactions {
+  id             String          @id @default(uuid())
+  created_at     DateTime
+  updated_at     DateTime
+  wallet_id      String
+  wallet_address String
+  token_id       String
+  hash           String
+  timestamp      DateTime
+  type           TransactionType
+  status         String
+  from           String
+  to             String
+  value          Float
+  value_usd      Float
+  wallet         Wallet          @relation(fields: [wallet_id], references: [id])
+  token          Token           @relation(fields: [token_id], references: [id])
+}
+
+model TrackedWallet {
+  id         String              @id @default(uuid())
   wallet_id  String
   address    String
   chain_id   String
-  created_at DateTime
-  updated_at DateTime
+  created_at DateTime            @default(now())
+  updated_at DateTime            @updatedAt
+  types      TrackedWalletType[]
 
-  wallet Wallets @relation(fields: [wallet_id], references: [id])
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
+  chain  Chain  @relation(fields: [chain_id], references: [chain_id])
 
-  @@unique([wallet_id, address, chain_id])
+  @@unique([address, chain_id])
   @@index([wallet_id])
 }
 
-// model TrendingToken {
-//   id         Int      @id @default(autoincrement()) // Primary key with autoincrement
-//   tokenId    Int
-//   trendingAt DateTime @default(now()) // Timestamp for when the token was trending
-//
-//   // Foreign Key to Token table
-//   token Token @relation(fields: [tokenId], references: [id])
-//
-//   @@index([tokenId])
-// }
+model PortfolioSnapshot {
+  id             String   @id @default(uuid())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  wallet_id      String
+  wallet_address String
+  usd_value      Float
+  data           Json
+  wallet         Wallet   @relation(fields: [wallet_id], references: [id])
+}
 
-// Wallet Discovery
-// Wallet Assessment
-// Token Assessment
-// Parsing Trades
-// Parsing Transactions
-// Analyse Trades
+model WalletPerformance {
+  id                       String   @id @default(uuid())
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+  wallet_id                String
+  wallet_address           String
+  pnl                      Float
+  win_rate                 Float
+  total_profit             Float
+  num_5x_profitable_trades Int
+  num_2x_profitable_trades Int
+  num_1x_profitable_trades Int
+  num_losses               Int
+  num_wins                 Int
+  pnl_1d_percentage        Float
+  pnl_7d_percentage        Float
+  pnl_30d_percentage       Float
+  realized_profit          Float
+  unrealized_profit        Float
+  chain_id                 String
 
-// Look for top holders 
-// => Get Wallet Addresses 
-// => Check the balance in the wallet 
-// => Categorise the wallet
-// - bot, whale, vault, is this associated with scames, analyse trading history
-// arkham => Blockchain Data Platfomr => https://intel.arkm.com/dashboards/explore
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
+  chain  Chain  @relation(fields: [chain_id], references: [chain_id])
 
-// Token Assessment
-// A trade, Telegram metion, Twitter mention
+  @@index([wallet_id])
+}
 
-// What is the market cap
-// How much liquidity is there
-// How much volume is there
-// How many holders
-// How many of our tracked wallets have been buying the token
+model TrendingToken {
+  id         String        @id @default(uuid())
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  token_id   String
+  platform   TokenPlatform
+  chain_id   String
+  market_cap Float
 
-// Token Distrubtion
-// How much the creator owns
-// How much do the top 10 holders
-// Are there locked
-// Are there any bundles
-// sol 0.1, 4000 token
-// Do multiple wallets own the same amount of token
+  token Token @relation(fields: [token_id], references: [id])
+  chain Chain @relation(fields: [chain_id], references: [chain_id])
+}
 
-// General Token Safety
-// Is the LP Liquidity Locked
-// Is the token mintable
+model SocialChannel {
+  id             String         @id @default(uuid())
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  id_on_platform String
+  username       String
+  platform       SocialPlatform
+  wallet_id      String?
+  wallet_address String?
+  wallet         Wallet?        @relation(fields: [wallet_id], references: [id])
+  mentions       Mentions[]
+}
 
-// Telegram or twitter
-// - How many mentions
-// - How many users
-// Who mentioned it
-// What is the historical potential from tracking this social media user
+model Settings {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  version    Int
+  data       Json
+}
 
-// Assessing a token via trade
-// - How much was traded
-// Is it a buy a sell
-// Who is trading
+enum SocialPlatform {
+  TELEGRAM
+  TWITTER
+}
 
-// https://gmgn.ai/sol/address/HyLxrdfu8iHSPSzbzw6zicDVWfG1wPfrFmoj6P3coHmb
+enum TokenPlatform {
+  GMGN
+  COIN_GECKO
+  DEX_SCREENER
+  PHOTON
+  AXIOM
+  BIRDEYE
+}
 
-// Payment Subscription Gateway
-// - Stripe Payment, Evm payment and solana payment
-// Offer different tiers, free, basic, premium
-// Product Level, Tier Level
-// Ethereum Instutional Tracker, Tier A, B
-// Solana Wallet Tracker, Tier A, B
-// (Solana + Ethereum + Binance Smart Chain) Product ID 1234 => Channel A, B, C
-// USDC, ETH, SOL (What is the native currency for a given blockchian) CARD PAYMENT
-// Coupons
+enum TokenRelationshipType {
+  TOP_HOLDER
+  EARLY_BUYER
+}
+
+enum TransactionType {
+  SWAP
+  TRANSFER
+  MINT
+  BURN
+}
+
+enum TrackedWalletType {
+  INSTITUTIONAL
+  KOL
+  SMART_MONEY
+  WHALE
+  SCAMMER
+  BOT
+  DEV
+  INSIDER
+  SNIPER
+  UNKNOWN
+}
+
+enum TokenDataSource {
+  BIRDEYE
+  GMGN
+  MORALIS
+  CHAIN_BASE
+  GO_PLUS
+  GECKO_TERMINAL
+}
+
+enum ChainType {
+  EVM
+  SOLANA
+}

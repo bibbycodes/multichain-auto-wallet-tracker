@@ -26,7 +26,9 @@ export const env: EnvConfig = {
   telegram: {
     sessionString: getOrThrowEnvVar('TELEGRAM_SESSION_STRING'),
     apiId: parseInt(getOrThrowEnvVar('TELEGRAM_API_ID')),
-    apiHash: getOrThrowEnvVar('TELEGRAM_API_HASH')
+    apiHash: getOrThrowEnvVar('TELEGRAM_API_HASH'),
+    wbbBscBotToken: getOrThrowEnvVar('WBB_BSC_TELEGRAM_BOT_TOKEN'),
+    wbbBscChannelId: getOrThrowEnvVar('WBB_BSC_CHANNEL_ID')
   },
   chainBase: [
     {apiKey: getOrThrowEnvVar('CHAIN_BASE_API_KEY_1'), email: 'robertrosijigriffith@gmail.com', project: '1'},
@@ -46,6 +48,9 @@ export const env: EnvConfig = {
     {apiKey: getOrThrowEnvVar('CHAIN_BASE_API_KEY_15'), email: 'p.ladar@icloud.com', project: 'track7'},
     {apiKey: getOrThrowEnvVar('CHAIN_BASE_API_KEY_16'), email: 'p.ladar@icloud.com', project: 'track8'},
   ],
+  database: {
+    url: getOrThrowEnvVar('DATABASE_URL'),
+  },
   quicknode: {
     [ChainsMap.bsc]: [{
       https: getOrThrowEnvVar('QUICKNODE_BSC_ENDPOINT_HTTPS_1'),

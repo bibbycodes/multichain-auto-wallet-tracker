@@ -12,5 +12,4 @@ export class EvmSwapConsumer {
       console.log('Received swap event:', event);
     })
   }
-  
 }

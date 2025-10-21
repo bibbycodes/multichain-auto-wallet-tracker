@@ -1,0 +1,37 @@
+{
+  "id": "bsc_0xe8852d270294cc9a84fe73d5a434ae85a1c34444",
+  "type": "token",
+  "attributes": {
+    "address": "0xe8852d270294cc9a84fe73d5a434ae85a1c34444",
+    "name": "Russell rug Survivor",
+    "symbol": "RUGSURVIVE",
+    "decimals": 18,
+    "image_url": "https://assets.geckoterminal.com/ji2ow594pnbzynwh1m5n4aq8ntig",
+    "coingecko_coin_id": null,
+    "total_supply": "1000000000000000000000000000.0",
+    "normalized_total_supply": "1000000000.0",
+    "price_usd": "0.000006559165138",
+    "fdv_usd": "6559.165138",
+    "total_reserve_in_usd": "5247.33211054772432250458544596",
+    "volume_usd": {
+      "h24": "0.0"
+    },
+    "market_cap_usd": null,
+    "launchpad_details": {
+      "graduation_percentage": 0,
+      "completed": false,
+      "completed_at": null,
+      "migrated_destination_pool_address": null
+    }
+  },
+  "relationships": {
+    "top_pools": {
+      "data": [
+        {
+          "id": "bsc_0xe8852d270294cc9a84fe73d5a434ae85a1c34444",
+          "type": "pool"
+        }
+      ]
+    }
+  }
+}

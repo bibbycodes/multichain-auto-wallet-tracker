@@ -1,151 +1,114 @@
-import axios from 'axios'
-import {TrendingToken} from '../../../../shared/types'
-import {Chain} from '../../../../shared/chains'
-import {env} from "../../util/env/env";
+import { ChainId, ChainsMap } from "../../../../shared/chains"
+import { AutoTrackerTokenData, TokenDataWithMarketCapAndRawData } from "../../../models/token/types"
+import { RawDataData } from "../../raw-data/types"
+import { BaseTokenFetcherService } from "../../tokens/token-fetcher-types"
+import { BirdeyeMapper } from "./birdeye-mapper"
+import { BirdEyeClient } from "./client/index"
+import { BirdeyeEvmTokenSecurity, BirdeyeSearchResponse, BirdeyeSolanaTokenSecurity, BirdTokenEyeOverview, MarketsData, MarketsResponse } from "./client/types"
 
-type BirdEyeToken = {
-  address: string
-  name: string
-  symbol: string
-  price: number
-  liquidity: number
-  volume24hUSD: number
-  rank: number
-}
-
-export type MultiChainPortfolioResponse = {
-  success: boolean
-  data: {
-    totalUsd: number
-  }
-}
-
-export class BirdEyeService {
-  private readonly apiKey: string
-  private readonly baseUrl: string
-
-  constructor() {
-    this.apiKey = env.birdeye.apikey || ''
-    if (!this.apiKey) {
-      throw new Error('BIRD_EYE_KEY is missing from environment variables')
-    }
-    this.baseUrl = 'https://public-api.birdeye.so'
+export class BirdEyeFetcherService extends BaseTokenFetcherService {
+  constructor(private client: BirdEyeClient = new BirdEyeClient()) {
+    super()
   }
 
-  private async get<T>(
-    endpoint: string,
-    headers: Record<string, string>,
-    params?: Record<string, any>
-  ): Promise<T | null> {
-    try {
-      const response = await axios.get(`${this.baseUrl}${endpoint}`, {
-        headers,
-        params,
-      })
-
-      if (response.status !== 200 || !response.data.success) {
-        console.error(`BirdEye API error: ${response.statusText}`)
-        return null
-      }
-
-      return response.data
-    } catch (error) {
-      console.error('Error fetching data:', error)
-      return null
-    }
-  }
-  
-  getHeaders = (extraParams: Record<string, any> = {}) => {
-    return {
-      'X-API-KEY': this.apiKey,
-      accept: 'application/json',
-      ...extraParams,
-    }
-  }
-
-  async getTrendingCryptos(
-    chain: Chain,
-    limit: number = 20,
-    offset: number = 0
-  ): Promise<Omit<TrendingToken, 'id'>[]> {
-    const headers = this.getHeaders({ 'x-chain': chain })
-
-    const params = {
-      sort_by: 'rank',
-      sort_type: 'asc',
-      offset,
-      limit,
-    }
-
-    const data = await this.get<{ data: { tokens: BirdEyeToken[] } }>(
-      `/defi/token_trending`,
-      headers,
-      params
+  async fetchTokenDataWithMarketCapFromAddress(tokenAddress: string): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
+    const supportedChains = BirdeyeMapper.getSupportedChains()
+    const tokenDataWithMarketCaps = await Promise.allSettled(supportedChains.map(chainId => this.fetchTokenWithMarketCap(tokenAddress, chainId)))
+    const successfulResult = tokenDataWithMarketCaps.find((r): r is PromiseFulfilledResult<TokenDataWithMarketCapAndRawData<RawDataData>> => 
+      r.status === 'fulfilled'
     )
-
-    if (!data) {
-      return []
+    if (!successfulResult) {
+      throw new Error(`No token data with market cap found for token address: ${tokenAddress}`)
     }
-
-    return data.data.tokens.map(
-      (token: BirdEyeToken) =>
-        ({
-          address: token.address,
-          name: token.name,
-          symbol: token.symbol,
-          chainType: chain,
-          trendingAt: new Date(),
-        }) as Omit<TrendingToken, 'id'>
-    )
+    return successfulResult.value
   }
 
-  async getTopTraders(
-    tokenAddress: string,
-    chain: Chain,
-    timeFrame: string = '24h'
-  ): Promise<string[] | null> {
-    const headers = this.getHeaders({ 'x-chain': chain })
-
-    const params = {
-      address: tokenAddress,
-      time_frame: timeFrame,
-      sort_type: 'desc',
-      sort_by: 'volume',
-    }
-
-    const data = await this.get<{ data: { items: { owner: string }[] } }>(
-      `/defi/v2/tokens/top_traders`,
-      headers,
-      params
-    )
-
-    if (!data) {
-      return null
-    }
-
-    return data.data.items.map((item) => item.owner)
+  async getMarkets(tokenAddress: string, chainId: ChainId): Promise<MarketsData> {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    const marketsResponse = await this.client.getMarkets(tokenAddress, {
+      chain,
+      limit: 1,
+      sortBy: 'liquidity',
+      sortType: 'desc'
+    })
+    return marketsResponse.data
   }
 
-  async getMultiChainPortfolioValueUsd(
-    walletAddress: string,
-    chains: Chain[]
-  ): Promise<number | null> {
-    const headers = this.getHeaders({ 'x-chain': chains.join(',') })
-
-    const params = {
-      wallet_address: walletAddress,
-    }
-
-    const data = await this.get<MultiChainPortfolioResponse>(
-      `/v1/wallet/multichain_token_list?wallet=${walletAddress}`,
-      headers,
-      params
+  async fetchTokenWithMarketCap(tokenAddress: string, chainId: ChainId): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    const  [
+      tokenOverview,
+      tokenSecurity
+    ] = await Promise.all([
+      this.client.getTokenOverview(tokenAddress, ['1h'], chain),
+      this.client.getTokenSecurity(tokenAddress, chain)
+    ])
+    
+    // Get markets to extract pair address - sorted by liquidity by default
+    const marketsResponse = await this.client.getMarkets(tokenAddress, { 
+      limit: 1, 
+      chain,
+      sortBy: 'liquidity',
+      sortType: 'desc'
+    })
+    
+    const pairAddress = marketsResponse.data?.items?.[0]?.address ?? ''
+    
+    const tokenData = BirdeyeMapper.mapTokenOverviewToTokenDataWithMarketCap(
+      tokenAddress,
+      chainId,
+      tokenOverview,
+      tokenSecurity.data,
+      pairAddress
     )
+    
+    return {token: tokenData, rawData: {birdeye: {tokenOverview, tokenSecurity: tokenSecurity.data, markets: marketsResponse.data}}}
+  }
 
-    if (!data) {
-      return null
+  async getTokenOverview(tokenAddress: string, chainId: ChainId): Promise<BirdTokenEyeOverview> {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    const tokenOverview = await this.client.getTokenOverview(tokenAddress, ['1h'], chain)
+    return tokenOverview
+  }
+
+  async getTokenSecurity(tokenAddress: string, chainId: ChainId): Promise<BirdeyeEvmTokenSecurity | BirdeyeSolanaTokenSecurity> {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    const tokenSecurity = await this.client.getTokenSecurity(tokenAddress, chain)
+    return tokenSecurity.data
+  }
+
+  async fetchTokenData(tokenAddress: string, chainId: ChainId): Promise<AutoTrackerTokenData> {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    const [tokenOverview, tokenSecurity] = await Promise.all([
+      this.client.getTokenOverview(tokenAddress, ['1h'], chain),
+      this.client.getTokenSecurity(tokenAddress, chain)
+    ])
+    return BirdeyeMapper.mapTokenMetadataToTokenData(tokenAddress, chainId, tokenOverview, tokenSecurity.data, '')
+  }
+
+  async search(
+    query: string,
+    chainId?: ChainId,
+    options?: {
+      limit?: number
+      offset?: number
     }
+  ): Promise<BirdeyeSearchResponse> {
+    return this.client.search(query, { ...options, chain: chainId ? BirdeyeMapper.chainIdToChain(chainId) : undefined })
+  }
 
-    return data.data.totalUsd
+  async getTrendingTokens(
+    limit: number = 50, 
+    offset: number = 0, 
+    sortBy: 'liquidity' | 'rank' = 'liquidity', 
+    chainId: ChainId = ChainsMap.bsc
+  ) {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    return this.client.getTrendingTokens(limit, offset, sortBy, chain)
+  }
+
+  async getTop100TrendingTokensByMarketCap(chainId: ChainId = ChainsMap.bsc) {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    return this.client.getTop100TrendingTokensByMarketCap(chain)
   }
 }
