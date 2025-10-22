@@ -90,9 +90,11 @@ export class TelegramMessageListener {
         }
     }
 
-    public processAndSaveMessage(update: TelegramUpdate): ProcessedMessageResult | null {
-        // Save raw update to file for testing fixtures - DISABLED
-        // this.parser.saveUpdateToFile(update, this.channelMap);
+    public processAndSaveMessage(update: TelegramUpdate, saveToFixture: boolean = false): ProcessedMessageResult | null {
+        if (saveToFixture) {
+            // Save raw update to file for testing fixtures - DISABLED
+            this.parser.saveUpdateToFile(update, this.channelMap);
+        }
         
         const result = this.parser.processMessage(update);
         if (!result) return null;

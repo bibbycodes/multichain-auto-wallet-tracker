@@ -1,17 +1,18 @@
 import { Api } from "telegram";
 import { AutoTrackerTokenData } from "../../../../models/token/types";
 import { TelegramChannelParser } from "../base-telegram-message-parser/base-telegram-message-parser";
-import { OnChainAlphaTrenchParser } from "../on-chain-alpha-trench/on-chain-alpha-trench-parser";
-import { KolScopeParser } from "../kol-scope/kol-scope-parser";
+import { BscHouseSignalVipParser } from "../bschouse-signal-vip/bschouse-signal-vip-parser";
 import { BullishBscCallsParser } from "../bullish-calls-parser/bullish-calls-bsc-parser";
-import { FourMemeParser } from "../four-meme-parser/four-meme-parser";
+import { KolScopeParser } from "../kol-scope/kol-scope-parser";
+import { OnChainAlphaTrenchParser } from "../on-chain-alpha-trench/on-chain-alpha-trench-parser";
 
 export class TelegramParserRouter {
     private static parsers: Map<string, TelegramChannelParser> = new Map([
         ['2097131181', new OnChainAlphaTrenchParser()],
         ['2397610468', new KolScopeParser()],
         ['2421215845', new BullishBscCallsParser()],
-        ['2649439684', new FourMemeParser()],
+        // ['2649439684', new FourMemeParser()],
+        ['2312141364', new BscHouseSignalVipParser()],
     ]);
 
     static parseMessage(message: Api.Message): Partial<AutoTrackerTokenData> | null {

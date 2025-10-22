@@ -88,12 +88,10 @@ export class AutoTrackerTokenBuilder {
         }
         
         if (!this.rawData) {
-            console.log('initialiseRawData: Raw data not set, creating new RawTokenDataCache')
             this.rawData = new RawTokenDataCache(this.tokenAddress, this.chainId)
         }
 
         if (rawDataData) {
-            console.log('initialiseRawData: Updating raw data')
             this.rawData.updateData(rawDataData)
         }
         return this.rawData
@@ -110,15 +108,13 @@ export class AutoTrackerTokenBuilder {
     async getOrCreate(): Promise<AutoTrackerToken> {
         const token = await this.getDbToken()
         if (token && !token.hasMissingRequiredFields()) {
-            console.log('Token already exists and does not have missing required fields')
+            await this.setChainIdAndInitialiseRawData(token.chainId)
             return token
         }
 
         if (!token?.chainId) {
-            console.log('Token does not have chain id, fetching initial data')
             const initialData = await this.getInitialData()
-            this.setChainId(initialData.token.chainId)
-            await this.initialiseRawData(initialData.rawData)
+            await this.setChainIdAndInitialiseRawData(initialData.token.chainId, initialData.rawData)
         }
 
         await this.collect()
@@ -139,33 +135,35 @@ export class AutoTrackerTokenBuilder {
 
     async getInitialData(): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
         if (!this.chainId) {
-            console.log('getInitialData: Chain id not set, fetching initial data')
             const data = await this.birdeyeService.fetchTokenDataWithMarketCapFromAddress(this.tokenAddress)
             if (!data.token.chainId) {
                 throw new Error('Chain id not returned')
             }
-            this.setChainId(data.token.chainId)
-            await this.initialiseRawData(data.rawData)
+            await this.setChainIdAndInitialiseRawData(data.token.chainId, data.rawData)
             return data
         } else {
             const data = await this.birdeyeService.fetchTokenWithMarketCap(this.tokenAddress, this.chainId)
-            this.setChainId(data.token.chainId)
-            await this.initialiseRawData(data.rawData)
+            await this.setChainIdAndInitialiseRawData(data.token.chainId, data.rawData)
             return data
         }
     }
 
-    getRawData(): RawTokenDataCache {
+    async getRawData(): Promise<RawTokenDataCache> {
         if (!this.chainId) {
             throw new Error('Chain id is not set')
         }
         if (!this.rawData) {
-            throw new Error('Raw data is not set')
+            this.rawData = await this.initialiseRawData()
         }
         return this.rawData
     }
 
     setChainId(chainId: ChainId): void {
         this.chainId = chainId
+    }
+
+    async setChainIdAndInitialiseRawData(chainId: ChainId, rawDataData?: RawDataData): Promise<RawTokenDataCache> {
+        this.setChainId(chainId)
+        return await this.initialiseRawData(rawDataData)
     }
 }

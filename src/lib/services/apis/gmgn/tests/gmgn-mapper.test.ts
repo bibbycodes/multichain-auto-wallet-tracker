@@ -1,5 +1,5 @@
 import { TokenDataSource } from '@prisma/client';
-import { GmGnEvmTokenSecurity, GmGnSolanaTokenSecurity, GmGnMultiWindowTokenInfo, GmGnTokenSocials } from 'python-proxy-scraper-client';
+import { GmGnEvmTokenSecurity, GmGnSolanaTokenSecurity, GmGnMultiWindowTokenInfo, GmGnTokenHolder, GmGnTokenSocials } from 'python-proxy-scraper-client';
 import { ChainId, ChainsMap } from '../../../../../shared/chains';
 import { GmGnMapper } from '../gmgn-mapper';
 import { GmGnChain } from '../gmgn-chain-map';
@@ -8,6 +8,7 @@ import { GmGnChain } from '../gmgn-chain-map';
 import tokenInfoFixture from '../../../../../../tests/fixtures/gmgn/getMultiWindowTokenInfo-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
 import socialsFixture from '../../../../../../tests/fixtures/gmgn/socials-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
 import securityFixture from '../../../../../../tests/fixtures/gmgn/getTokenSecurityAndLaunchpad-0xe8852d270294cc9a84fe73d5a434ae85a1c34444.json';
+import holdersFixture from '../../../../../../tests/fixtures/gmgn/getHolders-0xe6df05ce8c8301223373cf5b969afcb1498c5528.json';
 
 describe('GmGnMapper', () => {
     const testTokenAddress = '0xe8852d270294cc9a84fe73d5a434ae85a1c34444';
@@ -1012,6 +1013,230 @@ describe('GmGnMapper', () => {
             // Restore spies
             evmSpy.mockRestore();
             solanaSpy.mockRestore();
+        });
+    });
+
+    describe('isPool', () => {
+        const chainId = ChainsMap.bsc;
+        it('should recognize PancakeSwap V2 Router (BSC)', () => {
+            expect(GmGnMapper.isPool({
+                address: '0x10ed43c718714eb63d5aa57b78b54704e256024e',
+                addr_type: 2,
+            } as unknown as GmGnTokenHolder, chainId)).toBe(true);
+        });
+
+        it('should return true if address type is 2 as string', () => {
+            expect(GmGnMapper.isPool({
+                address: '0x1111111254fb6c44bac0bed2854e76f90643097d',
+                addr_type: '2',
+            } as unknown as GmGnTokenHolder, chainId)).toBe(true);
+        });
+
+        it('should recognize known liquidity addresses (BSC)', () => {
+            // FOUR_DOT_MEME_PROXY from BSC config
+            expect(GmGnMapper.isPool({
+                address: '0x5c952063c7fc8610ffdb798152d69f0b9550762b',
+                addr_type: '0',
+            } as unknown as GmGnTokenHolder, chainId)).toBe(true);
+        });
+
+        it('should return false if address is empty', () => {
+            expect(GmGnMapper.isPool({
+                address: '',
+                addr_type: '0',
+            } as unknown as GmGnTokenHolder, chainId)).toBe(false);
+        });
+
+        it('should should return true if known address case sensitive', () => {
+            expect(GmGnMapper.isPool({
+                address: '0x5C952063C7fC8610FFDB798152D69F0B9550762b',
+                addr_type: '0',
+            } as unknown as GmGnTokenHolder, chainId)).toBe(true);
+        });
+
+        it('should return address type 0 as not pool', () => {
+            expect(GmGnMapper.isPool({
+                address: '0xe8852d270294cc9a84fe73d5a434ae85a1c34444',
+                addr_type: '0',
+            } as unknown as GmGnTokenHolder, chainId)).toBe(false);
+        });
+        
+        it('should return false if address type is undefined', () => {
+            expect(GmGnMapper.isPool({
+                address: '0xe8852d270294cc9a84fe73d5a434ae85a1c34444',
+                addr_type: undefined,
+            } as unknown as GmGnTokenHolder, chainId)).toBe(false);
+        });
+    });
+
+    describe('shouldExcludeHolder', () => {
+        it('should exclude zero address', () => {
+            expect(GmGnMapper.shouldExcludeHolder({
+                address: '0x0000000000000000000000000000000000000000',
+                isPool: false
+            })).toBe(true);
+        });
+
+        it('should exclude dead address', () => {
+            expect(GmGnMapper.shouldExcludeHolder({
+                address: '0x000000000000000000000000000000000000dead',
+                isPool: false
+            })).toBe(true);
+        });
+
+        it('should exclude pool addresses', () => {
+            expect(GmGnMapper.shouldExcludeHolder({
+                address: '0x10ed43c718714eb63d5aa57b78b54704e256024e',
+                isPool: true
+            })).toBe(true);
+        });
+
+        it('should not exclude regular holders', () => {
+            expect(GmGnMapper.shouldExcludeHolder({
+                address: '0xe8852d270294cc9a84fe73d5a434ae85a1c34444',
+                isPool: false
+            })).toBe(false);
+        });
+
+        it('should be case insensitive for burn addresses', () => {
+            expect(GmGnMapper.shouldExcludeHolder({
+                address: '0x000000000000000000000000000000000000DEAD',
+                isPool: false
+            })).toBe(true);
+        });
+    });
+
+    describe('parseTopHolders', () => {
+        const holders = holdersFixture as unknown as GmGnTokenHolder[];
+        const tokenSupply = 3379952959999.98;
+        const tokenCreator = '0x79f8c3260575287c00f13d9e175d999491e72a5f';
+
+        it('should parse holders correctly', () => {
+            const result = GmGnMapper.parseTopHolders(holders, tokenSupply, tokenCreator);
+            expect(result.length).toBeGreaterThan(0);
+            expect(result[0]).toHaveProperty('address');
+            expect(result[0]).toHaveProperty('amount');
+            expect(result[0]).toHaveProperty('percentage');
+            expect(result[0]).toHaveProperty('dollarValue');
+            expect(result[0]).toHaveProperty('isKOL');
+            expect(result[0]).toHaveProperty('isWhale');
+            expect(result[0]).toHaveProperty('significantHolderIn');
+            expect(result[0]).toHaveProperty('isPool');
+            expect(result[0]).toHaveProperty('isCreator');
+        });
+
+        it('should calculate percentage correctly', () => {
+            const result = GmGnMapper.parseTopHolders(holders, tokenSupply, tokenCreator);
+            const firstHolder = result[0];
+            
+            // percentage should be calculated as (amount / supply) * 100
+            const expectedPercentage = Number(((Number(holders[0].amount_cur) / tokenSupply) * 100).toFixed(2));
+            expect(firstHolder.percentage).toBe(expectedPercentage);
+        });
+
+        it('should detect KOL from twitter username', () => {
+            const result = GmGnMapper.parseTopHolders(holders, tokenSupply, tokenCreator);
+            
+            // First holder in fixture has twitter_username: "laoyouhui"
+            const holderWithTwitter = result.find(h => h.socials?.twitter);
+            expect(holderWithTwitter).toBeDefined();
+            expect(holderWithTwitter?.isKOL).toBe(true);
+        });
+
+        it('should add socials when twitter username is present', () => {
+            const result = GmGnMapper.parseTopHolders(holders, tokenSupply, tokenCreator);
+            
+            const holderWithTwitter = result.find(h => h.socials?.twitter);
+            expect(holderWithTwitter?.socials).toBeDefined();
+            expect(holderWithTwitter?.socials?.twitter).toBeDefined();
+        });
+
+        it('should mark creator correctly', () => {
+            const testHolders = [{
+                address: tokenCreator,
+                amount_cur: 1000,
+                usd_value: 50,
+                twitter_username: null,
+                twitter_name: null,
+                name: null,
+            }] as unknown as GmGnTokenHolder[];
+            
+            const result = GmGnMapper.parseTopHolders(testHolders, tokenSupply, tokenCreator);
+            expect(result[0].isCreator).toBe(true);
+        });
+
+        it('should be case insensitive for creator detection', () => {
+            const testHolders = [{
+                address: tokenCreator.toUpperCase(),
+                amount_cur: 1000,
+                usd_value: 50,
+                twitter_username: null,
+                twitter_name: null,
+                name: null,
+            }] as unknown as GmGnTokenHolder[];
+            
+            const result = GmGnMapper.parseTopHolders(testHolders, tokenSupply, tokenCreator);
+            expect(result[0].isCreator).toBe(true);
+        });
+
+        it('should filter out burn addresses', () => {
+            const testHolders = [
+                {
+                    address: '0x000000000000000000000000000000000000dead',
+                    amount_cur: 1000,
+                    usd_value: 50,
+                    twitter_username: null,
+                    twitter_name: null,
+                    name: null,
+                },
+                {
+                    address: '0xe8852d270294cc9a84fe73d5a434ae85a1c34444',
+                    amount_cur: 500,
+                    usd_value: 25,
+                    twitter_username: null,
+                    twitter_name: null,
+                    name: null,
+                },
+            ] as unknown as GmGnTokenHolder[];
+            
+            const result = GmGnMapper.parseTopHolders(testHolders, tokenSupply, tokenCreator);
+            expect(result.length).toBe(1);
+            expect(result[0].address).toBe('0xe8852d270294cc9a84fe73d5a434ae85a1c34444');
+        });
+
+        it('should filter out pool addresses', () => {
+            const testHolders = [
+                {
+                    address: '0x10ed43c718714eb63d5aa57b78b54704e256024e', // PancakeSwap router
+                    amount_cur: 1000,
+                    usd_value: 50,
+                    twitter_username: null,
+                    twitter_name: null,
+                    name: null,
+                },
+                {
+                    address: '0xe8852d270294cc9a84fe73d5a434ae85a1c34444',
+                    amount_cur: 500,
+                    usd_value: 25,
+                    twitter_username: null,
+                    twitter_name: null,
+                    name: null,
+                },
+            ] as unknown as GmGnTokenHolder[];
+            
+            const result = GmGnMapper.parseTopHolders(testHolders, tokenSupply, tokenCreator);
+            expect(result.length).toBe(1);
+            expect(result[0].address).toBe('0xe8852d270294cc9a84fe73d5a434ae85a1c34444');
+        });
+
+        it('should set isWhale to false by default', () => {
+            const result = GmGnMapper.parseTopHolders(holders, tokenSupply, tokenCreator);
+            expect(result.every(h => h.isWhale === false)).toBe(true);
+        });
+
+        it('should set significantHolderIn to empty array by default', () => {
+            const result = GmGnMapper.parseTopHolders(holders, tokenSupply, tokenCreator);
+            expect(result.every(h => Array.isArray(h.significantHolderIn) && h.significantHolderIn.length === 0)).toBe(true);
         });
     });
 });

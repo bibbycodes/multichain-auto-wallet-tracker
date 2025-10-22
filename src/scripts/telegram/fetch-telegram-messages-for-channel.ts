@@ -21,5 +21,5 @@ async function main(channelId: string) {
     }
 }
 
-main('2299278180')
+main('2312141364')
 

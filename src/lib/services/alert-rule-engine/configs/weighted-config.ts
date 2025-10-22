@@ -1,38 +1,38 @@
-import { AlertRuleConfig } from "../types";
+import { AlertRuleConfig, AlertRuleName } from "../types";
 
 /**
  * Weighted configuration - uses custom weights to prioritize certain checks
- * 
+ *
  * Weight priorities:
  * - Critical security (3.0): Honeypot, Mintable, Pausable
  * - High importance (2.0): Renounced, LP Burned
  * - Medium importance (1.0): Freezable, Blacklist
- * 
+ *
  * Requires 75% weighted score to pass
  */
 export const weightedConfig: AlertRuleConfig = {
     optionalRules: [
-        'no_honeypot',      // 3.0 weight
-        'no_mintable',      // 3.0 weight
-        'no_pausable',      // 3.0 weight
-        'is_renounced',     // 2.0 weight
-        'lp_burned',        // 2.0 weight
-        'no_freezable',     // 1.0 weight (default)
-        'no_blacklist'      // 1.0 weight (default)
+        AlertRuleName.NO_HONEYPOT,      // 3.0 weight
+        AlertRuleName.NO_MINTABLE,      // 3.0 weight
+        AlertRuleName.NO_PAUSABLE,      // 3.0 weight
+        AlertRuleName.IS_RENOUNCED,     // 2.0 weight
+        AlertRuleName.LP_BURNED,        // 2.0 weight
+        AlertRuleName.NO_FREEZABLE,     // 1.0 weight (default)
+        AlertRuleName.NO_BLACKLIST      // 1.0 weight (default)
     ],
     ruleWeights: {
         // Critical - these are deal-breakers
-        'no_honeypot': 3.0,
-        'no_mintable': 3.0,
-        'no_pausable': 3.0,
-        
+        [AlertRuleName.NO_HONEYPOT]: 3.0,
+        [AlertRuleName.NO_MINTABLE]: 3.0,
+        [AlertRuleName.NO_PAUSABLE]: 3.0,
+
         // High importance - very risky without these
-        'is_renounced': 2.0,
-        'lp_burned': 2.0,
-        
+        [AlertRuleName.IS_RENOUNCED]: 2.0,
+        [AlertRuleName.LP_BURNED]: 2.0,
+
         // Medium importance - concerning but not critical
-        // 'no_freezable': 1.0,  // default
-        // 'no_blacklist': 1.0,  // default
+        // [AlertRuleName.NO_FREEZABLE]: 1.0,  // default
+        // [AlertRuleName.NO_BLACKLIST]: 1.0,  // default
     },
     minOptionalScore: 0.75, // 75% of maximum weighted score
     evaluateAllRules: true

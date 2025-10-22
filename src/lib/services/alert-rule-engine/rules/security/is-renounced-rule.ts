@@ -1,4 +1,4 @@
-import { AlertRule, RuleGroup, RuleResult } from "../../types";
+import { AlertRule, AlertRuleName, RuleGroup, RuleResult } from "../../types";
 import { BaseContextData } from "../../../token-context/types";
 
 /**
@@ -7,7 +7,7 @@ import { BaseContextData } from "../../../token-context/types";
  * the contract cannot be modified by the owner
  */
 export class IsRenouncedRule implements AlertRule {
-    name = 'is_renounced';
+    name = AlertRuleName.IS_RENOUNCED;
     group = RuleGroup.SECURITY;
 
     async evaluate(context: BaseContextData): Promise<RuleResult> {

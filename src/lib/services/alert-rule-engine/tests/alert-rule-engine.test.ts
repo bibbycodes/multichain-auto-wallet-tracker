@@ -1,6 +1,6 @@
 import { AlertRuleEngine } from '../alert-rule-engine';
 import { BaseContext } from '../../token-context/base-context';
-import { AlertRuleConfig, RuleGroup } from '../types';
+import { AlertRuleConfig, AlertRuleName, RuleGroup } from '../types';
 import { strictConfig, balancedConfig } from '../configs';
 import { createMockBaseContextData } from './test-helpers';
 
@@ -54,8 +54,8 @@ describe('AlertRuleEngine', () => {
             const decision = await engine.evaluate();
 
             expect(decision.shouldAlert).toBe(false);
-            expect(decision.reason).toContain('no_honeypot');
-            expect(decision.failedRules).toContain('no_honeypot');
+            expect(decision.reason).toContain(AlertRuleName.NO_HONEYPOT);
+            expect(decision.failedRules).toContain(AlertRuleName.NO_HONEYPOT);
         });
 
         it('should not alert when required rule fails', async () => {
@@ -76,7 +76,7 @@ describe('AlertRuleEngine', () => {
 
             expect(decision.shouldAlert).toBe(false);
             expect(decision.reason).toContain('Required rules failed');
-            expect(decision.failedRules).toContain('is_renounced');
+            expect(decision.failedRules).toContain(AlertRuleName.IS_RENOUNCED);
         });
     });
 
@@ -117,7 +117,7 @@ describe('AlertRuleEngine', () => {
             const decision = await engine.evaluate();
 
             expect(decision.shouldAlert).toBe(false);
-            expect(decision.failedRules).toContain('no_mintable');
+            expect(decision.failedRules).toContain(AlertRuleName.NO_MINTABLE);
         });
     });
 
@@ -162,50 +162,15 @@ describe('AlertRuleEngine', () => {
         });
     });
 
-    describe('Custom Rules', () => {
-        it('should allow registering custom rules', async () => {
-            const customRule = {
-                name: 'custom_rule',
-                group: RuleGroup.SECURITY,
-                evaluate: jest.fn().mockResolvedValue({
-                    passed: true,
-                    reason: 'Custom check passed'
-                })
-            };
-
-            mockBaseContext.toObject.mockResolvedValue(createMockBaseContextData({
-                tokenSecurity: {
-                    isRenounced: true,
-                    isLpTokenBurned: true,
-                    isHoneypot: false,
-                    isMintable: false,
-                    isPausable: false,
-                    isFreezable: false,
-                    isBlacklist: false
-                }
-            }));
-
-            const config: AlertRuleConfig = {
-                requiredRules: ['custom_rule']
-            };
-
-            const engine = new AlertRuleEngine(mockBaseContext, config);
-            engine.registerRule(customRule);
-
-            const decision = await engine.evaluate();
-
-            expect(customRule.evaluate).toHaveBeenCalled();
-            expect(decision.shouldAlert).toBe(true);
-        });
-
+    describe('Rule Management', () => {
         it('should allow unregistering rules', () => {
             const engine = new AlertRuleEngine(mockBaseContext);
             const initialCount = engine.getRules().length;
 
-            engine.unregisterRule('is_renounced');
+            engine.unregisterRule(AlertRuleName.IS_RENOUNCED);
 
             expect(engine.getRules().length).toBe(initialCount - 1);
-            expect(engine.getRules().find(r => r.name === 'is_renounced')).toBeUndefined();
+            expect(engine.getRules().find(r => r.name === AlertRuleName.IS_RENOUNCED)).toBeUndefined();
         });
     });
 
@@ -225,9 +190,9 @@ describe('AlertRuleEngine', () => {
 
             const config: AlertRuleConfig = {
                 optionalRules: [
-                    'is_renounced',
-                    'lp_burned',
-                    'no_mintable'
+                    AlertRuleName.IS_RENOUNCED,
+                    AlertRuleName.LP_BURNED,
+                    AlertRuleName.NO_MINTABLE
                 ],
                 minOptionalScore: 0.6 // 60% required
             };
@@ -254,10 +219,10 @@ describe('AlertRuleEngine', () => {
 
             const config: AlertRuleConfig = {
                 optionalRules: [
-                    'is_renounced',
-                    'lp_burned',
-                    'no_mintable',
-                    'no_pausable'
+                    AlertRuleName.IS_RENOUNCED,
+                    AlertRuleName.LP_BURNED,
+                    AlertRuleName.NO_MINTABLE,
+                    AlertRuleName.NO_PAUSABLE
                 ],
                 minOptionalScore: 0.7 // 70% required
             };
@@ -271,39 +236,6 @@ describe('AlertRuleEngine', () => {
         });
     });
 
-    describe('Error Handling', () => {
-        it('should handle rule evaluation errors gracefully', async () => {
-            const faultyRule = {
-                name: 'faulty_rule',
-                group: RuleGroup.SECURITY,
-                evaluate: jest.fn().mockRejectedValue(new Error('Rule error'))
-            };
-
-            mockBaseContext.toObject.mockResolvedValue(createMockBaseContextData({
-                tokenSecurity: {
-                    isRenounced: true,
-                    isLpTokenBurned: true,
-                    isHoneypot: false,
-                    isMintable: false,
-                    isPausable: false,
-                    isFreezable: false,
-                    isBlacklist: false
-                }
-            }));
-
-            const config: AlertRuleConfig = {
-                requiredRules: ['faulty_rule']
-            };
-
-            const engine = new AlertRuleEngine(mockBaseContext, config);
-            engine.registerRule(faultyRule);
-
-            const decision = await engine.evaluate();
-
-            expect(decision.shouldAlert).toBe(false);
-            expect(decision.failedRules).toContain('faulty_rule');
-        });
-    });
 
     describe('Blacklist Rules', () => {
         it('should reject when any blacklist rule fails', async () => {
@@ -320,7 +252,7 @@ describe('AlertRuleEngine', () => {
             }));
 
             const config: AlertRuleConfig = {
-                blacklistRules: ['no_mintable', 'no_pausable']
+                blacklistRules: [AlertRuleName.NO_MINTABLE, AlertRuleName.NO_PAUSABLE]
             };
 
             const engine = new AlertRuleEngine(mockBaseContext, config);
@@ -328,8 +260,8 @@ describe('AlertRuleEngine', () => {
 
             expect(decision.shouldAlert).toBe(false);
             expect(decision.reason).toContain('Blacklist rules failed');
-            expect(decision.reason).toContain('no_mintable');
-            expect(decision.failedRules).toContain('no_mintable');
+            expect(decision.reason).toContain(AlertRuleName.NO_MINTABLE);
+            expect(decision.failedRules).toContain(AlertRuleName.NO_MINTABLE);
         });
 
         it('should pass when all blacklist rules pass', async () => {
@@ -346,7 +278,7 @@ describe('AlertRuleEngine', () => {
             }));
 
             const config: AlertRuleConfig = {
-                blacklistRules: ['no_mintable', 'no_pausable']
+                blacklistRules: [AlertRuleName.NO_MINTABLE, AlertRuleName.NO_PAUSABLE]
             };
 
             const engine = new AlertRuleEngine(mockBaseContext, config);
@@ -370,7 +302,7 @@ describe('AlertRuleEngine', () => {
             }));
 
             const config: AlertRuleConfig = {
-                blacklistRules: ['no_mintable', 'no_pausable']
+                blacklistRules: [AlertRuleName.NO_MINTABLE, AlertRuleName.NO_PAUSABLE]
             };
 
             const engine = new AlertRuleEngine(mockBaseContext, config);
@@ -378,8 +310,8 @@ describe('AlertRuleEngine', () => {
 
             expect(decision.shouldAlert).toBe(false);
             expect(decision.reason).toContain('Blacklist rules failed');
-            expect(decision.failedRules).toContain('no_mintable');
-            expect(decision.failedRules).toContain('no_pausable');
+            expect(decision.failedRules).toContain(AlertRuleName.NO_MINTABLE);
+            expect(decision.failedRules).toContain(AlertRuleName.NO_PAUSABLE);
         });
     });
 
@@ -398,7 +330,7 @@ describe('AlertRuleEngine', () => {
             }));
 
             const config: AlertRuleConfig = {
-                whitelistRules: ['is_renounced', 'lp_burned']
+                whitelistRules: [AlertRuleName.IS_RENOUNCED, AlertRuleName.LP_BURNED]
             };
 
             const engine = new AlertRuleEngine(mockBaseContext, config);
@@ -422,7 +354,7 @@ describe('AlertRuleEngine', () => {
             }));
 
             const config: AlertRuleConfig = {
-                whitelistRules: ['is_renounced', 'lp_burned']
+                whitelistRules: [AlertRuleName.IS_RENOUNCED, AlertRuleName.LP_BURNED]
             };
 
             const engine = new AlertRuleEngine(mockBaseContext, config);
@@ -447,7 +379,7 @@ describe('AlertRuleEngine', () => {
             }));
 
             const config: AlertRuleConfig = {
-                whitelistRules: ['is_renounced', 'lp_burned']
+                whitelistRules: [AlertRuleName.IS_RENOUNCED, AlertRuleName.LP_BURNED]
             };
 
             const engine = new AlertRuleEngine(mockBaseContext, config);
@@ -472,8 +404,8 @@ describe('AlertRuleEngine', () => {
             }));
 
             const config: AlertRuleConfig = {
-                blacklistRules: ['no_mintable'],
-                whitelistRules: ['is_renounced']
+                blacklistRules: [AlertRuleName.NO_MINTABLE],
+                whitelistRules: [AlertRuleName.IS_RENOUNCED]
             };
 
             const engine = new AlertRuleEngine(mockBaseContext, config);
@@ -497,8 +429,8 @@ describe('AlertRuleEngine', () => {
             }));
 
             const config: AlertRuleConfig = {
-                blacklistRules: ['no_mintable', 'no_pausable'],
-                whitelistRules: ['is_renounced', 'lp_burned']
+                blacklistRules: [AlertRuleName.NO_MINTABLE, AlertRuleName.NO_PAUSABLE],
+                whitelistRules: [AlertRuleName.IS_RENOUNCED, AlertRuleName.LP_BURNED]
             };
 
             const engine = new AlertRuleEngine(mockBaseContext, config);

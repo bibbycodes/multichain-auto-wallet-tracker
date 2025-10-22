@@ -1,4 +1,4 @@
-import { AlertRuleConfig } from "../types";
+import { AlertRuleConfig, AlertRuleName } from "../types";
 
 /**
  * Permissive configuration - only blocks on honeypots,
@@ -7,15 +7,15 @@ import { AlertRuleConfig } from "../types";
  */
 export const permissiveConfig: AlertRuleConfig = {
     blockerRules: [
-        'no_honeypot'
+        AlertRuleName.NO_HONEYPOT
     ],
     optionalRules: [
-        'is_renounced',
-        'lp_burned',
-        'no_mintable',
-        'no_pausable',
-        'no_freezable',
-        'no_blacklist'
+        AlertRuleName.IS_RENOUNCED,
+        AlertRuleName.LP_BURNED,
+        AlertRuleName.NO_MINTABLE,
+        AlertRuleName.NO_PAUSABLE,
+        AlertRuleName.NO_FREEZABLE,
+        AlertRuleName.NO_BLACKLIST
     ],
     minOptionalScore: 0.6, // 60% of optional checks must pass
     evaluateAllRules: true

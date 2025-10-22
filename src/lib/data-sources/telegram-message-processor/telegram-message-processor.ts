@@ -68,7 +68,7 @@ export class TelegramMessageProcessor {
         messages.forEach((msg: any) => {
             if (msg) {
                 const update = { message: msg };
-                this.listener.processAndSaveMessage(update);
+                this.listener.processAndSaveMessage(update, true);
             }
         });
 

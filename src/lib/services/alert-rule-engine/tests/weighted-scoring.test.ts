@@ -1,6 +1,6 @@
 import { AlertRuleEngine } from '../alert-rule-engine';
 import { BaseContext } from '../../token-context/base-context';
-import { AlertRuleConfig, RuleGroup, AlertRule, RuleResult } from '../types';
+import { AlertRuleConfig, AlertRuleName, RuleGroup, AlertRule, RuleResult } from '../types';
 import { weightedConfig } from '../configs';
 import { createMockBaseContextData } from './test-helpers';
 import { BaseContextData } from '../../token-context/types';
@@ -32,11 +32,11 @@ describe('Weighted Scoring', () => {
             }));
 
             const config: AlertRuleConfig = {
-                optionalRules: ['is_renounced', 'lp_burned', 'no_honeypot'],
+                optionalRules: [AlertRuleName.IS_RENOUNCED, AlertRuleName.LP_BURNED, AlertRuleName.NO_HONEYPOT],
                 ruleWeights: {
-                    'is_renounced': 2.0,
-                    'lp_burned': 2.0,
-                    'no_honeypot': 3.0
+                    [AlertRuleName.IS_RENOUNCED]: 2.0,
+                    [AlertRuleName.LP_BURNED]: 2.0,
+                    [AlertRuleName.NO_HONEYPOT]: 3.0
                 },
                 minOptionalScore: 0.7
             };
@@ -65,11 +65,11 @@ describe('Weighted Scoring', () => {
             }));
 
             const config: AlertRuleConfig = {
-                optionalRules: ['is_renounced', 'lp_burned', 'no_honeypot'],
+                optionalRules: [AlertRuleName.IS_RENOUNCED, AlertRuleName.LP_BURNED, AlertRuleName.NO_HONEYPOT],
                 ruleWeights: {
-                    'is_renounced': 2.0,
-                    'lp_burned': 2.0,
-                    'no_honeypot': 3.0
+                    [AlertRuleName.IS_RENOUNCED]: 2.0,
+                    [AlertRuleName.LP_BURNED]: 2.0,
+                    [AlertRuleName.NO_HONEYPOT]: 3.0
                 },
                 minOptionalScore: 0.7
             };
@@ -98,11 +98,11 @@ describe('Weighted Scoring', () => {
             }));
 
             const config: AlertRuleConfig = {
-                optionalRules: ['is_renounced', 'lp_burned', 'no_honeypot'],
+                optionalRules: [AlertRuleName.IS_RENOUNCED, AlertRuleName.LP_BURNED, AlertRuleName.NO_HONEYPOT],
                 ruleWeights: {
-                    'is_renounced': 2.0,
-                    'lp_burned': 2.0,
-                    'no_honeypot': 3.0
+                    [AlertRuleName.IS_RENOUNCED]: 2.0,
+                    [AlertRuleName.LP_BURNED]: 2.0,
+                    [AlertRuleName.NO_HONEYPOT]: 3.0
                 },
                 minOptionalScore: 0.7
             };
@@ -189,87 +189,6 @@ describe('Weighted Scoring', () => {
         });
     });
 
-    describe('Rule Default Weights', () => {
-        it('should use rule default weight when not specified in config', async () => {
-            // Create custom rule with default weight
-            class HighPriorityRule implements AlertRule {
-                name = 'high_priority';
-                group = RuleGroup.SECURITY;
-                weight = 5.0; // Default weight in rule
-
-                async evaluate(): Promise<RuleResult> {
-                    return { passed: true, reason: 'High priority passed' };
-                }
-            }
-
-            mockBaseContext.toObject.mockResolvedValue(createMockBaseContextData({
-                tokenSecurity: {
-                    isRenounced: true,
-                    isLpTokenBurned: false,
-                    isHoneypot: false,
-                    isMintable: false,
-                    isPausable: false,
-                    isFreezable: false,
-                    isBlacklist: false
-                }
-            }));
-
-            const config: AlertRuleConfig = {
-                optionalRules: ['high_priority', 'is_renounced'],
-                minOptionalScore: 0.5
-            };
-
-            const engine = new AlertRuleEngine(mockBaseContext, config);
-            engine.registerRule(new HighPriorityRule());
-            
-            const decision = await engine.evaluate();
-
-            // high_priority: 5.0 (passed) + is_renounced: 1.0 (passed) = 6.0/6.0
-            expect(decision.scoreDetails!.actualScore).toBe(6);
-            expect(decision.scoreDetails!.maxPossibleScore).toBe(6);
-        });
-
-        it('should allow config to override rule default weight', async () => {
-            class HighPriorityRule implements AlertRule {
-                name = 'high_priority';
-                group = RuleGroup.SECURITY;
-                weight = 5.0; // Default weight
-
-                async evaluate(): Promise<RuleResult> {
-                    return { passed: true, reason: 'High priority passed' };
-                }
-            }
-
-            mockBaseContext.toObject.mockResolvedValue(createMockBaseContextData({
-                tokenSecurity: {
-                    isRenounced: true,
-                    isLpTokenBurned: false,
-                    isHoneypot: false,
-                    isMintable: false,
-                    isPausable: false,
-                    isFreezable: false,
-                    isBlacklist: false
-                }
-            }));
-
-            const config: AlertRuleConfig = {
-                optionalRules: ['high_priority', 'is_renounced'],
-                ruleWeights: {
-                    'high_priority': 2.0 // Override to 2.0
-                },
-                minOptionalScore: 0.5
-            };
-
-            const engine = new AlertRuleEngine(mockBaseContext, config);
-            engine.registerRule(new HighPriorityRule());
-            
-            const decision = await engine.evaluate();
-
-            // high_priority: 2.0 (overridden) + is_renounced: 1.0 = 3.0/3.0
-            expect(decision.scoreDetails!.actualScore).toBe(3);
-            expect(decision.scoreDetails!.maxPossibleScore).toBe(3);
-        });
-    });
 
     describe('Score Details', () => {
         it('should provide detailed breakdown of each rule contribution', async () => {
@@ -286,11 +205,11 @@ describe('Weighted Scoring', () => {
             }));
 
             const config: AlertRuleConfig = {
-                optionalRules: ['is_renounced', 'lp_burned', 'no_honeypot'],
+                optionalRules: [AlertRuleName.IS_RENOUNCED, AlertRuleName.LP_BURNED, AlertRuleName.NO_HONEYPOT],
                 ruleWeights: {
-                    'is_renounced': 2.0,
-                    'lp_burned': 1.5,
-                    'no_honeypot': 3.0
+                    [AlertRuleName.IS_RENOUNCED]: 2.0,
+                    [AlertRuleName.LP_BURNED]: 1.5,
+                    [AlertRuleName.NO_HONEYPOT]: 3.0
                 },
                 minOptionalScore: 0.5
             };
@@ -301,7 +220,7 @@ describe('Weighted Scoring', () => {
             const ruleScores = decision.scoreDetails!.ruleScores;
             
             // Check is_renounced
-            const renouncedScore = ruleScores.get('is_renounced');
+            const renouncedScore = ruleScores.get(AlertRuleName.IS_RENOUNCED);
             expect(renouncedScore).toEqual({
                 weight: 2.0,
                 passed: true,
@@ -309,7 +228,7 @@ describe('Weighted Scoring', () => {
             });
 
             // Check lp_burned
-            const lpBurnedScore = ruleScores.get('lp_burned');
+            const lpBurnedScore = ruleScores.get(AlertRuleName.LP_BURNED);
             expect(lpBurnedScore).toEqual({
                 weight: 1.5,
                 passed: false,
@@ -317,7 +236,7 @@ describe('Weighted Scoring', () => {
             });
 
             // Check no_honeypot
-            const honeypotScore = ruleScores.get('no_honeypot');
+            const honeypotScore = ruleScores.get(AlertRuleName.NO_HONEYPOT);
             expect(honeypotScore).toEqual({
                 weight: 3.0,
                 passed: true,

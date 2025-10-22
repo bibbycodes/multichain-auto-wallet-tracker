@@ -1,4 +1,4 @@
-import { AlertRule, RuleGroup, RuleResult } from "../../types";
+import { AlertRule, AlertRuleName, RuleGroup, RuleResult } from "../../types";
 import { BaseContextData } from "../../../token-context/types";
 
 /**
@@ -6,7 +6,7 @@ import { BaseContextData } from "../../../token-context/types";
  * Honeypots allow buying but prevent selling
  */
 export class NoHoneypotRule implements AlertRule {
-    name = 'no_honeypot';
+    name = AlertRuleName.NO_HONEYPOT;
     group = RuleGroup.SECURITY;
 
     async evaluate(context: BaseContextData): Promise<RuleResult> {

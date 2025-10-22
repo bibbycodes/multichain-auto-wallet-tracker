@@ -40,4 +40,50 @@ export class EvmChain {
     isKnownLiquidityAddress(address: string): boolean {
         return this.knownLiquidityAddresses.has(address)
     }
+
+    /**
+     * Check if an address is a pool, liquidity address, or DEX router
+     * @param address - The address to check (case-insensitive)
+     */
+    isPoolOrLiquidityAddress(address: string): boolean {
+        const lowerAddress = address.toLowerCase();
+
+        if (!lowerAddress) {
+            return false;
+        }
+        
+        // Check if address is in the VALUES of knownLiquidityAddresses map
+        const liquidityValues = Array.from(this.knownLiquidityAddresses.values()).map(v => v.toLowerCase());
+        if (liquidityValues.includes(lowerAddress)) {
+            return true;
+        }
+        
+        // Check if address is in the VALUES of knownAddresses map (includes routers and pools)
+        const knownValues = Array.from(this.knownAddresses.values()).map(v => v.toLowerCase());
+        if (knownValues.includes(lowerAddress)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if an address is a burn address (dead address or null address)
+     * @param address - The address to check (case-insensitive)
+     */
+    isBurnAddress(address: string): boolean {
+        const lowerAddress = address.toLowerCase();
+        
+        // Check burn addresses
+        if (this.burnAddresses.some((addr: string) => addr.toLowerCase() === lowerAddress)) {
+            return true;
+        }
+        
+        // Check null addresses
+        if (this.nullAddresses.some((addr: string) => addr.toLowerCase() === lowerAddress)) {
+            return true;
+        }
+        
+        return false;
+    }
 }

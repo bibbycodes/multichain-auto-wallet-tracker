@@ -1,4 +1,4 @@
-import { AlertRule, RuleGroup, RuleResult } from "../../types";
+import { AlertRule, AlertRuleName, RuleGroup, RuleResult } from "../../types";
 import { BaseContextData } from "../../../token-context/types";
 
 /**
@@ -6,7 +6,7 @@ import { BaseContextData } from "../../../token-context/types";
  * Freezable tokens allow blocking specific addresses
  */
 export class NoFreezableRule implements AlertRule {
-    name = 'no_freezable';
+    name = AlertRuleName.NO_FREEZABLE;
     group = RuleGroup.SECURITY;
 
     async evaluate(context: BaseContextData): Promise<RuleResult> {

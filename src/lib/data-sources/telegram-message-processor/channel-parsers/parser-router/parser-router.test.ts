@@ -1,5 +1,6 @@
 import { TelegramParserRouter } from './parser-router';
 import { Api } from 'telegram';
+import { ChainsMap } from '../../../../../shared/chains';
 
 describe('TelegramParserRouter', () => {
     describe('parseMessage', () => {
@@ -40,7 +41,7 @@ describe('TelegramParserRouter', () => {
 
         it('should route to BullishBscCallsParser for channel 2421215845', () => {
             const messageText = "🔔 耶稣 | $Yeshua\n\n🏦 Market Cap: 26.60K\n\n0xcf75b6b3fe60dfd52cc3bf47c71ea3fbed754444\n\n🌐 WEB | 🐦 X | 💬 TG\n4️⃣ FourMeme\n\n💹 DexScreener | MevX | GMGN\n\n‼️ Dear Degen, #DYOR!";
-            
+
             const mockMessage = {
                 message: messageText,
                 id: 3,
@@ -55,6 +56,44 @@ describe('TelegramParserRouter', () => {
             expect(result?.name).toBe('耶稣');
             expect(result?.symbol).toBe('Yeshua');
             expect(result?.address).toBe('0xcf75b6b3fe60dfd52cc3bf47c71ea3fbed754444');
+        });
+
+        it('should route to BscHouseSignalVipParser for channel 2312141364', () => {
+            const messageText = "⚡️ NEW CALL ⚡️\n\n➡️ TOKEN: CCDS\n➡️ TICKER: CCDS\n➡️ CHAIN: bsc\n➡️ MC: 13.97K\n\n➡️ CA:\n0x271b70f71C46bc76482ad7976B3173Bcb2A14F60\n\n✅ TG | 🔗 X\n\n📈 Chart | Mevx Chart";
+
+            const mockMessage = {
+                message: messageText,
+                id: 4,
+                date: 1738429976,
+                peerId: { channelId: '2312141364', className: 'PeerChannel' },
+                className: 'Message',
+                entities: [
+                    {
+                        offset: 129,
+                        length: 2,
+                        url: 'https://t.me/CCDAO_CC',
+                        className: 'MessageEntityTextUrl'
+                    },
+                    {
+                        offset: 137,
+                        length: 1,
+                        url: 'https://x.com/Michael198341',
+                        className: 'MessageEntityTextUrl'
+                    }
+                ]
+            } as unknown as Api.Message;
+
+            const result = TelegramParserRouter.parseMessage(mockMessage);
+
+            expect(result).not.toBeNull();
+            expect(result?.name).toBe('CCDS');
+            expect(result?.symbol).toBe('CCDS');
+            expect(result?.address).toBe('0x271b70f71C46bc76482ad7976B3173Bcb2A14F60');
+            expect(result?.chainId).toBe(ChainsMap.bsc);
+            expect(result?.socials).toEqual({
+                telegram: 'https://t.me/CCDAO_CC',
+                twitter: 'https://x.com/Michael198341'
+            });
         });
 
         it('should return null for unsupported channel', () => {
@@ -121,6 +160,7 @@ describe('TelegramParserRouter', () => {
             expect(parsers.has('2097131181')).toBe(true);
             expect(parsers.has('2397610468')).toBe(true);
             expect(parsers.has('2421215845')).toBe(true);
+            expect(parsers.has('2312141364')).toBe(true);
         });
 
         it('should get supported channel IDs', () => {
@@ -128,6 +168,7 @@ describe('TelegramParserRouter', () => {
             expect(channelIds).toContain('2097131181');
             expect(channelIds).toContain('2397610468');
             expect(channelIds).toContain('2421215845');
+            expect(channelIds).toContain('2312141364');
         });
     });
 

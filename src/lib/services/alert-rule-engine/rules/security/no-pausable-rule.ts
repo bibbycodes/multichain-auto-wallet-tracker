@@ -1,4 +1,4 @@
-import { AlertRule, RuleGroup, RuleResult } from "../../types";
+import { AlertRule, AlertRuleName, RuleGroup, RuleResult } from "../../types";
 import { BaseContextData } from "../../../token-context/types";
 
 /**
@@ -6,7 +6,7 @@ import { BaseContextData } from "../../../token-context/types";
  * Pausable tokens can be frozen, preventing all transfers
  */
 export class NoPausableRule implements AlertRule {
-    name = 'no_pausable';
+    name = AlertRuleName.NO_PAUSABLE;
     group = RuleGroup.SECURITY;
 
     async evaluate(context: BaseContextData): Promise<RuleResult> {

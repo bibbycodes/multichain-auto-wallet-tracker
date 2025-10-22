@@ -133,6 +133,45 @@ describe('AutoTrackerTokenBuilder', () => {
     });
   });
 
+  describe('setChainIdAndInitialiseRawData()', () => {
+    it('should set chain ID and initialize raw data', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress);
+      expect((builder as any).chainId).toBeUndefined();
+      expect((builder as any).rawData).toBeUndefined();
+
+      const result = await builder.setChainIdAndInitialiseRawData(chainId);
+
+      expect((builder as any).chainId).toBe(chainId);
+      expect((builder as any).rawData).toBeDefined();
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('chainId', chainId);
+      expect(result).toHaveProperty('tokenAddress', tokenAddress);
+    });
+
+    it('should initialize raw data with provided data', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress);
+
+      const result = await builder.setChainIdAndInitialiseRawData(chainId, rawDataDataMock);
+      const rawData = (builder as any).rawData;
+
+      expect((builder as any).chainId).toBe(chainId);
+      expect(rawData.updateData).toHaveBeenCalledWith(rawDataDataMock);
+      expect(result).toBeDefined();
+    });
+
+    it('should allow updating chain ID and raw data', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, ChainsMap.ethereum);
+      await builder.setChainIdAndInitialiseRawData(ChainsMap.ethereum);
+
+      const newChainId = ChainsMap.bsc;
+      await builder.setChainIdAndInitialiseRawData(newChainId, rawDataDataMock);
+      const rawData = (builder as any).rawData;
+
+      expect((builder as any).chainId).toBe(newChainId);
+      expect(rawData.updateData).toHaveBeenCalledWith(rawDataDataMock);
+    });
+  });
+
   describe('initialiseRawData()', () => {
     it('should throw error when chain ID is not set', async () => {
       const builder = new AutoTrackerTokenBuilder(tokenAddress);
@@ -190,13 +229,13 @@ describe('AutoTrackerTokenBuilder', () => {
   describe('getRawData()', () => {
     it('should throw error when chain ID is not set', () => {
       const builder = new AutoTrackerTokenBuilder(tokenAddress);
-      expect(() => builder.getRawData()).toThrow('Chain id is not set');
+      expect(async () => await builder.getRawData()).rejects.toThrow('Chain id is not set');
     });
 
     it('should create new RawTokenDataCache if not initialized', async () => {
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       await builder.initialiseRawData();
-      const result = builder.getRawData();
+      const result = await builder.getRawData();
       expect(RawTokenDataCache).toHaveBeenCalledWith(tokenAddress, chainId);
       expect(result).toBeDefined();
       expect(result).toHaveProperty('chainId', chainId);
@@ -207,15 +246,20 @@ describe('AutoTrackerTokenBuilder', () => {
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       await builder.initialiseRawData();
       const existingRawData = (builder as any).rawData;
-      const result = builder.getRawData();
+      const result = await builder.getRawData();
       expect(mockRawDataCache.updateData).not.toHaveBeenCalled();
       expect(result).toBe(existingRawData);
     });
 
-    it('should throw error when rawData is not set', () => {
+    it('should initialize raw data if not already set', async () => {
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       expect((builder as any).rawData).toBeUndefined();
-      expect(() => builder.getRawData()).toThrow('Raw data is not set');
+      
+      const rawData = await builder.getRawData();
+      
+      expect(rawData).toBeDefined();
+      expect(rawData).toBeInstanceOf(RawTokenDataCacheMock);
+      expect((builder as any).rawData).toBe(rawData);
     });
   });
 
@@ -1207,7 +1251,7 @@ describe('AutoTrackerTokenBuilder', () => {
         expect((builder as any).chainId).toBe(chainId);
       });
 
-      it('should pass rawData from getInitialData to initialiseRawData', async () => {
+      it('should pass chainId and rawData from getInitialData to setChainIdAndInitialiseRawData', async () => {
         // Create builder WITHOUT chain ID
         const builder = new AutoTrackerTokenBuilder(
           tokenAddress,
@@ -1234,8 +1278,8 @@ describe('AutoTrackerTokenBuilder', () => {
           rawData: mockRawData
         });
 
-        // Spy on initialiseRawData
-        const initialiseRawDataSpy = jest.spyOn(builder as any, 'initialiseRawData');
+        // Spy on setChainIdAndInitialiseRawData
+        const setChainIdAndInitialiseRawDataSpy = jest.spyOn(builder as any, 'setChainIdAndInitialiseRawData');
 
         // Mock other methods
         jest.spyOn(builder as any, 'collect').mockResolvedValue({
@@ -1265,8 +1309,8 @@ describe('AutoTrackerTokenBuilder', () => {
         // Call getOrCreate
         await builder.getOrCreate();
 
-        // Verify initialiseRawData was called with the rawData from getInitialData
-        expect(initialiseRawDataSpy).toHaveBeenCalledWith(mockRawData);
+        // Verify setChainIdAndInitialiseRawData was called with chainId and rawData from getInitialData
+        expect(setChainIdAndInitialiseRawDataSpy).toHaveBeenCalledWith(chainId, mockRawData);
       });
     });
 

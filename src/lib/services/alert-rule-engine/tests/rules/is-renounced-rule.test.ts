@@ -1,5 +1,6 @@
 import { IsRenouncedRule } from '../../rules/security/is-renounced-rule';
 import { BaseContextData } from '../../../token-context/types';
+import { AlertRuleName, RuleGroup } from '../../types';
 
 describe('IsRenouncedRule', () => {
     const rule = new IsRenouncedRule();
@@ -43,8 +44,8 @@ describe('IsRenouncedRule', () => {
     });
 
     it('should have correct name and group', () => {
-        expect(rule.name).toBe('is_renounced');
-        expect(rule.group).toBe('security');
+        expect(rule.name).toBe(AlertRuleName.IS_RENOUNCED);
+        expect(rule.group).toBe(RuleGroup.SECURITY);
     });
 });
 

@@ -1,0 +1,338 @@
+{
+  "message": {
+    "flags": 18112,
+    "out": false,
+    "mentioned": false,
+    "mediaUnread": false,
+    "silent": false,
+    "post": true,
+    "fromScheduled": false,
+    "legacy": false,
+    "editHide": false,
+    "pinned": false,
+    "noforwards": false,
+    "invertMedia": false,
+    "flags2": 0,
+    "offline": false,
+    "videoProcessingPending": false,
+    "id": 8640,
+    "fromId": null,
+    "fromBoostsApplied": null,
+    "peerId": {
+      "channelId": "2312141364",
+      "className": "PeerChannel"
+    },
+    "savedPeerId": null,
+    "fwdFrom": null,
+    "viaBotId": null,
+    "viaBusinessBotId": null,
+    "replyTo": null,
+    "date": 1761090826,
+    "message": "⚡️ NEW CALL ⚡️\n\n➡️ TOKEN: CCDS\n➡️ TICKER: CCDS\n➡️ CHAIN: bsc\n➡️ MC: 13.97K\n\n➡️ CA:\n0x271b70f71C46bc76482ad7976B3173Bcb2A14F60\n\n✅ TG | 🔗 X\n\n📈 Chart | Mevx Chart",
+    "media": {
+      "flags": 1,
+      "spoiler": false,
+      "photo": {
+        "flags": 0,
+        "hasStickers": false,
+        "id": "6034905672450772562",
+        "accessHash": "-8731620920507450140",
+        "fileReference": {
+          "type": "Buffer",
+          "data": [
+            5,
+            0,
+            0,
+            0,
+            0,
+            137,
+            208,
+            122,
+            52,
+            0,
+            0,
+            33,
+            192,
+            104,
+            248,
+            39,
+            1,
+            143,
+            97,
+            157,
+            74,
+            128,
+            55,
+            79,
+            194,
+            135,
+            4,
+            196,
+            107,
+            31,
+            215,
+            56,
+            206
+          ]
+        },
+        "date": 1761090826,
+        "sizes": [
+          {
+            "type": "i",
+            "bytes": {
+              "type": "Buffer",
+              "data": [
+                1,
+                40,
+                40,
+                217,
+                162,
+                138,
+                134,
+                87,
+                59,
+                130,
+                131,
+                143,
+                122,
+                153,
+                59,
+                43,
+                141,
+                43,
+                146,
+                210,
+                213,
+                127,
+                36,
+                227,
+                59,
+                179,
+                75,
+                30,
+                240,
+                220,
+                131,
+                138,
+                143,
+                104,
+                239,
+                102,
+                135,
+                101,
+                209,
+                147,
+                209,
+                69,
+                21,
+                169,
+                33,
+                85,
+                148,
+                159,
+                60,
+                250,
+                243,
+                86,
+                42,
+                25,
+                99,
+                59,
+                183,
+                47,
+                90,
+                206,
+                162,
+                122,
+                53,
+                208,
+                168,
+                177,
+                71,
+                153,
+                129,
+                157,
+                221,
+                121,
+                224,
+                80,
+                190,
+                110,
+                225,
+                187,
+                56,
+                239,
+                77,
+                19,
+                54,
+                48,
+                64,
+                205,
+                44,
+                123,
+                203,
+                114,
+                78,
+                43,
+                53,
+                52,
+                218,
+                74,
+                227,
+                104,
+                158,
+                138,
+                40,
+                174,
+                130,
+                2,
+                138,
+                40,
+                160,
+                2,
+                138,
+                40,
+                160,
+                2,
+                138,
+                40,
+                160,
+                15
+              ]
+            },
+            "className": "PhotoStrippedSize"
+          },
+          {
+            "type": "m",
+            "w": 320,
+            "h": 320,
+            "size": 7870,
+            "className": "PhotoSize"
+          },
+          {
+            "type": "x",
+            "w": 439,
+            "h": 439,
+            "size": 9635,
+            "className": "PhotoSize"
+          }
+        ],
+        "videoSizes": null,
+        "dcId": 4,
+        "className": "Photo"
+      },
+      "ttlSeconds": null,
+      "className": "MessageMediaPhoto"
+    },
+    "replyMarkup": {
+      "rows": [
+        {
+          "buttons": [
+            {
+              "text": "🚀️ Sigma",
+              "url": "https://t.me/Sigma_buyBot?start=x27648337-0x271b70f71C46bc76482ad7976B3173Bcb2A14F60",
+              "className": "KeyboardButtonUrl"
+            },
+            {
+              "text": "🔥️ Maestro",
+              "url": "https://t.me/maestro?start=r-0x271b70f71C46bc76482ad7976B3173Bcb2A14F60-simuzt",
+              "className": "KeyboardButtonUrl"
+            }
+          ],
+          "className": "KeyboardButtonRow"
+        },
+        {
+          "buttons": [
+            {
+              "text": "🔍️ TTF Scan",
+              "url": "https://t.me/ttfbotbot?start=0x271b70f71C46bc76482ad7976B3173Bcb2A14F60",
+              "className": "KeyboardButtonUrl"
+            },
+            {
+              "text": "📈 MevX",
+              "url": "https://alpha.mevx.io/bsc/0x271b70f71C46bc76482ad7976B3173Bcb2A14F60?ref=solhousesignal",
+              "className": "KeyboardButtonUrl"
+            }
+          ],
+          "className": "KeyboardButtonRow"
+        }
+      ],
+      "className": "ReplyInlineMarkup"
+    },
+    "entities": [
+      {
+        "offset": 3,
+        "length": 8,
+        "className": "MessageEntityBold"
+      },
+      {
+        "offset": 19,
+        "length": 6,
+        "className": "MessageEntityBold"
+      },
+      {
+        "offset": 34,
+        "length": 7,
+        "className": "MessageEntityBold"
+      },
+      {
+        "offset": 50,
+        "length": 6,
+        "className": "MessageEntityBold"
+      },
+      {
+        "offset": 64,
+        "length": 3,
+        "className": "MessageEntityBold"
+      },
+      {
+        "offset": 79,
+        "length": 3,
+        "className": "MessageEntityBold"
+      },
+      {
+        "offset": 83,
+        "length": 42,
+        "className": "MessageEntityCode"
+      },
+      {
+        "offset": 129,
+        "length": 2,
+        "url": "https://t.me/CCDAO_CC",
+        "className": "MessageEntityTextUrl"
+      },
+      {
+        "offset": 137,
+        "length": 1,
+        "url": "https://x.com/Michael198341",
+        "className": "MessageEntityTextUrl"
+      },
+      {
+        "offset": 143,
+        "length": 5,
+        "url": "https://dexscreener.com/bsc/0x271b70f71c46bc76482ad7976b3173bcb2a14f60:4meme",
+        "className": "MessageEntityTextUrl"
+      },
+      {
+        "offset": 151,
+        "length": 10,
+        "url": "https://mevx.io/bsc/0x271b70f71C46bc76482ad7976B3173Bcb2A14F60?ref=solhousesignal",
+        "className": "MessageEntityTextUrl"
+      }
+    ],
+    "views": 10,
+    "forwards": 0,
+    "replies": null,
+    "editDate": null,
+    "postAuthor": null,
+    "groupedId": null,
+    "reactions": null,
+    "restrictionReason": null,
+    "ttlPeriod": null,
+    "quickReplyShortcutId": null,
+    "effect": null,
+    "factcheck": null,
+    "reportDeliveryUntilDate": null,
+    "className": "Message"
+  }
+}

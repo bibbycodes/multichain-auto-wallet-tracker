@@ -1,6 +1,7 @@
 import { TokenDataSource } from "@prisma/client";
-import { GmGnEvmTokenSecurity, GmGnMultiWindowTokenInfo, GmGnSolanaTokenSecurity, GmGnTokenSocials } from "python-proxy-scraper-client";
-import { ChainId, getInternallySupportedChainIds } from "../../../../shared/chains";
+import { GmGnEvmTokenSecurity, GmGnMultiWindowTokenInfo, GmGnSolanaTokenSecurity, GmGnTokenHolder, GmGnTokenSocials } from "python-proxy-scraper-client";
+import { ChainFactory } from "../../../chains/chain-factory";
+import { ChainId, ChainsMap, getInternallySupportedChainIds } from "../../../../shared/chains";
 import { MIN_BURN_RATIO } from "../../../../shared/constants";
 import { getTwitterUrlFromUsername } from "../../../../utils/links";
 import { isNullOrUndefined, safeParseBoolean, safeParseNumber } from "../../../../utils/object";
@@ -8,6 +9,8 @@ import { SocialMedia } from "../../../models/socials/types";
 import { AutoTrackerToken } from "../../../models/token";
 import { AutoTrackerTokenData, TokenDataWithMarketCap, TokenSecurity } from "../../../models/token/types";
 import { isSolanaAddress } from "../../util/common";
+import { getTwitterHandleUrl } from "../../telegram-message-formatter/utils";
+import { TokenHolder } from "../../token-context/token-distribution/types";
 import { CHAIN_ID_TO_GMGN_CHAIN, GMGN_CHAIN_TO_CHAIN_ID, GmGnChain } from "./gmgn-chain-map";
 
 export class GmGnMapper {
@@ -323,5 +326,100 @@ export class GmGnMapper {
         } else {
             return this.extractTokenSecurityFromEvm(security as GmGnEvmTokenSecurity);
         }
+    }
+
+
+    public static isPool(gmGnTokenHolder: GmGnTokenHolder, chainId: ChainId): boolean {
+        const chain = ChainFactory.getChain(chainId);
+        if (chain.isPoolOrLiquidityAddress(gmGnTokenHolder.address)) {
+            return true;
+        }
+        if (!gmGnTokenHolder.addr_type) {
+            return false;
+        }
+        return Number(gmGnTokenHolder.addr_type) === 2;
+    }
+
+    /**
+     * Check if a holder should be excluded from analysis
+     * Excludes pools, burn addresses, and other non-meaningful holders
+     * Delegates to chain-specific logic via ChainFactory
+     * @param holder - The holder to check
+     * @param chainId - Optional chain ID (defaults to BSC)
+     */
+    public static shouldExcludeHolder(
+        holder: { address: string; isPool?: boolean; percentage?: number },
+        chainId: ChainId = ChainsMap.bsc
+    ): boolean {
+        try {
+            const chain = ChainFactory.getChain(chainId);
+            
+            // Check if it's a burn address using chain method
+            if (chain.isBurnAddress(holder.address)) {
+                return true;
+            }
+        } catch (error) {
+            // Fallback to common burn addresses if chain not supported
+            const lowerAddress = holder.address.toLowerCase();
+            const commonBurnAddresses = [
+                '0x0000000000000000000000000000000000000000',
+                '0x000000000000000000000000000000000000dead',
+            ];
+            if (commonBurnAddresses.includes(lowerAddress)) {
+                return true;
+            }
+        }
+        
+        // Exclude pools
+        if (holder.isPool) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Parse GmGn top holders into TokenHolder format
+     * Filters out pools and burn addresses
+     * @param holders - Array of GmGn token holders
+     * @param tokenSupply - Total token supply
+     * @param tokenCreator - Token creator address
+     * @param chainId - Optional chain ID (defaults to BSC)
+     */
+    public static parseTopHolders(
+        holders: GmGnTokenHolder[],
+        tokenSupply: number,
+        tokenCreator: string,
+        chainId: ChainId = ChainsMap.bsc
+    ): TokenHolder[] {
+        const tokenHolders = holders.map(holder => {
+            const percentage = Number(((Number(holder.amount_cur) / tokenSupply) * 100).toFixed(2));
+            const dollarValue = Number(holder.usd_value);
+            const isPool = this.isPool(holder, chainId);
+            const isCreator = holder.address.toLowerCase() === tokenCreator.toLowerCase();
+            
+            const tokenHolder: TokenHolder = {
+                address: holder.address,
+                amount: Number(holder.amount_cur),
+                percentage: percentage,
+                dollarValue: dollarValue,
+                isKOL: !!(holder.twitter_username || holder.twitter_name),
+                isWhale: false, // This should be determined by comparing to other holdings
+                significantHolderIn: [], // This should be populated separately
+                isPool: isPool,
+                isCreator: isCreator,
+            };
+            
+            // Add socials if available
+            if (holder.twitter_username) {
+                tokenHolder.socials = {
+                    twitter: getTwitterHandleUrl(holder.name || holder.twitter_username)
+                };
+            }
+            
+            return tokenHolder;
+        });
+        
+        return tokenHolders.filter(holder => !this.shouldExcludeHolder(holder, chainId));
     }
 }

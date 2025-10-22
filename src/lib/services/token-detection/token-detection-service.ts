@@ -8,6 +8,8 @@ import { BaseContext } from '../token-context/base-context';
 import { AlertsService } from '../alerts/alerts-service';
 import { env } from '../util/env/env';
 import { TokenSecurityBuilder } from '../token-security-builder/token-security-builder';
+import { AlertRuleEngine } from '../alert-rule-engine/alert-rule-engine';
+import { balancedConfig } from '../alert-rule-engine/configs/wbb-bsc-signals-rule-config';
 
 export class TokenDetectionWorkerService {
     constructor(
@@ -40,7 +42,7 @@ export class TokenDetectionWorkerService {
         // How can we filter ahead of time addresses that are not token addresses - Parse incoming data more effectively
         const tokenBuilder = new AutoTrackerTokenBuilder(data.tokenData.address, data.tokenData.chainId)
         const token = await tokenBuilder.getOrCreate()
-        const rawData = tokenBuilder.getRawData()
+        const rawData = await tokenBuilder.getRawData()
         await rawData.collect()
 
         if (!tokenBuilder.chainId) {
@@ -52,18 +54,33 @@ export class TokenDetectionWorkerService {
         console.log({tokenSecurity})
         const baseContext = new BaseContext(token, rawData)
         const baseContextData = await baseContext.toObject()
-        console.log({baseContextData})
 
-        await this.telegramMessageQueue.addJob<TelegramMessageJobData>({
-            type: TelegramMessageJobTypes.SEND_ALERT,
-            data: {
-                channelId: env.telegram.wbbBscChannelId,
-                caption: new TelegramMessageFormatter(baseContextData).getAlertMessage(),
-                token: token,
-                priceDetails: baseContextData.priceDetails,
-            }
-        });
+        // Evaluate token using AlertRuleEngine with balanced config
+        const alertEngine = new AlertRuleEngine(baseContext, balancedConfig)
+        const decision = await alertEngine.evaluate()
 
-        return { processed: true, tokenAddress: data.tokenData.address};
+        console.log('Alert decision:', {
+            shouldAlert: decision.shouldAlert,
+            reason: decision.reason,
+            passedRules: decision.passedRules,
+            failedRules: decision.failedRules
+        })
+
+        // Only send alert if the rule engine approves
+        if (decision.shouldAlert) {
+            await this.telegramMessageQueue.addJob<TelegramMessageJobData>({
+                type: TelegramMessageJobTypes.SEND_ALERT,
+                data: {
+                    channelId: env.telegram.wbbBscChannelId,
+                    caption: new TelegramMessageFormatter(baseContextData).getAlertMessage(),
+                    token: token,
+                    priceDetails: baseContextData.priceDetails,
+                }
+            });
+
+            return { processed: true, alerted: true, tokenAddress: data.tokenData.address, decision };
+        }
+
+        return { processed: true, alerted: false, tokenAddress: data.tokenData.address, decision };
     }
 }

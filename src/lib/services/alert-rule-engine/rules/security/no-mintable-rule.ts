@@ -1,4 +1,4 @@
-import { AlertRule, RuleGroup, RuleResult } from "../../types";
+import { AlertRule, AlertRuleName, RuleGroup, RuleResult } from "../../types";
 import { BaseContextData } from "../../../token-context/types";
 
 /**
@@ -6,7 +6,7 @@ import { BaseContextData } from "../../../token-context/types";
  * Mintable tokens allow creating new supply which dilutes holders
  */
 export class NoMintableRule implements AlertRule {
-    name = 'no_mintable';
+    name = AlertRuleName.NO_MINTABLE;
     group = RuleGroup.SECURITY;
 
     async evaluate(context: BaseContextData): Promise<RuleResult> {

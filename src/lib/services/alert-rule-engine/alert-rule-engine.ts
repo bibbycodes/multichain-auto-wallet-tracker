@@ -1,6 +1,6 @@
 import { BaseContext } from "../token-context/base-context";
 import { BaseContextData } from "../token-context/types";
-import { AlertRule, AlertRuleConfig, AlertDecision, RuleResult, RuleEvaluationSummary } from "./types";
+import { AlertRule, AlertRuleConfig, AlertDecision, AlertRuleName, RuleResult, RuleEvaluationSummary } from "./types";
 import {
     IsRenouncedRule,
     LpBurnedRule,
@@ -24,7 +24,7 @@ import {
 export class AlertRuleEngine {
     private static readonly DEFAULT_RULE_WEIGHT = 1.0;
 
-    private rules: Map<string, AlertRule> = new Map();
+    private rules: Map<AlertRuleName, AlertRule> = new Map();
     private config: AlertRuleConfig;
     private logger: { warn: (msg: string) => void; error: (msg: string, error?: any) => void };
 
@@ -51,7 +51,7 @@ export class AlertRuleEngine {
     /**
      * Unregister a rule by name
      */
-    unregisterRule(ruleName: string): void {
+    unregisterRule(ruleName: AlertRuleName): void {
         this.rules.delete(ruleName);
     }
 
@@ -76,8 +76,8 @@ export class AlertRuleEngine {
     /**
      * Evaluate all rules against the context
      */
-    private async evaluateRules(context: BaseContextData): Promise<Map<string, RuleResult>> {
-        const results = new Map<string, RuleResult>();
+    private async evaluateRules(context: BaseContextData): Promise<Map<AlertRuleName, RuleResult>> {
+        const results = new Map<AlertRuleName, RuleResult>();
 
         // If evaluateAllRules is false and we have blocker rules, check them first
         if (!this.config.evaluateAllRules && this.config.blockerRules) {
@@ -122,10 +122,10 @@ export class AlertRuleEngine {
     /**
      * Get the weight for a rule (from config or rule default)
      */
-    private getRuleWeight(ruleName: string): number {
+    private getRuleWeight(ruleName: AlertRuleName): number {
         // Check config override first
         if (this.config.ruleWeights && this.config.ruleWeights[ruleName] !== undefined) {
-            return this.config.ruleWeights[ruleName];
+            return this.config.ruleWeights[ruleName]!;
         }
 
         // Check rule's default weight
@@ -142,17 +142,17 @@ export class AlertRuleEngine {
      * Calculate weighted score for optional rules
      */
     private calculateWeightedScore(
-        optionalRuleNames: string[],
-        results: Map<string, RuleResult>
+        optionalRuleNames: AlertRuleName[],
+        results: Map<AlertRuleName, RuleResult>
     ): {
         actualScore: number;
         maxPossibleScore: number;
         normalizedScore: number;
-        ruleScores: Map<string, { weight: number; passed: boolean; contribution: number }>;
+        ruleScores: Map<AlertRuleName, { weight: number; passed: boolean; contribution: number }>;
     } {
         let actualScore = 0;
         let maxPossibleScore = 0;
-        const ruleScores = new Map<string, { weight: number; passed: boolean; contribution: number }>();
+        const ruleScores = new Map<AlertRuleName, { weight: number; passed: boolean; contribution: number }>();
 
         for (const ruleName of optionalRuleNames) {
             const weight = this.getRuleWeight(ruleName);
@@ -185,8 +185,8 @@ export class AlertRuleEngine {
      * Check blocker rules - if any fail, return rejection decision
      */
     private checkBlockerRules(
-        results: Map<string, RuleResult>,
-        passedRules: string[]
+        results: Map<AlertRuleName, RuleResult>,
+        passedRules: AlertRuleName[]
     ): AlertDecision | null {
         if (!this.config.blockerRules) return null;
 
@@ -209,12 +209,12 @@ export class AlertRuleEngine {
      * Check required rules - if any fail, return rejection decision
      */
     private checkRequiredRules(
-        results: Map<string, RuleResult>,
-        passedRules: string[]
+        results: Map<AlertRuleName, RuleResult>,
+        passedRules: AlertRuleName[]
     ): AlertDecision | null {
         if (!this.config.requiredRules) return null;
 
-        const failedRequired: string[] = [];
+        const failedRequired: AlertRuleName[] = [];
 
         for (const ruleName of this.config.requiredRules) {
             const result = results.get(ruleName);
@@ -247,14 +247,14 @@ export class AlertRuleEngine {
      * All blacklist rules must pass to proceed
      */
     private checkBlacklistRules(
-        results: Map<string, RuleResult>,
-        passedRules: string[]
+        results: Map<AlertRuleName, RuleResult>,
+        passedRules: AlertRuleName[]
     ): AlertDecision | null {
         if (!this.config.blacklistRules || this.config.blacklistRules.length === 0) {
             return null;
         }
 
-        const failedBlacklist: string[] = [];
+        const failedBlacklist: AlertRuleName[] = [];
 
         for (const ruleName of this.config.blacklistRules) {
             const result = results.get(ruleName);
@@ -287,8 +287,8 @@ export class AlertRuleEngine {
      * If none pass, return rejection decision
      */
     private checkWhitelistRules(
-        results: Map<string, RuleResult>,
-        passedRules: string[]
+        results: Map<AlertRuleName, RuleResult>,
+        passedRules: AlertRuleName[]
     ): AlertDecision | null {
         if (!this.config.whitelistRules || this.config.whitelistRules.length === 0) {
             return null;
@@ -322,12 +322,12 @@ export class AlertRuleEngine {
     /**
      * Categorize rule results into passed and failed
      */
-    private categorizeResults(results: Map<string, RuleResult>): {
-        failedRules: string[];
-        passedRules: string[];
+    private categorizeResults(results: Map<AlertRuleName, RuleResult>): {
+        failedRules: AlertRuleName[];
+        passedRules: AlertRuleName[];
     } {
-        const failedRules: string[] = [];
-        const passedRules: string[] = [];
+        const failedRules: AlertRuleName[] = [];
+        const passedRules: AlertRuleName[] = [];
 
         for (const [ruleName, result] of results) {
             if (result.passed) {
@@ -350,7 +350,7 @@ export class AlertRuleEngine {
      * 4. Required rules (all must pass)
      * 5. Optional rules (weighted scoring)
      */
-    private makeDecision(results: Map<string, RuleResult>): AlertDecision {
+    private makeDecision(results: Map<AlertRuleName, RuleResult>): AlertDecision {
         const { failedRules, passedRules } = this.categorizeResults(results);
 
         // Check blocker rules first (immediate rejection)
@@ -407,7 +407,7 @@ export class AlertRuleEngine {
     /**
      * Get a summary of the evaluation results
      */
-    getSummary(results: Map<string, RuleResult>): RuleEvaluationSummary {
+    getSummary(results: Map<AlertRuleName, RuleResult>): RuleEvaluationSummary {
         let passedRules = 0;
         let failedRules = 0;
         let criticalFailures = 0;
@@ -455,14 +455,14 @@ export class AlertRuleEngine {
     private getDefaultConfig(): AlertRuleConfig {
         return {
             requiredRules: [
-                'is_renounced',
-                'lp_burned'
+                AlertRuleName.IS_RENOUNCED,
+                AlertRuleName.LP_BURNED
             ],
             blockerRules: [
-                'no_honeypot',
-                'no_mintable',
-                'no_pausable',
-                'no_freezable'
+                AlertRuleName.NO_HONEYPOT,
+                AlertRuleName.NO_MINTABLE,
+                AlertRuleName.NO_PAUSABLE,
+                AlertRuleName.NO_FREEZABLE
             ],
             evaluateAllRules: false
         };
