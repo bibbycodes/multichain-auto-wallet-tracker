@@ -244,6 +244,8 @@ export class BirdEyeClient {
     return await this.get<MarketsResponse>(url, this.apiKey, chain);
   }
 
+  
+
   async getTradesBetweenDates(
     tokenAddress: string, 
     afterTimestamp: number,

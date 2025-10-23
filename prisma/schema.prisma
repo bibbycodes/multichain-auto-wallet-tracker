@@ -45,6 +45,7 @@ model Alert {
   social_platform     SocialPlatform
   market_cap          Float
   price               Float
+  type                AlertType @default(SIGNAL)
 }
 
 model Token {
@@ -286,4 +287,9 @@ enum TokenDataSource {
 enum ChainType {
   EVM
   SOLANA
+}
+
+enum AlertType {
+  PRICE_UPDATE
+  SIGNAL
 }

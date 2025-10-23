@@ -42,4 +42,5 @@ export class Database extends Singleton {
         }
         return Singleton.instances.get(this) as T
     }
+    
 }

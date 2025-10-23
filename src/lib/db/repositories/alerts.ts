@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, Alert, SocialPlatform } from "@prisma/client";
+import { Prisma, PrismaClient, Alert, SocialPlatform, Token, AlertType } from "@prisma/client";
 
 export class AlertsRepository {
     constructor(private readonly prisma: PrismaClient) { }
@@ -13,6 +13,24 @@ export class AlertsRepository {
         return this.prisma.alert.createMany({
             data: alerts
         });
+    }
+
+    async getAlertsAndTokensAfterDate(afterDate: Date, alertType: AlertType = AlertType.SIGNAL): Promise<{alert: Alert, token: Token}[]> {
+        const alerts = await this.prisma.alert.findMany({
+            where: {
+                created_at: {
+                    gte: afterDate
+                },
+                type: alertType
+            },
+            include: {
+                token: true
+            }
+        });
+        return alerts.map(alert => ({
+            alert,
+            token: alert.token
+        }));
     }
 
     async findOneById(id: string) {
@@ -232,5 +250,34 @@ export class AlertsRepository {
                 created_at: 'desc'
             }
         });
+    }
+
+    async getLastPriceUpdate(tokenAddress: string): Promise<Alert | null> {
+        return this.prisma.alert.findFirst({
+            where: {
+                token_address: tokenAddress,
+                type: AlertType.PRICE_UPDATE
+            },
+            orderBy: {
+                created_at: 'desc'
+            }
+        });
+    }
+
+    async countPriceUpdates(tokenAddress: string): Promise<number> {
+        return this.prisma.alert.count({
+            where: {
+                token_address: tokenAddress,
+                type: AlertType.PRICE_UPDATE
+            }
+        });
+    }
+
+    async getPriceUpdateInfo(tokenAddress: string): Promise<{ count: number; lastUpdate: Alert | null }> {
+        const [count, lastUpdate] = await Promise.all([
+            this.countPriceUpdates(tokenAddress),
+            this.getLastPriceUpdate(tokenAddress)
+        ]);
+        return { count, lastUpdate };
     }
 }

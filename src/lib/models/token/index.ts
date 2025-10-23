@@ -187,4 +187,8 @@ export class AutoTrackerToken {
     hasMissingRequiredFields(): boolean {
         return AutoTrackerToken.requiredFields.some(field => this[field as keyof AutoTrackerToken] === undefined || this[field as keyof AutoTrackerToken] === null)
     }
+
+    calculateMarketCap(price: number): number {
+        return this.totalSupply * price
+    }
 }

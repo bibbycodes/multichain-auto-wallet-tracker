@@ -14,7 +14,7 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
   async fetchTokenDataWithMarketCapFromAddress(tokenAddress: string): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
     const supportedChains = BirdeyeMapper.getSupportedChains()
     const tokenDataWithMarketCaps = await Promise.allSettled(supportedChains.map(chainId => this.fetchTokenWithMarketCap(tokenAddress, chainId)))
-    const successfulResult = tokenDataWithMarketCaps.find((r): r is PromiseFulfilledResult<TokenDataWithMarketCapAndRawData<RawDataData>> => 
+    const successfulResult = tokenDataWithMarketCaps.find((r): r is PromiseFulfilledResult<TokenDataWithMarketCapAndRawData<RawDataData>> =>
       r.status === 'fulfilled'
     )
     if (!successfulResult) {
@@ -36,24 +36,24 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
 
   async fetchTokenWithMarketCap(tokenAddress: string, chainId: ChainId): Promise<TokenDataWithMarketCapAndRawData<RawDataData>> {
     const chain = BirdeyeMapper.chainIdToChain(chainId)
-    const  [
+    const [
       tokenOverview,
       tokenSecurity
     ] = await Promise.all([
       this.client.getTokenOverview(tokenAddress, ['1h'], chain),
       this.client.getTokenSecurity(tokenAddress, chain)
     ])
-    
+
     // Get markets to extract pair address - sorted by liquidity by default
-    const marketsResponse = await this.client.getMarkets(tokenAddress, { 
-      limit: 1, 
+    const marketsResponse = await this.client.getMarkets(tokenAddress, {
+      limit: 1,
       chain,
       sortBy: 'liquidity',
       sortType: 'desc'
     })
-    
+
     const pairAddress = marketsResponse.data?.items?.[0]?.address ?? ''
-    
+
     const tokenData = BirdeyeMapper.mapTokenOverviewToTokenDataWithMarketCap(
       tokenAddress,
       chainId,
@@ -61,8 +61,8 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
       tokenSecurity.data,
       pairAddress
     )
-    
-    return {token: tokenData, rawData: {birdeye: {tokenOverview, tokenSecurity: tokenSecurity.data, markets: marketsResponse.data}}}
+
+    return { token: tokenData, rawData: { birdeye: { tokenOverview, tokenSecurity: tokenSecurity.data, markets: marketsResponse.data } } }
   }
 
   async getTokenOverview(tokenAddress: string, chainId: ChainId): Promise<BirdTokenEyeOverview> {
@@ -86,6 +86,11 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
     return BirdeyeMapper.mapTokenMetadataToTokenData(tokenAddress, chainId, tokenOverview, tokenSecurity.data, '')
   }
 
+  async getManyPrices(tokenAddresses: string[], chainId: ChainId): Promise<{ [key: string]: number }> {
+    const chain = BirdeyeMapper.chainIdToChain(chainId)
+    return this.client.getMultiplePrices(tokenAddresses, chain)
+  }
+
   async search(
     query: string,
     chainId?: ChainId,
@@ -98,9 +103,9 @@ export class BirdEyeFetcherService extends BaseTokenFetcherService {
   }
 
   async getTrendingTokens(
-    limit: number = 50, 
-    offset: number = 0, 
-    sortBy: 'liquidity' | 'rank' = 'liquidity', 
+    limit: number = 50,
+    offset: number = 0,
+    sortBy: 'liquidity' | 'rank' = 'liquidity',
     chainId: ChainId = ChainsMap.bsc
   ) {
     const chain = BirdeyeMapper.chainIdToChain(chainId)
