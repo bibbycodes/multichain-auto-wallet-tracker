@@ -281,17 +281,15 @@ describe('AutoTrackerTokenBuilder', () => {
       });
 
       it('should throw error if API does not return chain ID when needed for resolution', async () => {
-        // Create builder without chain ID
         const builder = new AutoTrackerTokenBuilder(tokenAddress);
         expect((builder as any).chainId).toBeUndefined();
 
-        // Mock the API to return data without chainId
         mockBirdeyeService.fetchTokenDataWithMarketCapFromAddress.mockResolvedValueOnce({
           token: {
             address: tokenAddress,
             name: "Test Token",
             symbol: "TEST",
-            chainId: undefined as any, // No chain ID in response
+            chainId: undefined as any,
             decimals: 18,
             totalSupply: 1000000,
             socials: {},
@@ -332,7 +330,6 @@ describe('AutoTrackerTokenBuilder', () => {
       });
 
       it('should initialize rawData with API response data', async () => {
-        // Create builder without chain ID
         const builder = new AutoTrackerTokenBuilder(tokenAddress);
         const result = await builder.getInitialData();
         expect((builder as any).rawData).toBeDefined();
@@ -391,23 +388,109 @@ describe('AutoTrackerTokenBuilder', () => {
       expect(result).toHaveProperty('gmgnTokenSocials');
     });
 
-    it('should return object with all collected data', () => {
-      // TODO: Implement
-    });
-
-    it('should return data even if some sources return null', async () => {
-      // Create builder and initialize rawData
+    it('should return object with all collected data', async () => {
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       await builder.initialiseRawData();
 
-      // Get the rawData instance
+      const result = await builder.collect();
+
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('birdeyeTokenOverview');
+      expect(result).toHaveProperty('birdeyeTokenSecurity');
+      expect(result).toHaveProperty('birdeyeMarkets');
+      expect(result).toHaveProperty('gmgnTokenInfo');
+      expect(result).toHaveProperty('gmgnTokenSocials');
+
+      expect(result.birdeyeTokenOverview).toBeDefined();
+      expect(result.birdeyeTokenSecurity).toBeDefined();
+      expect(result.birdeyeMarkets).toBeDefined();
+      expect(result.gmgnTokenInfo).toBeDefined();
+      expect(result.gmgnTokenSocials).toBeDefined();
+    });
+
+    it('only calls required data for collection', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId, mockRawDataCache as unknown as RawTokenDataCache);
+      const rawData = mockRawDataCache;
+
+      const birdeyeGetTokenOverviewSpy = jest.spyOn(rawData.birdeye, 'getTokenOverview');
+      const birdeyeGetTokenSecuritySpy = jest.spyOn(rawData.birdeye, 'getTokenSecurity');
+      const birdeyeGetMarketsSpy = jest.spyOn(rawData.birdeye, 'getMarkets');
+      const birdeyeGetPriceSpy = jest.spyOn(rawData.birdeye, 'getPrice');
+      const birdeyeGetMarketCapSpy = jest.spyOn(rawData.birdeye, 'getMarketCap');
+      const birdeyeGetLiquiditySpy = jest.spyOn(rawData.birdeye, 'getLiquidity');
+      const birdeyeGetSupplySpy = jest.spyOn(rawData.birdeye, 'getSupply');
+      const birdeyeGetDecimalsSpy = jest.spyOn(rawData.birdeye, 'getDecimals');
+      const birdeyeGetNameSpy = jest.spyOn(rawData.birdeye, 'getName');
+      const birdeyeGetSymbolSpy = jest.spyOn(rawData.birdeye, 'getSymbol');
+      const birdeyeGetLogoUrlSpy = jest.spyOn(rawData.birdeye, 'getLogoUrl');
+      const birdeyeGetDescriptionSpy = jest.spyOn(rawData.birdeye, 'getDescription');
+      const birdeyeGetSocialsSpy = jest.spyOn(rawData.birdeye, 'getSocials');
+      const birdeyeGetCreatedBySpy = jest.spyOn(rawData.birdeye, 'getCreatedBy');
+      const birdeyeGetTopHoldersSpy = jest.spyOn(rawData.birdeye, 'getTopHolders');
+
+      const gmgnGetTokenInfoSpy = jest.spyOn(rawData.gmgn, 'getTokenInfo');
+      const gmgnGetGmgnSocialsSpy = jest.spyOn(rawData.gmgn, 'getGmgnSocials');
+      const gmgnGetPriceSpy = jest.spyOn(rawData.gmgn, 'getPrice');
+      const gmgnGetMarketCapSpy = jest.spyOn(rawData.gmgn, 'getMarketCap');
+      const gmgnGetLiquiditySpy = jest.spyOn(rawData.gmgn, 'getLiquidity');
+      const gmgnGetSupplySpy = jest.spyOn(rawData.gmgn, 'getSupply');
+      const gmgnGetDecimalsSpy = jest.spyOn(rawData.gmgn, 'getDecimals');
+      const gmgnGetNameSpy = jest.spyOn(rawData.gmgn, 'getName');
+      const gmgnGetSymbolSpy = jest.spyOn(rawData.gmgn, 'getSymbol');
+      const gmgnGetLogoUrlSpy = jest.spyOn(rawData.gmgn, 'getLogoUrl');
+      const gmgnGetDescriptionSpy = jest.spyOn(rawData.gmgn, 'getDescription');
+      const gmgnGetSocialsSpy = jest.spyOn(rawData.gmgn, 'getSocials');
+      const gmgnGetCreatedBySpy = jest.spyOn(rawData.gmgn, 'getCreatedBy');
+      const gmgnGetHoldersSpy = jest.spyOn(rawData.gmgn, 'getHolders');
+      const gmgnGetTokenSocialsSpy = jest.spyOn(rawData.gmgn, 'getTokenSocials');
+      const gmgnGetTokenSecurityAndLaunchpadSpy = jest.spyOn(rawData.gmgn, 'getTokenSecurityAndLaunchpad');
+
+      await builder.collect();
+
+      expect(birdeyeGetTokenOverviewSpy).toHaveBeenCalledTimes(1);
+      expect(birdeyeGetTokenSecuritySpy).toHaveBeenCalledTimes(1);
+      expect(birdeyeGetMarketsSpy).toHaveBeenCalledTimes(1);
+      expect(gmgnGetTokenInfoSpy).toHaveBeenCalledTimes(1);
+      expect(gmgnGetGmgnSocialsSpy).toHaveBeenCalledTimes(1);
+
+      expect(birdeyeGetPriceSpy).not.toHaveBeenCalled();
+      expect(birdeyeGetMarketCapSpy).not.toHaveBeenCalled();
+      expect(birdeyeGetLiquiditySpy).not.toHaveBeenCalled();
+      expect(birdeyeGetSupplySpy).not.toHaveBeenCalled();
+      expect(birdeyeGetDecimalsSpy).not.toHaveBeenCalled();
+      expect(birdeyeGetNameSpy).not.toHaveBeenCalled();
+      expect(birdeyeGetSymbolSpy).not.toHaveBeenCalled();
+      expect(birdeyeGetLogoUrlSpy).not.toHaveBeenCalled();
+      expect(birdeyeGetDescriptionSpy).not.toHaveBeenCalled();
+      expect(birdeyeGetSocialsSpy).not.toHaveBeenCalled();
+      expect(birdeyeGetCreatedBySpy).not.toHaveBeenCalled();
+      expect(birdeyeGetTopHoldersSpy).not.toHaveBeenCalled();
+
+      expect(gmgnGetPriceSpy).not.toHaveBeenCalled();
+      expect(gmgnGetMarketCapSpy).not.toHaveBeenCalled();
+      expect(gmgnGetLiquiditySpy).not.toHaveBeenCalled();
+      expect(gmgnGetSupplySpy).not.toHaveBeenCalled();
+      expect(gmgnGetDecimalsSpy).not.toHaveBeenCalled();
+      expect(gmgnGetNameSpy).not.toHaveBeenCalled();
+      expect(gmgnGetSymbolSpy).not.toHaveBeenCalled();
+      expect(gmgnGetLogoUrlSpy).not.toHaveBeenCalled();
+      expect(gmgnGetDescriptionSpy).not.toHaveBeenCalled();
+      expect(gmgnGetSocialsSpy).not.toHaveBeenCalled();
+      expect(gmgnGetCreatedBySpy).not.toHaveBeenCalled();
+      expect(gmgnGetHoldersSpy).not.toHaveBeenCalled();
+      expect(gmgnGetTokenSocialsSpy).not.toHaveBeenCalled();
+      expect(gmgnGetTokenSecurityAndLaunchpadSpy).not.toHaveBeenCalled();
+    });
+
+    it('should return data even if some sources return null', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+      await builder.initialiseRawData();
+
       const rawData = (builder as any).rawData as RawTokenDataCacheMock;
 
-      // Mock some methods to return null (simulating source failures or missing data)
       jest.spyOn(rawData.birdeye, 'getTokenOverview').mockResolvedValue(null);
       jest.spyOn(rawData.gmgn, 'getTokenInfo').mockResolvedValue(null);
 
-      // Keep other methods returning data
       const mockSecurity = { isOpenSource: 'true' } as any;
       const mockMarkets = { items: [{ address: '0xpair' }] } as any;
       const mockSocials = { twitter: 'test' } as any;
@@ -430,18 +513,14 @@ describe('AutoTrackerTokenBuilder', () => {
     });
 
     it('should not fail entire collection if one source fails', async () => {
-      // Create builder and initialize rawData
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       await builder.initialiseRawData();
 
-      // Get the rawData instance
       const rawData = (builder as any).rawData as RawTokenDataCacheMock;
 
-      // Mock some methods to throw errors (simulating API failures)
       jest.spyOn(rawData.birdeye, 'getTokenOverview').mockRejectedValue(new Error('Birdeye API error'));
       jest.spyOn(rawData.gmgn, 'getTokenInfo').mockRejectedValue(new Error('GMGN API timeout'));
 
-      // Keep other methods returning data
       const mockSecurity = { isOpenSource: 'true' } as any;
       const mockMarkets = { items: [{ address: '0xpair' }] } as any;
       const mockSocials = { twitter: 'test' } as any;
@@ -450,11 +529,7 @@ describe('AutoTrackerTokenBuilder', () => {
       jest.spyOn(rawData.birdeye, 'getMarkets').mockResolvedValue(mockMarkets);
       jest.spyOn(rawData.gmgn, 'getGmgnSocials').mockResolvedValue(mockSocials);
 
-      // Call collect - it uses Promise.all which will reject if any promise rejects
-      // So we expect this to throw
       await expect(builder.collect()).rejects.toThrow();
-
-      // Verify all methods were called before the error propagated
       expect(rawData.birdeye.getTokenOverview).toHaveBeenCalledTimes(1);
       expect(rawData.gmgn.getTokenInfo).toHaveBeenCalledTimes(1);
       expect(rawData.birdeye.getTokenSecurity).toHaveBeenCalledTimes(1);
@@ -516,48 +591,172 @@ describe('AutoTrackerTokenBuilder', () => {
   });
 
   describe('getToken()', () => {
-    it('should call getInitialData to resolve chain ID if not set', () => {
-      // TODO: Implement
+    it('should call getInitialData to resolve chain ID if not set', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress);
+      expect((builder as any).chainId).toBeUndefined();
+
+      const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
+      const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
+      const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
+
+      const mockToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'Test',
+        symbol: 'TEST',
+        decimals: 18,
+        totalSupply: 1000000,
+        pairAddress: '0xpair',
+        socials: {},
+        dataSource: TokenDataSource.BIRDEYE,
+      });
+
+      getBirdeyeTokenSpy.mockResolvedValue(mockToken);
+      getGmgnTokenSpy.mockResolvedValue(null);
+
+      await builder.getToken();
+
+      expect(getInitialDataSpy).toHaveBeenCalled();
+      expect((builder as any).chainId).toBe('56');
     });
 
-    it('should throw error when both GMGN and Birdeye return null', () => {
-      // TODO: Implement
+    it('should throw error when both GMGN and Birdeye return null', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+
+      jest.spyOn(builder as any, 'getGmgnAutoTrackerToken').mockResolvedValue(null);
+      jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(null);
+
+      await expect(builder.getToken()).rejects.toThrow('Could not fetch tokens');
     });
 
-    it('should merge tokens from both sources using AutoTrackerToken.mergeMany', () => {
-      // TODO: Implement
+    it('should merge tokens from both sources using AutoTrackerToken.mergeMany', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+
+      const mockGmgnToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'GMGN Token',
+        symbol: 'GMGN',
+        decimals: 18,
+        totalSupply: 1000000,
+        pairAddress: '0xgmgnpair',
+        socials: { telegram: 'https://t.me/gmgn' },
+        dataSource: TokenDataSource.GMGN,
+      });
+
+      const mockBirdeyeToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'Birdeye Token',
+        symbol: 'BIRD',
+        decimals: 18,
+        totalSupply: 2000000,
+        pairAddress: '0xbirdpair',
+        socials: { twitter: 'https://twitter.com/birdeye' },
+        dataSource: TokenDataSource.BIRDEYE,
+      });
+
+      jest.spyOn(builder as any, 'getGmgnAutoTrackerToken').mockResolvedValue(mockGmgnToken);
+      jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(mockBirdeyeToken);
+
+      const mergeSpy = jest.spyOn(AutoTrackerToken, 'mergeMany');
+
+      const result = await builder.getToken();
+
+      expect(mergeSpy).toHaveBeenCalled();
+      expect(mergeSpy).toHaveBeenCalledWith([mockGmgnToken, mockBirdeyeToken]);
+      expect(result).toBeDefined();
     });
 
-    it('should return token when only GMGN has data', () => {
-      // TODO: Implement
+    it('should return token when only GMGN has data', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+
+      const mockGmgnToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'GMGN Token',
+        symbol: 'GMGN',
+        decimals: 18,
+        totalSupply: 1000000,
+        pairAddress: '0xgmgnpair',
+        socials: { telegram: 'https://t.me/gmgn' },
+        dataSource: TokenDataSource.GMGN,
+      });
+
+      jest.spyOn(builder as any, 'getGmgnAutoTrackerToken').mockResolvedValue(mockGmgnToken);
+      jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(null);
+
+      const result = await builder.getToken();
+
+      expect(result).toBeDefined();
+      expect(result.address).toBe(tokenAddress);
+      expect(result.name).toBe('GMGN Token');
+      expect(result.dataSource).toBe(TokenDataSource.GMGN);
     });
 
-    it('should return token when only Birdeye has data', () => {
-      // TODO: Implement
+    it('should return token when only Birdeye has data', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+
+      const mockBirdeyeToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'Birdeye Token',
+        symbol: 'BIRD',
+        decimals: 18,
+        totalSupply: 2000000,
+        pairAddress: '0xbirdpair',
+        socials: { twitter: 'https://twitter.com/birdeye' },
+        dataSource: TokenDataSource.BIRDEYE,
+      });
+
+      jest.spyOn(builder as any, 'getGmgnAutoTrackerToken').mockResolvedValue(null);
+      jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(mockBirdeyeToken);
+
+      const result = await builder.getToken();
+
+      expect(result).toBeDefined();
+      expect(result.address).toBe(tokenAddress);
+      expect(result.name).toBe('Birdeye Token');
+      expect(result.dataSource).toBe(TokenDataSource.BIRDEYE);
     });
 
-    it('should filter out null tokens before passing to mergeMany', () => {
-      // TODO: Implement
+    it('should filter out null tokens before passing to mergeMany', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+
+      const mockBirdeyeToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'Birdeye Token',
+        symbol: 'BIRD',
+        decimals: 18,
+        totalSupply: 2000000,
+        pairAddress: '0xbirdpair',
+        socials: {},
+        dataSource: TokenDataSource.BIRDEYE,
+      });
+
+      jest.spyOn(builder as any, 'getGmgnAutoTrackerToken').mockResolvedValue(null);
+      jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(mockBirdeyeToken);
+
+      const mergeSpy = jest.spyOn(AutoTrackerToken, 'mergeMany');
+
+      await builder.getToken();
+
+      expect(mergeSpy).toHaveBeenCalledWith([mockBirdeyeToken]);
+      expect(mergeSpy).not.toHaveBeenCalledWith(expect.arrayContaining([null]));
     });
   });
 
   describe('getDbToken()', () => {
     it('should return null if token not found in DB', async () => {
-      // Mock database to return null (token not found)
       mockDatabase.tokens.findOneByTokenAddress.mockResolvedValue(null);
 
-      // Create builder and call getDbToken
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       const result = await builder.getDbToken();
 
-      // Verify result is null
       expect(result).toBeNull();
-
-      // Verify database was queried
       expect(mockDatabase.tokens.findOneByTokenAddress).toHaveBeenCalledWith(tokenAddress);
       expect(mockDatabase.tokens.findOneByTokenAddress).toHaveBeenCalledTimes(1);
-
-      // Verify toModel was NOT called since token wasn't found
       expect(mockDatabase.tokens.toModel).not.toHaveBeenCalled();
     });
 
@@ -576,12 +775,10 @@ describe('AutoTrackerTokenBuilder', () => {
       it('should return mapped AutoTrackerToken from database', async () => {
         const builder = createBuilderWithRealDb(realDb);
 
-        // Call getDbToken - should retrieve the real token
         const result = await builder.getDbToken();
         expect(result).toBeDefined();
         expect(result).toBeInstanceOf(AutoTrackerToken);
 
-        // Verify the data matches what we inserted
         expect(result?.address).toBe(tokenAddress);
         expect(result?.chainId).toBe(chainId);
         expect(result?.name).toBe(TEST_TOKEN_DATA.name);
@@ -591,13 +788,11 @@ describe('AutoTrackerTokenBuilder', () => {
         expect(result?.pairAddress).toBe(TEST_TOKEN_DATA.pairAddress);
         expect(result?.dataSource).toBe('BIRDEYE');
 
-        // Clean up
         await testSeed.deleteToken(tokenAddress, chainId);
       });
     });
 
     it('should use db.tokens.toModel to convert database record', async () => {
-      // Create mock database token
       const mockDbToken = {
         address: tokenAddress,
         chain_id: chainId,
@@ -607,31 +802,24 @@ describe('AutoTrackerTokenBuilder', () => {
 
       const mockAutoTrackerToken = {} as AutoTrackerToken;
 
-      // Mock database methods
       mockDatabase.tokens.findOneByTokenAddress.mockResolvedValue(mockDbToken);
       mockDatabase.tokens.toModel.mockReturnValue(mockAutoTrackerToken);
 
-      // Create builder and call getDbToken
       const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
       await builder.getDbToken();
 
-      // Verify toModel was called with the exact DB token
       expect(mockDatabase.tokens.toModel).toHaveBeenCalledWith(mockDbToken);
       expect(mockDatabase.tokens.toModel).toHaveBeenCalledTimes(1);
     });
 
     it('should query database using the token address', async () => {
-      // Mock database to return null
       mockDatabase.tokens.findOneByTokenAddress.mockResolvedValue(null);
 
-      // Create builder with specific token address
       const specificAddress = '0xspecific123';
       const builder = new AutoTrackerTokenBuilder(specificAddress, chainId);
 
-      // Call getDbToken
       await builder.getDbToken();
 
-      // Verify database was queried with the correct token address
       expect(mockDatabase.tokens.findOneByTokenAddress).toHaveBeenCalledWith(specificAddress);
       expect(mockDatabase.tokens.findOneByTokenAddress).toHaveBeenCalledTimes(1);
     });
@@ -649,89 +837,68 @@ describe('AutoTrackerTokenBuilder', () => {
       });
 
       it('should return DB token immediately if it exists and has all required fields', async () => {
-        // Insert the complete token into database
         await realDb.tokens.upsertTokenFromTokenData(completeToken);
 
-        // Create builder with real database
         const builder = createBuilderWithRealDb(realDb);
 
-        // Spy on getInitialData to verify it's NOT called
         const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
         const collectSpy = jest.spyOn(builder as any, 'collect');
 
-        // Call getOrCreate - should return existing token without fetching
         const result = await builder.getOrCreate();
 
-        // Verify the token was returned
         expect(result).toBeDefined();
         expect(result.address).toBe(tokenAddress);
         expect(result.name).toBe(TEST_TOKEN_DATA.name);
         expect(result.symbol).toBe(TEST_TOKEN_DATA.symbol);
 
-        // Verify NO API calls were made (short-circuit)
         expect(getInitialDataSpy).not.toHaveBeenCalled();
         expect(collectSpy).not.toHaveBeenCalled();
 
-        // Clean up
         await testSeed.deleteToken(tokenAddress, chainId);
       });
 
       it('should short-circuit and skip API calls when DB token is complete', async () => {
-        // Insert the complete token
         await realDb.tokens.upsertTokenFromTokenData(completeToken);
 
-        // Create builder
         const builder = createBuilderWithRealDb(realDb);
 
-        // Spy on API-related methods
         const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
         const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
         const collectSpy = jest.spyOn(builder as any, 'collect');
         const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
 
-        // Call getOrCreate
         const result = await builder.getOrCreate();
 
-        // Verify token was returned
         expect(result).toBeDefined();
         expect(result.address).toBe(tokenAddress);
         expect(result.symbol).toBe(TEST_TOKEN_DATA.symbol);
 
-        // Verify NO API methods were called
         expect(getGmgnTokenSpy).not.toHaveBeenCalled();
         expect(getBirdeyeTokenSpy).not.toHaveBeenCalled();
         expect(collectSpy).not.toHaveBeenCalled();
         expect(getInitialDataSpy).not.toHaveBeenCalled();
 
-        // Verify the Birdeye service itself was never used
         expect(mockBirdeyeService.fetchTokenDataWithMarketCapFromAddress).not.toHaveBeenCalled();
         expect(mockBirdeyeService.fetchTokenWithMarketCap).not.toHaveBeenCalled();
 
-        // Clean up
         await testSeed.deleteToken(tokenAddress, chainId);
       });
 
       it('should fetch and create token when not in database', async () => {
-        // Use a token address that doesn't exist in the database
         const testAddress = '0xnewtoken1234567890123456789012345';
 
-        // Verify token doesn't exist
         const existingToken = await realDb.tokens.findOneByTokenAddress(testAddress);
         expect(existingToken).toBeNull();
 
-        // Create builder
         const builder = createBuilderWithRealDb(realDb);
 
-        // Mock rawData to return valid data for collection
         const mockRawData = new RawTokenDataCacheMock(testAddress, chainId);
 
-        // Spy on methods to verify they ARE called
         const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
         const collectSpy = jest.spyOn(builder as any, 'collect');
         const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
         const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
 
-        // Mock the collect method to return data
         collectSpy.mockResolvedValue({
           birdeyeTokenOverview: mockRawData.birdeye.getTokenOverview(),
           birdeyeTokenSecurity: mockRawData.birdeye.getTokenSecurity(),
@@ -740,7 +907,6 @@ describe('AutoTrackerTokenBuilder', () => {
           gmgnTokenSocials: mockRawData.gmgn.getGmgnSocials(),
         });
 
-        // Mock getGmgnAutoTrackerToken to return a valid token
         const mockGmgnToken = new AutoTrackerToken({
           address: testAddress,
           chainId,
@@ -756,45 +922,33 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         getGmgnTokenSpy.mockResolvedValue(mockGmgnToken);
 
-        // Mock getBirdeyeAutoTrackerToken to return null (only GMGN succeeds)
         getBirdeyeTokenSpy.mockResolvedValue(null);
 
-        // Mock database upsert
         const upsertSpy = jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // Call getOrCreate - should fetch and create
         const result = await builder.getOrCreate();
 
-        // Verify result
         expect(result).toBeDefined();
         expect(result.address).toBe(testAddress);
         expect(result.name).toBe('New GMGN Token');
 
-        // Verify API methods WERE called
         expect(getInitialDataSpy).toHaveBeenCalled();
         expect(collectSpy).toHaveBeenCalled();
         expect(getGmgnTokenSpy).toHaveBeenCalled();
         expect(getBirdeyeTokenSpy).toHaveBeenCalled();
 
-        // Verify token was saved to database
         expect(upsertSpy).toHaveBeenCalled();
         expect(upsertSpy).toHaveBeenCalledWith(expect.objectContaining({
           address: testAddress,
           name: 'New GMGN Token',
         }));
 
-        // Clean up (in case it was actually inserted)
-        await testSeed.deleteToken(testAddress, chainId).catch(() => {
-          // Ignore error if token wasn't actually inserted
-        });
+        await testSeed.deleteToken(testAddress, chainId).catch(() => {});
       });
 
       it('should fetch additional data when DB token is incomplete', async () => {
-        // Create an incomplete token (missing pairAddress which is required)
         const testAddress = '0xincomplete123456789012345678901';
 
-        // Insert the incomplete token into database
-        // We need to bypass the normal validation, so use Prisma directly
         const prisma = dbHelper.getPrisma();
         await prisma.token.create({
           data: {
@@ -804,21 +958,18 @@ describe('AutoTrackerTokenBuilder', () => {
             symbol: 'INC',
             decimals: 18,
             total_supply: '1000000',
-            pair_address: '' as any, // Empty string instead of null to pass type check
+            pair_address: '' as any,
             telegram_url: 'https://t.me/incomplete',
             data_source: TokenDataSource.GMGN,
           },
         });
 
-        // Create builder
         const builder = createBuilderWithRealDb(realDb);
 
-        // Spy on methods to verify they ARE called (should fetch to complete the token)
         const collectSpy = jest.spyOn(builder as any, 'collect');
         const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
         const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
 
-        // Mock the collect method
         const mockRawData = new RawTokenDataCacheMock(testAddress, chainId);
         collectSpy.mockResolvedValue({
           birdeyeTokenOverview: mockRawData.birdeye.getTokenOverview(),
@@ -828,7 +979,6 @@ describe('AutoTrackerTokenBuilder', () => {
           gmgnTokenSocials: mockRawData.gmgn.getGmgnSocials(),
         });
 
-        // Mock Birdeye to return token with the missing pairAddress
         const mockBirdeyeToken = new AutoTrackerToken({
           address: testAddress,
           chainId,
@@ -836,7 +986,7 @@ describe('AutoTrackerTokenBuilder', () => {
           symbol: 'INC',
           decimals: 18,
           totalSupply: 1000000,
-          pairAddress: '0xcompletedpair', // This fills the missing field!
+          pairAddress: '0xcompletedpair',
           socials: {
             twitter: 'https://twitter.com/complete',
           },
@@ -845,26 +995,21 @@ describe('AutoTrackerTokenBuilder', () => {
         getBirdeyeTokenSpy.mockResolvedValue(mockBirdeyeToken);
         getGmgnTokenSpy.mockResolvedValue(null);
 
-        // Mock database upsert
         const upsertSpy = jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // Call getOrCreate - should fetch to complete the token
         const result = await builder.getOrCreate();
 
-        // Verify result has the completed data (merged from DB + API)
         expect(result).toBeDefined();
         expect(result.address).toBe(testAddress);
-        expect(result.pairAddress).toBe('0xcompletedpair'); // Should have the missing field now
-        expect(result.name).toBe('Incomplete Token'); // From DB
-        expect(result.socials.telegram).toBe('https://t.me/incomplete'); // From DB
-        expect(result.socials.twitter).toBe('https://twitter.com/complete'); // From API
+        expect(result.pairAddress).toBe('0xcompletedpair');
+        expect(result.name).toBe('Incomplete Token');
+        expect(result.socials.telegram).toBe('https://t.me/incomplete');
+        expect(result.socials.twitter).toBe('https://twitter.com/complete');
 
-        // Verify API methods WERE called to fetch missing data
         expect(collectSpy).toHaveBeenCalled();
         expect(getGmgnTokenSpy).toHaveBeenCalled();
         expect(getBirdeyeTokenSpy).toHaveBeenCalled();
 
-        // Verify the completed token was saved back to database
         expect(upsertSpy).toHaveBeenCalled();
         expect(upsertSpy).toHaveBeenCalledWith(expect.objectContaining({
           address: testAddress,
@@ -874,65 +1019,51 @@ describe('AutoTrackerTokenBuilder', () => {
       });
 
       it('should use hasMissingRequiredFields to determine if token is complete', async () => {
-          // Insert the complete token into database
           await realDb.tokens.upsertTokenFromTokenData(completeToken);
 
-          // Create builder
           const builder = createBuilderWithRealDb(realDb);
 
-          // Spy on methods - these should NOT be called since token is complete
           const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
           const collectSpy = jest.spyOn(builder as any, 'collect');
           const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
           const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
           const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
 
-          // Call getOrCreate
           const result = await builder.getOrCreate();
 
-          // Verify getDbToken was called
           expect(getDbTokenSpy).toHaveBeenCalled();
 
-          // Get the token that was returned from getDbToken
           const dbToken = await getDbTokenSpy.mock.results[0].value;
           expect(dbToken).not.toBeNull();
 
-          // Verify the token is complete (hasMissingRequiredFields returns false)
           expect(dbToken.hasMissingRequiredFields()).toBe(false);
 
-          // Verify collect was NOT called because token was complete
           expect(collectSpy).not.toHaveBeenCalled();
 
-          // Verify API methods were NOT called because token was complete
           expect(getInitialDataSpy).not.toHaveBeenCalled();
           expect(getBirdeyeTokenSpy).not.toHaveBeenCalled();
           expect(getGmgnTokenSpy).not.toHaveBeenCalled();
 
-          // Verify result is the complete token
           expect(result).toBeDefined();
           expect(result.address).toBe(tokenAddress);
           expect(result.name).toBe(TEST_TOKEN_DATA.name);
           expect(result.pairAddress).toBe(TEST_TOKEN_DATA.pairAddress);
 
-          // Clean up
           await testSeed.deleteToken(tokenAddress, chainId);
         });
 
         it('should merge tokens with available data even when some sources fail', async () => {
           const builder = createBuilderWithRealDb(realDb);
 
-          // Mock getDbToken to return null (no token in DB)
           const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
           getDbTokenSpy.mockResolvedValue(null);
 
-          // Mock getInitialData to provide chain ID
           const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
           getInitialDataSpy.mockResolvedValue({
             token: { chainId },
             rawData: {}
           });
 
-          // Mock collect
           const mockRawData = new RawTokenDataCacheMock(tokenAddress, chainId);
           const collectSpy = jest.spyOn(builder as any, 'collect');
           collectSpy.mockResolvedValue({
@@ -943,11 +1074,9 @@ describe('AutoTrackerTokenBuilder', () => {
             gmgnTokenSocials: mockRawData.gmgn.getGmgnSocials(),
           });
 
-          // Mock GMGN to fail (return null)
           const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
           getGmgnTokenSpy.mockResolvedValue(null);
 
-          // Mock Birdeye to succeed
           const mockBirdeyeToken = new AutoTrackerToken({
             address: tokenAddress,
             chainId,
@@ -964,17 +1093,13 @@ describe('AutoTrackerTokenBuilder', () => {
           const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
           getBirdeyeTokenSpy.mockResolvedValue(mockBirdeyeToken);
 
-          // Mock database upsert
           const upsertSpy = jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-          // Call getOrCreate
           const result = await builder.getOrCreate();
 
-          // Verify both sources were attempted
           expect(getGmgnTokenSpy).toHaveBeenCalled();
           expect(getBirdeyeTokenSpy).toHaveBeenCalled();
 
-          // Verify result is the merged token (should only have Birdeye data since GMGN failed)
           expect(result).toBeDefined();
           expect(result.address).toBe(tokenAddress);
           expect(result.name).toBe('Test Token');
@@ -982,7 +1107,6 @@ describe('AutoTrackerTokenBuilder', () => {
           expect(result.pairAddress).toBe('0xpair');
           expect(result.dataSource).toBe(TokenDataSource.BIRDEYE);
 
-          // Verify token was saved
           expect(upsertSpy).toHaveBeenCalled();
           expect(upsertSpy).toHaveBeenCalledWith(expect.objectContaining({
             address: tokenAddress,
@@ -1002,20 +1126,17 @@ describe('AutoTrackerTokenBuilder', () => {
       });
 
       it('should fetch initial data to resolve chain ID when not provided initially', async () => {
-        // Create builder WITHOUT chain ID
         const builder = new AutoTrackerTokenBuilder(
           tokenAddress,
-          undefined, // No chain ID provided
+          undefined,
           undefined,
           mockBirdeyeService as any,
           realDb
         );
 
-        // Mock getDbToken to return null (no DB token)
         const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
         getDbTokenSpy.mockResolvedValue(null);
 
-        // Mock getInitialData to return chain ID
         const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
         const mockInitialData = {
           token: { chainId },
@@ -1023,7 +1144,6 @@ describe('AutoTrackerTokenBuilder', () => {
         };
         getInitialDataSpy.mockResolvedValue(mockInitialData);
 
-        // Mock collect and token fetch methods
         const collectSpy = jest.spyOn(builder as any, 'collect');
         collectSpy.mockResolvedValue({
           birdeyeTokenOverview: {},
@@ -1055,15 +1175,13 @@ describe('AutoTrackerTokenBuilder', () => {
       });
 
       it('should use chain ID from builder constructor and call getInitialData if DB token lacks it', async () => {
-        // Create builder WITH chain ID
         const builder = createBuilderWithRealDb(realDb);
         expect((builder as any).chainId).toBe(chainId);
 
-        // Mock getDbToken to return token without chainId (edge case)
         const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
         const mockDbToken = new AutoTrackerToken({
           address: tokenAddress,
-          chainId: undefined as any, // DB token missing chain ID
+          chainId: undefined as any,
           name: 'Test',
           symbol: 'TEST',
           decimals: 18,
@@ -1074,14 +1192,12 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         getDbTokenSpy.mockResolvedValue(mockDbToken);
 
-        // Mock getInitialData - WILL be called because token.chainId is undefined (line 114)
         const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
         getInitialDataSpy.mockResolvedValue({
           token: { chainId },
           rawData: { birdeye: {} }
         });
 
-        // Mock other methods
         const collectSpy = jest.spyOn(builder as any, 'collect');
         collectSpy.mockResolvedValue({
           birdeyeTokenOverview: {},
@@ -1107,46 +1223,37 @@ describe('AutoTrackerTokenBuilder', () => {
         jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(completeTokenFromApi);
         jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // Call getOrCreate
         await builder.getOrCreate();
 
-        // Verify chain ID from constructor was preserved
         expect((builder as any).chainId).toBe(chainId);
-
-        // getInitialData WILL be called because token.chainId is undefined (line 114 condition is true)
         expect(getInitialDataSpy).toHaveBeenCalled();
       });
 
       it('should not resolve chain ID via getInitialData if DB token already has it', async () => {
-        // Create builder WITH chain ID (since if builder doesn't have it, it won't be set from DB token)
         const builder = createBuilderWithRealDb(realDb);
         expect((builder as any).chainId).toBe(chainId);
 
-        // Mock getDbToken to return token WITH chainId but missing other fields
         const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
         const mockDbToken = new AutoTrackerToken({
           address: tokenAddress,
-          chainId, // DB token HAS chain ID
+          chainId,
           name: 'Test',
           symbol: 'TEST',
           decimals: 18,
           totalSupply: 1000000,
-          pairAddress: '0xincomplete', // Has pairAddress but might be missing other fields
+          pairAddress: '0xincomplete',
           socials: {},
           dataSource: TokenDataSource.BIRDEYE,
         });
-        // Force the token to have missing fields for testing
         (mockDbToken as any).pairAddress = undefined;
         getDbTokenSpy.mockResolvedValue(mockDbToken);
 
-        // Mock getInitialData - should NOT be called
         const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
         getInitialDataSpy.mockResolvedValue({
           token: { chainId },
           rawData: { birdeye: {} }
         });
 
-        // Mock other methods
         const collectSpy = jest.spyOn(builder as any, 'collect');
         collectSpy.mockResolvedValue({
           birdeyeTokenOverview: {},
@@ -1172,18 +1279,13 @@ describe('AutoTrackerTokenBuilder', () => {
         jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(completeTokenFromApi);
         jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // Call getOrCreate
         await builder.getOrCreate();
 
-        // Verify getInitialData was NOT called (DB token had chainId so line 114 condition was false)
         expect(getInitialDataSpy).not.toHaveBeenCalled();
-
-        // Verify chain ID remained from builder constructor
         expect((builder as any).chainId).toBe(chainId);
       });
 
       it('should resolve chain ID when builder and DB token both lack it', async () => {
-        // Create builder WITHOUT chain ID
         const builder = new AutoTrackerTokenBuilder(
           tokenAddress,
           undefined,
@@ -1192,11 +1294,10 @@ describe('AutoTrackerTokenBuilder', () => {
           realDb
         );
 
-        // Mock getDbToken to return token WITHOUT chainId
         const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
         const mockDbToken = new AutoTrackerToken({
           address: tokenAddress,
-          chainId: undefined as any, // DB token missing chain ID
+          chainId: undefined as any,
           name: 'Test',
           symbol: 'TEST',
           decimals: 18,
@@ -1207,7 +1308,6 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         getDbTokenSpy.mockResolvedValue(mockDbToken);
 
-        // Mock getInitialData - SHOULD be called
         const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
         const mockInitialData = {
           token: { chainId },
@@ -1215,7 +1315,6 @@ describe('AutoTrackerTokenBuilder', () => {
         };
         getInitialDataSpy.mockResolvedValue(mockInitialData);
 
-        // Mock other methods
         const collectSpy = jest.spyOn(builder as any, 'collect');
         collectSpy.mockResolvedValue({
           birdeyeTokenOverview: {},
@@ -1241,18 +1340,13 @@ describe('AutoTrackerTokenBuilder', () => {
         jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(completeTokenFromApi);
         jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // Call getOrCreate
         await builder.getOrCreate();
 
-        // Verify getInitialData WAS called (neither builder nor DB token had chainId)
         expect(getInitialDataSpy).toHaveBeenCalled();
-
-        // Verify chain ID was resolved and set
         expect((builder as any).chainId).toBe(chainId);
       });
 
       it('should pass chainId and rawData from getInitialData to setChainIdAndInitialiseRawData', async () => {
-        // Create builder WITHOUT chain ID
         const builder = new AutoTrackerTokenBuilder(
           tokenAddress,
           undefined,
@@ -1261,10 +1355,8 @@ describe('AutoTrackerTokenBuilder', () => {
           realDb
         );
 
-        // Mock getDbToken to return null
         jest.spyOn(builder as any, 'getDbToken').mockResolvedValue(null);
 
-        // Mock getInitialData with specific rawData
         const mockRawData = {
           birdeye: {
             tokenOverview: { address: tokenAddress },
@@ -1278,10 +1370,8 @@ describe('AutoTrackerTokenBuilder', () => {
           rawData: mockRawData
         });
 
-        // Spy on setChainIdAndInitialiseRawData
         const setChainIdAndInitialiseRawDataSpy = jest.spyOn(builder as any, 'setChainIdAndInitialiseRawData');
 
-        // Mock other methods
         jest.spyOn(builder as any, 'collect').mockResolvedValue({
           birdeyeTokenOverview: {},
           birdeyeTokenSecurity: {},
@@ -1306,10 +1396,8 @@ describe('AutoTrackerTokenBuilder', () => {
         jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(mockToken);
         jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // Call getOrCreate
         await builder.getOrCreate();
 
-        // Verify setChainIdAndInitialiseRawData was called with chainId and rawData from getInitialData
         expect(setChainIdAndInitialiseRawDataSpy).toHaveBeenCalledWith(chainId, mockRawData);
       });
     });
@@ -1338,7 +1426,6 @@ describe('AutoTrackerTokenBuilder', () => {
       });
 
       it('should merge existing DB token with fresh API data from both sources', async () => {
-        // Create an incomplete DB token (missing pairAddress - a required field)
         const incompleteDbToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1353,14 +1440,11 @@ describe('AutoTrackerTokenBuilder', () => {
           dataSource: TokenDataSource.BIRDEYE,
         });
 
-        // Force it to be missing pairAddress to trigger the fetch logic
         (incompleteDbToken as any).pairAddress = undefined;
 
-        // Mock getDbToken to return the incomplete token
         jest.spyOn(builder as any, 'getDbToken').mockResolvedValue(incompleteDbToken);
         jest.spyOn(builder as any, 'collect').mockResolvedValue(mockCollectData());
 
-        // Mock GMGN to return token with twitter
         const mockGmgnToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1376,7 +1460,6 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         jest.spyOn(builder as any, 'getGmgnAutoTrackerToken').mockResolvedValue(mockGmgnToken);
 
-        // Mock Birdeye to return token with website
         const mockBirdeyeToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1392,14 +1475,11 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(mockBirdeyeToken);
 
-        // Spy on mergeMany to verify the merging
         const mergeSpy = jest.spyOn(AutoTrackerToken, 'mergeMany');
         jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // Call getOrCreate
         const result = await builder.getOrCreate();
 
-        // Verify all three sources were merged
         expect(mergeSpy).toHaveBeenCalled();
         expect(mergeSpy).toHaveBeenCalledWith(
           expect.arrayContaining([
@@ -1408,16 +1488,14 @@ describe('AutoTrackerTokenBuilder', () => {
           ])
         );
 
-        // Verify result has data from all sources
         expect(result).toBeDefined();
         expect(result.address).toBe(tokenAddress);
-        expect(result.socials.telegram).toBe('https://t.me/db'); // From DB
-        expect(result.socials.twitter).toBe('https://twitter.com/gmgn'); // From GMGN
-        expect(result.socials.website).toBe('https://birdeye.com'); // From Birdeye
+        expect(result.socials.telegram).toBe('https://t.me/db');
+        expect(result.socials.twitter).toBe('https://twitter.com/gmgn');
+        expect(result.socials.website).toBe('https://birdeye.com');
       });
 
       it('should pass tokens in correct order to mergeMany', async () => {
-        // Create a DB token with missing pairAddress
         const dbToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1434,7 +1512,6 @@ describe('AutoTrackerTokenBuilder', () => {
         jest.spyOn(builder as any, 'getDbToken').mockResolvedValue(dbToken);
         jest.spyOn(builder as any, 'collect').mockResolvedValue(mockCollectData());
 
-        // Mock GMGN token
         const mockGmgnToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1448,7 +1525,6 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         jest.spyOn(builder as any, 'getGmgnAutoTrackerToken').mockResolvedValue(mockGmgnToken);
 
-        // Mock Birdeye token
         const mockBirdeyeToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1462,15 +1538,11 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken').mockResolvedValue(mockBirdeyeToken);
 
-        // Spy on mergeMany to verify the order
         const mergeSpy = jest.spyOn(AutoTrackerToken, 'mergeMany');
         jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // Call getOrCreate
         await builder.getOrCreate();
 
-        // Verify mergeMany was called with tokens in the correct order: [gmgn, birdeye, db]
-        // According to line 130 in token-builder.ts: [gmgnToken, birdeyeToken, token]
         expect(mergeSpy).toHaveBeenCalledWith(
           expect.arrayContaining([
             expect.objectContaining({ dataSource: TokenDataSource.GMGN }),
@@ -1478,7 +1550,6 @@ describe('AutoTrackerTokenBuilder', () => {
           ])
         );
 
-        // Verify the call arguments specifically - should have 3 tokens filtered from nulls
         const callArgs = mergeSpy.mock.calls[0][0];
         expect(callArgs).toHaveLength(3);
         expect(callArgs[0].dataSource).toBe(TokenDataSource.GMGN);
@@ -1493,7 +1564,6 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         jest.spyOn(builder as any, 'collect').mockResolvedValue(mockCollectData());
 
-        // Mock GMGN to succeed with complete token
         const mockGmgnToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1579,7 +1649,6 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         jest.spyOn(builder as any, 'collect').mockResolvedValue(mockCollectData());
 
-        // Mock GMGN to return partial data (has name, symbol, decimals, telegram)
         const mockGmgnToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1587,7 +1656,7 @@ describe('AutoTrackerTokenBuilder', () => {
           symbol: 'GMGN',
           decimals: 18,
           totalSupply: 1000000,
-          pairAddress: '0xpartial1', // Will be overridden
+          pairAddress: '0xpartial1',
           socials: {
             telegram: 'https://t.me/gmgn',
           },
@@ -1595,15 +1664,14 @@ describe('AutoTrackerTokenBuilder', () => {
         });
         jest.spyOn(builder as any, 'getGmgnAutoTrackerToken').mockResolvedValue(mockGmgnToken);
 
-        // Mock Birdeye to return partial data (has pairAddress, twitter, totalSupply)
         const mockBirdeyeToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
-          name: 'Partial Name', // Will be overridden by GMGN
+          name: 'Partial Name',
           symbol: 'PART',
           decimals: 18,
-          totalSupply: 2000000, // This will override GMGN's totalSupply
-          pairAddress: '0xbirdpair', // The correct pairAddress
+          totalSupply: 2000000,
+          pairAddress: '0xbirdpair',
           socials: {
             twitter: 'https://twitter.com/birdeye',
             website: 'https://birdeye.com',
@@ -1616,22 +1684,18 @@ describe('AutoTrackerTokenBuilder', () => {
 
         const result = await builder.getOrCreate();
 
-        // Verify result combines data from both sources
         expect(result).toBeDefined();
         expect(result.address).toBe(tokenAddress);
 
-        // From GMGN (first in merge order, so takes precedence for these)
         expect(result.name).toBe('GMGN Token');
         expect(result.symbol).toBe('GMGN');
 
-        // From Birdeye (overrides GMGN's partial data)
-        expect(result.pairAddress).toBe('0xpartial1'); // GMGN comes first, so it takes precedence
-        expect(result.totalSupply).toBe(1000000); // GMGN comes first
+        expect(result.pairAddress).toBe('0xpartial1');
+        expect(result.totalSupply).toBe(1000000);
 
-        // Socials combined from both
-        expect(result.socials.telegram).toBe('https://t.me/gmgn'); // From GMGN
-        expect(result.socials.twitter).toBe('https://twitter.com/birdeye'); // From Birdeye
-        expect(result.socials.website).toBe('https://birdeye.com'); // From Birdeye
+        expect(result.socials.telegram).toBe('https://t.me/gmgn');
+        expect(result.socials.twitter).toBe('https://twitter.com/birdeye');
+        expect(result.socials.website).toBe('https://birdeye.com');
 
         expect(upsertSpy).toHaveBeenCalledWith(expect.objectContaining({
           address: tokenAddress,
@@ -1640,7 +1704,6 @@ describe('AutoTrackerTokenBuilder', () => {
       });
 
       it('should try to work with just DB token if APIs fail', async () => {
-        // Create a DB token with missing pairAddress to trigger fetch logic
         const dbToken = new AutoTrackerToken({
           address: tokenAddress,
           chainId,
@@ -1663,7 +1726,6 @@ describe('AutoTrackerTokenBuilder', () => {
 
         const upsertSpy = jest.spyOn(realDb.tokens, 'upsertTokenFromTokenData').mockResolvedValue(undefined);
 
-        // This should throw because the DB token is missing required fields and APIs failed
         await expect(builder.getOrCreate()).rejects.toThrow();
       });
     });
@@ -1706,24 +1768,198 @@ describe('AutoTrackerTokenBuilder', () => {
   });
 
   describe('Integration Tests - Complete Flows', () => {
-    it('should handle complete flow: no chain ID, no DB, both APIs succeed', () => {
-      // TODO: Implement
-      // Should:
-      // 1. Resolve chain ID via getInitialData
-      // 2. Collect data from sources
-      // 3. Fetch from both APIs
-      // 4. Merge tokens
-      // 5. Validate
-      // 6. Save to DB
-      // 7. Return complete token
+    it('should handle complete flow: no chain ID, no DB, both APIs succeed', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress);
+      expect((builder as any).chainId).toBeUndefined();
+
+      const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
+      const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
+      const setChainIdAndInitialiseRawDataSpy = jest.spyOn(builder as any, 'setChainIdAndInitialiseRawData');
+      const collectSpy = jest.spyOn(builder as any, 'collect');
+      const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
+      const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
+      const validateSpy = jest.spyOn(AutoTrackerToken, 'validate');
+      const upsertSpy = jest.spyOn(mockDatabase.tokens, 'upsertTokenFromTokenData');
+
+      getDbTokenSpy.mockResolvedValue(null);
+
+      const mockRawData = new RawTokenDataCacheMock(tokenAddress, chainId);
+      getInitialDataSpy.mockResolvedValue({
+        token: { chainId },
+        rawData: mockRawData.getRawData()
+      });
+
+      collectSpy.mockResolvedValue({
+        birdeyeTokenOverview: mockRawData.birdeye.getTokenOverview(),
+        birdeyeTokenSecurity: mockRawData.birdeye.getTokenSecurity(),
+        birdeyeMarkets: mockRawData.birdeye.getMarkets(),
+        gmgnTokenInfo: mockRawData.gmgn.getTokenInfo(),
+        gmgnTokenSocials: mockRawData.gmgn.getGmgnSocials(),
+      });
+
+      const mockGmgnToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'GMGN Token',
+        symbol: 'GMGN',
+        decimals: 18,
+        totalSupply: 1000000,
+        pairAddress: '0xgmgnpair',
+        socials: { telegram: 'https://t.me/gmgn' },
+        dataSource: TokenDataSource.GMGN,
+      });
+
+      const mockBirdeyeToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'Birdeye Token',
+        symbol: 'BIRD',
+        decimals: 18,
+        totalSupply: 2000000,
+        pairAddress: '0xbirdpair',
+        socials: { twitter: 'https://twitter.com/birdeye' },
+        dataSource: TokenDataSource.BIRDEYE,
+      });
+
+      getGmgnTokenSpy.mockResolvedValue(mockGmgnToken);
+      getBirdeyeTokenSpy.mockResolvedValue(mockBirdeyeToken);
+
+      const result = await builder.getOrCreate();
+
+      expect(getDbTokenSpy).toHaveBeenCalled();
+      expect(getInitialDataSpy).toHaveBeenCalled();
+      expect(setChainIdAndInitialiseRawDataSpy).toHaveBeenCalledWith(chainId, mockRawData.getRawData());
+      expect((builder as any).chainId).toBe(chainId);
+      expect(collectSpy).toHaveBeenCalled();
+      expect(getGmgnTokenSpy).toHaveBeenCalled();
+      expect(getBirdeyeTokenSpy).toHaveBeenCalled();
+      expect(validateSpy).toHaveBeenCalled();
+      expect(upsertSpy).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.address).toBe(tokenAddress);
     });
 
-    it('should handle complete flow when chain ID is known', () => {
-      // TODO: Implement
+    it('should handle complete flow when chain ID is known', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+      expect((builder as any).chainId).toBe(chainId);
+
+      const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
+      const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
+      const collectSpy = jest.spyOn(builder as any, 'collect');
+      const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
+      const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
+      const validateSpy = jest.spyOn(AutoTrackerToken, 'validate');
+      const upsertSpy = jest.spyOn(mockDatabase.tokens, 'upsertTokenFromTokenData');
+
+      getDbTokenSpy.mockResolvedValue(null);
+
+      const mockRawData = new RawTokenDataCacheMock(tokenAddress, chainId);
+      getInitialDataSpy.mockResolvedValue({
+        token: { chainId },
+        rawData: mockRawData.getRawData()
+      });
+
+      collectSpy.mockResolvedValue({
+        birdeyeTokenOverview: mockRawData.birdeye.getTokenOverview(),
+        birdeyeTokenSecurity: mockRawData.birdeye.getTokenSecurity(),
+        birdeyeMarkets: mockRawData.birdeye.getMarkets(),
+        gmgnTokenInfo: mockRawData.gmgn.getTokenInfo(),
+        gmgnTokenSocials: mockRawData.gmgn.getGmgnSocials(),
+      });
+
+      const mockToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'Test Token',
+        symbol: 'TEST',
+        decimals: 18,
+        totalSupply: 1000000,
+        pairAddress: '0xpair',
+        socials: {},
+        dataSource: TokenDataSource.BIRDEYE,
+      });
+
+      getGmgnTokenSpy.mockResolvedValue(null);
+      getBirdeyeTokenSpy.mockResolvedValue(mockToken);
+
+      const result = await builder.getOrCreate();
+
+      expect(getDbTokenSpy).toHaveBeenCalled();
+      expect(getInitialDataSpy).toHaveBeenCalled();
+      expect((builder as any).chainId).toBe(chainId);
+      expect(collectSpy).toHaveBeenCalled();
+      expect(getGmgnTokenSpy).toHaveBeenCalled();
+      expect(getBirdeyeTokenSpy).toHaveBeenCalled();
+      expect(validateSpy).toHaveBeenCalled();
+      expect(upsertSpy).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.address).toBe(tokenAddress);
     });
 
-    it('should enrich partial DB data with API data', () => {
-      // TODO: Implement
+    it('should enrich partial DB data with API data', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+
+      const partialDbToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'DB Token',
+        symbol: 'DBT',
+        decimals: 18,
+        totalSupply: 1000000,
+        pairAddress: '0xdbpair',
+        socials: { telegram: 'https://t.me/db' },
+        dataSource: TokenDataSource.BIRDEYE,
+      });
+      (partialDbToken as any).pairAddress = undefined;
+
+      const getDbTokenSpy = jest.spyOn(builder as any, 'getDbToken');
+      const getInitialDataSpy = jest.spyOn(builder as any, 'getInitialData');
+      const collectSpy = jest.spyOn(builder as any, 'collect');
+      const getGmgnTokenSpy = jest.spyOn(builder as any, 'getGmgnAutoTrackerToken');
+      const getBirdeyeTokenSpy = jest.spyOn(builder as any, 'getBirdeyeAutoTrackerToken');
+      const mergeSpy = jest.spyOn(AutoTrackerToken, 'mergeMany');
+      const validateSpy = jest.spyOn(AutoTrackerToken, 'validate');
+      const upsertSpy = jest.spyOn(mockDatabase.tokens, 'upsertTokenFromTokenData');
+
+      getDbTokenSpy.mockResolvedValue(partialDbToken);
+
+      const mockRawData = new RawTokenDataCacheMock(tokenAddress, chainId);
+      collectSpy.mockResolvedValue({
+        birdeyeTokenOverview: mockRawData.birdeye.getTokenOverview(),
+        birdeyeTokenSecurity: mockRawData.birdeye.getTokenSecurity(),
+        birdeyeMarkets: mockRawData.birdeye.getMarkets(),
+        gmgnTokenInfo: mockRawData.gmgn.getTokenInfo(),
+        gmgnTokenSocials: mockRawData.gmgn.getGmgnSocials(),
+      });
+
+      const mockApiToken = new AutoTrackerToken({
+        address: tokenAddress,
+        chainId,
+        name: 'API Token',
+        symbol: 'API',
+        decimals: 18,
+        totalSupply: 2000000,
+        pairAddress: '0xapipair',
+        socials: { twitter: 'https://twitter.com/api' },
+        dataSource: TokenDataSource.BIRDEYE,
+      });
+
+      getGmgnTokenSpy.mockResolvedValue(null);
+      getBirdeyeTokenSpy.mockResolvedValue(mockApiToken);
+
+      const result = await builder.getOrCreate();
+
+      expect(getDbTokenSpy).toHaveBeenCalled();
+      expect(getInitialDataSpy).not.toHaveBeenCalled();
+      expect(collectSpy).toHaveBeenCalled();
+      expect(getGmgnTokenSpy).toHaveBeenCalled();
+      expect(getBirdeyeTokenSpy).toHaveBeenCalled();
+      expect(mergeSpy).toHaveBeenCalledWith(expect.arrayContaining([mockApiToken, partialDbToken]));
+      expect(validateSpy).toHaveBeenCalled();
+      expect(upsertSpy).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.socials.telegram).toBe('https://t.me/db');
+      expect(result.socials.twitter).toBe('https://twitter.com/api');
     });
 
     describe('API failure scenarios', () => {
@@ -1818,16 +2054,46 @@ describe('AutoTrackerTokenBuilder', () => {
   });
 
   describe('Chain ID Behavior', () => {
-    it('should maintain consistent chain ID across all API calls', () => {
-      // TODO: Implement
+    it('should maintain consistent chain ID across all API calls', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress, chainId);
+      expect((builder as any).chainId).toBe(chainId);
+
+      await builder.initialiseRawData();
+      const rawData = (builder as any).rawData as RawTokenDataCacheMock;
+      expect(rawData.chainId).toBe(chainId);
+
+      await builder.collect();
+      expect((builder as any).chainId).toBe(chainId);
+      expect(rawData.chainId).toBe(chainId);
+
+      const gmgnToken = await builder.getGmgnAutoTrackerToken();
+      expect((builder as any).chainId).toBe(chainId);
+      if (gmgnToken) {
+        expect(gmgnToken.chainId).toBe(chainId);
+      }
+
+      const birdeyeToken = await builder.getBirdeyeAutoTrackerToken();
+      expect((builder as any).chainId).toBe(chainId);
+      if (birdeyeToken) {
+        expect(birdeyeToken.chainId).toBe(chainId);
+      }
+
+      expect((builder as any).chainId).toBe(chainId);
+      expect(rawData.chainId).toBe(chainId);
     });
 
-    it('should update builder\'s chain ID after resolution', () => {
-      // TODO: Implement
-    });
+    it('should update builder\'s chain ID after resolution', async () => {
+      const builder = new AutoTrackerTokenBuilder(tokenAddress);
+      expect((builder as any).chainId).toBeUndefined();
 
-    it('should pass correct chain ID when creating RawTokenDataCache', () => {
-      // TODO: Implement
+      const result = await builder.getInitialData();
+
+      expect((builder as any).chainId).toBe('56');
+      expect((builder as any).chainId).toBeDefined();
+      expect(result.token.chainId).toBe('56');
+
+      expect((builder as any).rawData).toBeDefined();
+      expect((builder as any).rawData.chainId).toBe('56');
     });
   });
 });

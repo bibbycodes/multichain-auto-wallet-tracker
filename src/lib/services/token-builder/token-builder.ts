@@ -23,6 +23,7 @@ export class AutoTrackerTokenBuilder {
         if (!this.rawData) {
             throw new Error('Raw data is not set')
         }
+        
         const data = await Promise.all([
             this.rawData.birdeye.getTokenOverview(),
             this.rawData.birdeye.getTokenSecurity(),
